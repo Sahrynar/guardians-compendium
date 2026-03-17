@@ -66,6 +66,9 @@ export const CATS = {
   eras:       { l: 'Eras & Dating',i: '⧖',  c: 'var(--cca)' },
   spellings:  { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
   map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
+  wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
+  notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
+  familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
   flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
 }
 

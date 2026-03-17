@@ -5,7 +5,7 @@ const LS_KEY = 'gcomp3'
 const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps'
+  'calendar_entries','flags','maps','wiki','notes','family_tree'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────

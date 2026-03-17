@@ -20,12 +20,15 @@ import Eras from './tabs/Eras'
 import Spellings from './tabs/Spellings'
 import MapTab from './tabs/MapTab'
 import Flags from './tabs/Flags'
+import Wiki from './tabs/Wiki'
+import FamilyTree from './tabs/FamilyTree'
+import Notes from './tabs/Notes'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
   'dashboard','characters','wardrobe','items','locations',
   'timeline','scenes','calendar','tools','canon','world',
-  'questions','eras','spellings','map','flags'
+  'questions','eras','spellings','map','wiki','notes','familytree','flags'
 ]
 
 export default function App() {
@@ -97,6 +100,9 @@ export default function App() {
       case 'eras':       return <Eras {...tabProps} />
       case 'spellings':  return <Spellings {...tabProps} />
       case 'map':        return <MapTab {...tabProps} />
+      case 'wiki':       return <Wiki {...tabProps} />
+      case 'notes':      return <Notes {...tabProps} />
+      case 'familytree': return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
       default:           return <Dashboard {...tabProps} />
     }
