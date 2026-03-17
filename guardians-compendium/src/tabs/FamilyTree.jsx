@@ -98,7 +98,12 @@ function TreeNode({ node, selected, onClick, onEdit, onDelete }) {
 
 // ── Main Family Tree Tab ────────────────────────────────────────
 export default function FamilyTree({ db }) {
-  const treeData = (db.db.family_tree || [{ id: '_root', nodes: [], edges: [], bg_color: '#060608', bg_image: null, name: 'Doyle / Lajen Family' }])[0]
+  // FIX: use ?. and ?? so an empty array doesn't block the fallback
+  const treeData = db.db.family_tree?.[0] ?? {
+    id: '_root', nodes: [], edges: [],
+    bg_color: '#060608', bg_image: null,
+    name: 'Doyle / Lajen Family'
+  }
 
   const [nodes, setNodes] = useState(treeData.nodes || [])
   const [edges, setEdges] = useState(treeData.edges || [])
