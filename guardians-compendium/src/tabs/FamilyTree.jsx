@@ -201,21 +201,35 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
   const col = allNodeColors[node.nodeType] || '#8899bb'
   const dragging = useRef(false)
 
-  function onMouseDown(e) {
-    if (e.button !== 0) return
-    e.stopPropagation()
-    const ox = e.clientX - node.x, oy = e.clientY - node.y
+  function startDrag(clientX, clientY) {
+    const ox = clientX - node.x, oy = clientY - node.y
     dragging.current = false
     function onMove(ev) {
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX
+      const cy = ev.touches ? ev.touches[0].clientY : ev.clientY
       dragging.current = true
-      onDrag(node.id, Math.max(0, ev.clientX - ox), Math.max(0, ev.clientY - oy))
+      onDrag(node.id, Math.max(0, cx - ox), Math.max(0, cy - oy))
     }
     function onUp() {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onUp)
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onUp)
+  }
+  function onMouseDown(e) {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    startDrag(e.clientX, e.clientY)
+  }
+  function onTouchStart(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    startDrag(e.touches[0].clientX, e.touches[0].clientY)
   }
 
   return (
@@ -230,6 +244,7 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
     }}
       onClick={e => { e.stopPropagation(); if (!dragging.current) onClick(node.id) }}
       onMouseDown={editMode ? onMouseDown : undefined}
+      onTouchStart={editMode ? onTouchStart : undefined}
     >
       {node.image && <img src={node.image} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', float: 'right', marginLeft: 6, marginBottom: 3, border: `2px solid ${col}` }} />}
       <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>{node.name}</div>
@@ -268,10 +283,10 @@ export default function FamilyTree({ db }) {
   const panRef = useRef(null)
   const bgRef  = useRef()
 
-  const customEdgeTypes  = Array.isArray(db.db.custom_edge_types)  ? db.db.custom_edge_types  : []
-  const customNodeTypes  = Array.isArray(db.db.custom_node_types)  ? db.db.custom_node_types  : []
-  const customEdgeColors = (typeof db.db.custom_edge_colors === 'object' && db.db.custom_edge_colors) ? db.db.custom_edge_colors : {}
-  const customNodeColors = (typeof db.db.custom_node_colors === 'object' && db.db.custom_node_colors) ? db.db.custom_node_colors : {}
+  const customEdgeTypes  = Array.isArray(raw.custom_edge_types)  ? raw.custom_edge_types  : (Array.isArray(db.db.custom_edge_types)  ? db.db.custom_edge_types  : [])
+  const customNodeTypes  = Array.isArray(raw.custom_node_types)  ? raw.custom_node_types  : (Array.isArray(db.db.custom_node_types)  ? db.db.custom_node_types  : [])
+  const customEdgeColors = (raw.custom_edge_colors && typeof raw.custom_edge_colors === 'object') ? raw.custom_edge_colors : ((db.db.custom_edge_colors && typeof db.db.custom_edge_colors === 'object') ? db.db.custom_edge_colors : {})
+  const customNodeColors = (raw.custom_node_colors && typeof raw.custom_node_colors === 'object') ? raw.custom_node_colors : ((db.db.custom_node_colors && typeof db.db.custom_node_colors === 'object') ? db.db.custom_node_colors : {})
 
   const allEdgeTypes  = [...BUILTIN_EDGE_TYPES,  ...customEdgeTypes.filter(t => !BUILTIN_EDGE_TYPES.includes(t))]
   const allNodeTypes  = [...BUILTIN_NODE_TYPES,  ...customNodeTypes.filter(t => !BUILTIN_NODE_TYPES.includes(t))]
@@ -292,14 +307,21 @@ export default function FamilyTree({ db }) {
   function persist(nn, ne, bg, bi) {
     const merged = { ...sp, ...nodePos }
     const nodesToSave = (nn ?? nodes).map(n => { const p = merged[n.id]; return p ? { ...n, x: p.x, y: p.y } : n })
-    db.upsertEntry('family_tree', { id: '_root', name: 'Family Tree', nodes: nodesToSave, edges: ne ?? edges, bg_color: bg ?? bgColor, bg_image: bi !== undefined ? bi : bgImage })
+    db.upsertEntry('family_tree', { id: '_root', name: 'Family Tree', nodes: nodesToSave, edges: ne ?? edges, bg_color: bg ?? bgColor, bg_image: bi !== undefined ? bi : bgImage,
+      custom_edge_types: customEdgeTypes, custom_node_types: customNodeTypes,
+      custom_edge_colors: customEdgeColors, custom_node_colors: customNodeColors })
   }
 
   function saveCustom(et, nt, ec, nc) {
-    if (et !== undefined) db.upsertEntry('custom_edge_types', et)
-    if (nt !== undefined) db.upsertEntry('custom_node_types', nt)
-    if (ec !== undefined) db.upsertEntry('custom_edge_colors', ec)
-    if (nc !== undefined) db.upsertEntry('custom_node_colors', nc)
+    // Store custom types inside the family_tree record for reliable persistence
+    db.upsertEntry('family_tree', {
+      id: '_root', name: 'Family Tree',
+      nodes, edges, bg_color: bgColor, bg_image: bgImage,
+      custom_edge_types:  et ?? customEdgeTypes,
+      custom_node_types:  nt ?? customNodeTypes,
+      custom_edge_colors: ec ?? customEdgeColors,
+      custom_node_colors: nc ?? customNodeColors,
+    })
   }
 
   // ── Node CRUD ────────────────────────────────────────────────
@@ -444,7 +466,10 @@ export default function FamilyTree({ db }) {
       {/* ── Canvas ── */}
       {nodes.length > 0 && (
         <div style={{ overflow:'hidden', maxHeight:'72vh', minHeight:300, border:'1px solid var(--brd)', borderRadius:'var(--rl)', background: bgImage ? `url(${bgImage}) center/cover` : bgColor, position:'relative', cursor: panning ? 'grabbing' : 'default' }}
-          onWheel={onWheel} onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}>
+          onWheel={onWheel} onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
+          onTouchStart={e => { if(e.touches.length===1){ setPanning(true); panRef.current={x:e.touches[0].clientX-pan.x,y:e.touches[0].clientY-pan.y} }}}
+          onTouchMove={e => { if(panning && panRef.current && e.touches.length===1){ e.preventDefault(); setPan({x:e.touches[0].clientX-panRef.current.x,y:e.touches[0].clientY-panRef.current.y}) }}}
+          onTouchEnd={() => { setPanning(false); panRef.current=null }}>
           <div style={{ transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`, transformOrigin:'0 0', position:'relative', width:maxX, height:maxY }}>
             <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible' }}>
               <defs>
@@ -554,7 +579,7 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
           if (ch?.portrait_canvas) setImage(ch.portrait_canvas)
         }}>
           <option value="">— None —</option>
-          {chars.map(c=><option key={c.id} value={c.id}>{c.display_name||c.name}</option>)}
+          {[...chars].sort((a,b)=>(a.display_name||a.name||'').localeCompare(b.display_name||b.name||'')).map(c=><option key={c.id} value={c.id}>{c.display_name||c.name}</option>)}
         </select>
       </div>
       <div className="field"><label>Name *</label><input value={form.name} onChange={s('name')} /></div>
@@ -615,10 +640,10 @@ function EdgeForm({ edge, nodes, onSave, onDelete, onCancel, edgeTypes, edgeColo
     <>
       <div className="field-row">
         <div className="field"><label>From *</label>
-          <select value={form.from} onChange={s('from')}><option value="">— Pick person —</option>{nodes.map(n=><option key={n.id} value={n.id}>{n.name}</option>)}</select>
+          <select value={form.from} onChange={s('from')}><option value="">— Pick person —</option>{[...nodes].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(n=><option key={n.id} value={n.id}>{n.name}</option>)}</select>
         </div>
         <div className="field"><label>To *</label>
-          <select value={form.to} onChange={s('to')}><option value="">— Pick person —</option>{nodes.map(n=><option key={n.id} value={n.id}>{n.name}</option>)}</select>
+          <select value={form.to} onChange={s('to')}><option value="">— Pick person —</option>{[...nodes].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(n=><option key={n.id} value={n.id}>{n.name}</option>)}</select>
         </div>
       </div>
       <div className="field"><label>Relationship Type</label>
