@@ -1,17 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#08080f" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-    <title>The Guardians of Lajen — Worldbuilding Compendium</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+import { useEffect } from 'react'
+
+export default function Modal({ open, onClose, title, color = 'var(--cc)', children, maxWidth = 580 }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onClose() }
+    if (open) document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  return (
+    <div
+      className="modal-overlay open"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="modal-box" style={{ maxWidth }}>
+        <button className="modal-close" onClick={onClose}>✕</button>
+        {title && (
+          <h2 className="modal-title" style={{ color }}>{title}</h2>
+        )}
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export function ModalActions({ children }) {
+  return <div className="modal-actions">{children}</div>
+}
