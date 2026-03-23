@@ -17,6 +17,7 @@ const EDGE_TYPES = [
   'Half-aunt/Half-uncle – Niece/Nephew',
   'Adoptive Parent/Child',
   'Guardian/Ward',
+  'Other Parent',
   'Unknown',
 ]
 
@@ -34,6 +35,7 @@ const EDGE_COLORS = {
   'Half-aunt/Half-uncle – Niece/Nephew': '#dd9966',
   'Adoptive Parent/Child':               '#88cc99',
   'Guardian/Ward':                        '#aaaacc',
+  'Other Parent':                         '#ff9944',
   'Unknown':                              '#666688',
 }
 
@@ -181,7 +183,7 @@ function TreeNode({ node, selected, editMode, onClick, onEdit, onDelete, onAddRe
     >
       {node.image && (
         <img src={node.image} alt=""
-          style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', float: 'right', marginLeft: 6, border: `1px solid ${col}` }}
+          style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', float: 'right', marginLeft: 6, marginBottom: 4, border: `2px solid ${col}` }}
         />
       )}
       <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>
@@ -214,90 +216,89 @@ function btnStyle(col) {
 }
 
 // ── Auto-populate helpers ───────────────────────────────────────
-// Parse relationship type from character traits/notes text
-function guessRelType(text) {
-  const t = (text || '').toLowerCase()
-  if (t.includes('married') || t.includes('spouse') || t.includes('husband') || t.includes('wife')) return 'Married'
-  if (t.includes('half-sibling') || t.includes('half sibling')) return 'Half-sibling'
-  if (t.includes('sibling') || t.includes('brother') || t.includes('sister')) return 'Sibling'
-  if (t.includes('parent') || t.includes('father') || t.includes('mother') || t.includes('son') || t.includes('daughter') || t.includes('child')) return 'Parent/Child'
-  if (t.includes('grandparent') || t.includes('grandmother') || t.includes('grandfather')) return 'Grandparent/Grandchild'
-  if (t.includes('aunt') || t.includes('uncle') || t.includes('niece') || t.includes('nephew')) return 'Aunt/Uncle – Niece/Nephew'
-  if (t.includes('cousin')) return 'Cousin'
-  return null
+
+// iAmParent=true  → I am the senior role → FROM=me, TO=target
+// iAmParent=false → target is the senior → FROM=target, TO=me  
+// iAmParent=null  → symmetric
+function guessRelDir(snippet) {
+  const t = (snippet || '').toLowerCase()
+  if (t.includes('married') || t.includes('spouse') || t.includes('husband') || t.includes('wife'))
+    return { type: 'Married', iAmParent: null }
+  if (t.includes('half-sibling') || t.includes('half sibling'))
+    return { type: 'Half-sibling', iAmParent: null }
+  if (t.includes('sibling') || t.includes('brother') || t.includes('sister'))
+    return { type: 'Sibling', iAmParent: null }
+  if (t.includes('cousin'))
+    return { type: 'Cousin', iAmParent: null }
+  if (t.includes('grandchild') || t.includes('grandson') || t.includes('granddaughter'))
+    return { type: 'Grandparent/Grandchild', iAmParent: true }
+  if (t.includes('grandparent') || t.includes('grandmother') || t.includes('grandfather'))
+    return { type: 'Grandparent/Grandchild', iAmParent: false }
+  if (t.includes('niece') || t.includes('nephew'))
+    return { type: 'Aunt/Uncle – Niece/Nephew', iAmParent: true }
+  if (t.includes('aunt') || t.includes('uncle'))
+    return { type: 'Aunt/Uncle – Niece/Nephew', iAmParent: false }
+  if (t.includes('son') || t.includes('daughter') || t.includes('child') || t.includes('born of'))
+    return { type: 'Parent/Child', iAmParent: false }
+  if (t.includes('father') || t.includes('mother') || t.includes('parent'))
+    return { type: 'Parent/Child', iAmParent: true }
+  return { type: null, iAmParent: null }
 }
 
+const HIER = new Set(['Parent/Child','Grandparent/Grandchild','Adoptive Parent/Child',
+  'Step-parent/Step-child','Aunt/Uncle – Niece/Nephew',
+  'Half-aunt/Half-uncle – Niece/Nephew','Guardian/Ward'])
+
 function buildNodesFromCharacters(characters) {
-  const nodes = []
-  const edges = []
-  const seen  = new Set()
+  const nodes = [], edges = [], seen = new Set(), ekeys = new Set()
 
   characters.forEach(ch => {
     if (!ch.id || !ch.name) return
-    const nodeId = 'ft_' + ch.id
-    if (!seen.has(nodeId)) {
-      seen.add(nodeId)
-      // Detect nodeType from traits
-      let nodeType = 'Other'
-      const traitsLower = (ch.traits || '').toLowerCase()
-      if (traitsLower.includes('guardian') || (ch.element && ch.element !== '')) nodeType = 'Guardian'
-      if (traitsLower.includes('queen') || traitsLower.includes('king') || traitsLower.includes('royal')) nodeType = 'Royalty'
-      if (traitsLower.includes('praelyn')) nodeType = 'Praelyn'
-
-      nodes.push({
-        id: nodeId,
-        name: ch.display_name || ch.name,
-        birth_year: ch.birthday || '',
-        death_year: ch.notes?.includes('Deceased: true') ? '†' : '',
-        title: '',
-        nodeType,
-        notes: '',
-        char_id: ch.id,
-        image: ch.portrait_canvas || null,
-      })
-    }
+    const nid = 'ft_' + ch.id
+    if (seen.has(nid)) return
+    seen.add(nid)
+    const tl = (ch.traits || '').toLowerCase()
+    let nodeType = 'Other'
+    if (tl.includes('praelyn')) nodeType = 'Praelyn'
+    else if (tl.includes('queen') || tl.includes('king') || tl.includes('royal')) nodeType = 'Royalty'
+    else if (ch.element && ch.element !== '') nodeType = 'Guardian'
+    else if (tl.includes('guardian')) nodeType = 'Guardian'
+    nodes.push({ id: nid, name: ch.display_name || ch.name, birth_year: ch.birthday || '',
+      death_year: (ch.notes||'').includes('Deceased: true') ? '†' : '',
+      title: '', nodeType, notes: '', char_id: ch.id, image: ch.portrait_canvas || null })
   })
 
-  // Build edges from relationships array
-  // The existing data has relationships as plain ID arrays — we can only make Unknown edges from those
-  // But traits text often has explicit family language we can parse
   characters.forEach(ch => {
-    const fromId = 'ft_' + ch.id
-    const rels = ch.relationships || []
-
-    rels.forEach(rel => {
-      // rel might be a string ID or an object {id, type}
-      const targetCharId = typeof rel === 'string' ? rel : rel.id
-      const relTypeHint  = typeof rel === 'object' ? rel.type : null
-      const toId = 'ft_' + targetCharId
-
-      if (!seen.has(toId)) return // target not in tree
-
-      // Avoid duplicate edges
-      const edgeKey = [fromId, toId].sort().join('|')
-      if (edges.find(e => [e.from, e.to].sort().join('|') === edgeKey)) return
-
-      // Try to determine relationship type
-      let type = relTypeHint || guessRelType(ch.traits) || 'Unknown'
-
-      // More specific: check if traits mention this specific character
-      const targetChar = characters.find(c => c.id === targetCharId)
-      if (targetChar) {
-        const combined = (ch.traits || '') + ' ' + (ch.notes || '')
-        const targetName = targetChar.display_name || targetChar.name || ''
-        // Look for mentions near family words
-        const nameIdx = combined.toLowerCase().indexOf(targetName.toLowerCase())
-        if (nameIdx >= 0) {
-          const snippet = combined.slice(Math.max(0, nameIdx - 40), nameIdx + 60).toLowerCase()
-          const parsed = guessRelType(snippet)
-          if (parsed) type = parsed
+    const myId = 'ft_' + ch.id
+    ;(ch.relationships || []).forEach(rel => {
+      const tid = typeof rel === 'string' ? rel : rel.id
+      const hint = typeof rel === 'object' ? rel.type : null
+      const theirId = 'ft_' + tid
+      if (!seen.has(theirId)) return
+      const ek = [myId, theirId].sort().join('|')
+      if (ekeys.has(ek)) return
+      ekeys.add(ek)
+      let type = 'Unknown', from = myId, to = theirId
+      if (hint) {
+        type = hint
+      } else {
+        const tc = characters.find(c => c.id === tid)
+        const combined = (ch.traits||'') + ' ' + (ch.notes||'')
+        const tname = (tc?.display_name || tc?.name || '').toLowerCase()
+        let snippet = ''
+        if (tname) {
+          const idx = combined.toLowerCase().indexOf(tname)
+          if (idx >= 0) snippet = combined.slice(Math.max(0,idx-60), idx+100).toLowerCase()
+        }
+        const { type: g, iAmParent } = guessRelDir(snippet || combined.toLowerCase())
+        if (g) {
+          type = g
+          if (HIER.has(g) && iAmParent === false) { from = theirId; to = myId }
         }
       }
-
-      edges.push({ id: uid(), from: fromId, to: toId, type, label: '' })
+      edges.push({ id: uid(), from, to, type, label: '' })
     })
   })
-
   return { nodes, edges }
 }
 
@@ -420,7 +421,7 @@ export default function FamilyTree({ db }) {
 
         <button
           className="btn btn-sm btn-outline"
-          style={{ color: 'var(--cl)', borderColor: 'var(--cl)', marginLeft: 'auto' }}
+          style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }}
           onClick={autoPopulate}
           title="Reads all characters from the Characters tab and builds tree nodes from them"
         >
