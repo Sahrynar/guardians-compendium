@@ -9,6 +9,7 @@ const TOOLS = [
   { id: 'age',       label: 'Character Age at Event',  emoji: '🎂', color: 'var(--cc)'  },
   { id: 'units',     label: 'Unit Converter',          emoji: '📐', color: 'var(--cl)'  },
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",   emoji: '✦',  color: 'var(--cl)'  },
+  { id: 'backfill',  label: 'Backfill Birthdays',    emoji: '🎂', color: 'var(--cc)'  },
 ]
 
 function Row({ label, value }) {
@@ -386,6 +387,69 @@ export default function Tools({ db }) {
 
       {/* ── Ix'Citlatl Converter ── */}
       <IxCitlatlTool />
+
+      {/* ── Birthday Backfill ── */}
+      <div className="tool-card" id="tool-backfill">
+        <h3 style={{ color:'var(--cc)' }}>🎂 Backfill Birthday Timeline Entries</h3>
+        <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
+          Auto-creates a timeline entry for every character who has a Lajen birthday set,
+          but doesn't yet have a matching "Birthday: [Name]" event in the timeline.
+          Safe to run multiple times — won't create duplicates.
+        </div>
+        <BackfillTool db={db} />
+      </div>
+    </div>
+  )
+}
+
+function BackfillTool({ db }) {
+  const [result, setResult] = useState(null)
+
+  function run() {
+    const chars = db.db.characters || []
+    const timeline = db.db.timeline || []
+    let added = 0
+
+    chars.forEach(ch => {
+      if (!ch.birthday_lajen || ch.birthday_lajen === 'n/a (born in Mnaerah)' || ch.birthday_lajen === 'pending_math') return
+      const name = ch.display_name || ch.name
+      const existing = timeline.find(t => t.name === 'Birthday: ' + name)
+      if (existing) return
+
+      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7) + added
+
+      db.upsertEntry('timeline', {
+        id: uid(),
+        name: 'Birthday: ' + name,
+        date_hc: ch.birthday_lajen,
+        date_mnaerah: ch.birthday || '',
+        sort_order: '',
+        era: ch.books && ch.books.length ? ch.books[0] : '',
+        detail: 'Auto-created from character birthday.',
+        status: 'locked',
+        books: ch.books || [],
+        relationships: [],
+        created: new Date().toISOString(),
+      })
+      added++
+    })
+
+    setResult(added)
+  }
+
+  return (
+    <div>
+      <button className="btn btn-primary btn-sm" style={{ background:'var(--cc)' }} onClick={run}>
+        Run Backfill
+      </button>
+      {result !== null && (
+        <div style={{ marginTop:8, fontSize:11,
+          color: result > 0 ? 'var(--sl)' : 'var(--dim)' }}>
+          {result > 0
+            ? `✓ Created ${result} birthday event${result !== 1 ? 's' : ''}.`
+            : '✓ All birthdays already have timeline entries — nothing to add.'}
+        </div>
+      )}
     </div>
   )
 }

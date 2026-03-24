@@ -1,11 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
+-- Guardians Compendium — Supabase Schema
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+create table if not exists entries (
+  id text primary key,
+  category text not null,
+  data jsonb not null default '{}',
+  updated_at timestamptz default now()
+);
 
-// If no Supabase credentials, fall back to localStorage only
-export const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null
+create table if not exists settings (
+  key text primary key,
+  value jsonb
+);
 
-export const hasSupabase = !!supabase
+create index if not exists entries_category_idx on entries(category);
