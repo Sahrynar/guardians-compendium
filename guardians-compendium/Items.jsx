@@ -1,85 +1,126 @@
-import { CATS, SL } from '../constants'
+import { useState } from 'react'
+import Modal from '../components/common/Modal'
+import EntryForm from '../components/common/EntryForm'
+import { uid } from '../constants'
 
-export default function Dashboard({ db, goTo }) {
-  const { db: data } = db
-  let tot = 0, lk = 0, pv = 0, op = 0
-  const fl = (data.flags || []).length
+const LOC_FIELDS = [
+  { k: 'name',        l: 'Name',            t: 'text', r: true },
+  { k: 'loc_type',    l: 'Type',            t: 'sel', o: ['','World','Continent','Country','City/Town','Building','Room/Area','Landmark','Island','Body of Water','Portal','Other'] },
+  { k: 'parent_id',   l: 'Inside / Part of',t: 'locsel' },
+  { k: 'description', l: 'Description',     t: 'ta' },
+]
 
-  Object.keys(CATS).forEach(c => {
-    if (c === 'flags' || c === 'dashboard' || !data[c]) return
-    tot += data[c].length
-    data[c].forEach(e => {
-      if (e.status === 'locked') lk++
-      if (e.status === 'provisional') pv++
-      if (e.status === 'open') op++
+function locPath(id, locations) {
+  const parts = []
+  let cur = locations.find(l => l.id === id)
+  while (cur) { parts.unshift(cur.name); cur = cur.parent_id ? locations.find(l => l.id === cur.parent_id) : null }
+  return parts.join(' → ')
+}
+
+function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddChild }) {
+  const kids = locations.filter(l => l.parent_id === loc.id)
+  const isOpen = expanded.has(loc.id)
+  return (
+    <div style={{ marginBottom: 2 }}>
+      <div className="loc-node" onClick={() => onToggle(loc.id)}>
+        {kids.length > 0
+          ? <span style={{ fontSize: 9, color: 'var(--cl)', transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>►</span>
+          : <span style={{ width: 12 }} />
+        }
+        <span style={{ fontSize: 12, fontWeight: 600 }}>{loc.name}</span>
+        {loc.status && <span className={`badge badge-${loc.status}`} style={{ marginLeft: 4 }}>{loc.status}</span>}
+        <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 'auto' }}>{loc.loc_type || ''}</span>
+      </div>
+      {isOpen && (
+        <div style={{ padding: '6px 8px 6px 24px', fontSize: 11, color: 'var(--dim)' }}>
+          {loc.description && <div>{loc.description}</div>}
+          {loc.notes && <div className="entry-notes">{loc.notes}</div>}
+          <div className="entry-actions" style={{ marginTop: 4 }}>
+            <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={e => { e.stopPropagation(); onEdit(loc) }}>✎</button>
+            <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={e => { e.stopPropagation(); onAddChild(loc.id) }}>+ Child</button>
+            <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); onDelete(loc.id) }}>✕</button>
+          </div>
+        </div>
+      )}
+      {isOpen && kids.length > 0 && (
+        <div className="loc-children">
+          {kids.map(k => (
+            <LocNode key={k.id} loc={k} locations={locations} expanded={expanded} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Locations({ db }) {
+  const locations = db.db.locations || []
+  const [expanded, setExpanded] = useState(new Set())
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
+
+  function toggle(id) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
     })
-  })
+  }
 
-  const rainbow = ['#ff69b4','#ff3366','#ff4444','#ff6633','#ff8800','#ffaa00','#ffcc00','#aadd00','#44cc44','#00cc88','#00cccc','#2299dd','#3366ff','#5544ff','#7733ee','#9933cc','#bb33aa','#dd44aa']
+  function openAdd(parentId) {
+    setEditing(parentId ? { parent_id: parentId } : {})
+    setModalOpen(true)
+  }
+
+  function handleSave(entry) {
+    db.upsertEntry('locations', entry)
+    setModalOpen(false); setEditing(null)
+  }
+
+  function handleDelete(id) {
+    db.deleteEntry('locations', id)
+    // Orphan children
+    ;(db.db.locations || []).filter(l => l.parent_id === id).forEach(l => {
+      db.upsertEntry('locations', { ...l, parent_id: '' })
+    })
+    setConfirmId(null)
+  }
+
+  const roots = locations.filter(l => !l.parent_id)
 
   return (
     <div>
-      <div style={{ textAlign: 'center', padding: '16px 0 10px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17 }}>Worldbuilding Compendium</div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>The Guardians of Lajen</div>
-        {!db.hasSupabase && (
-          <div style={{ fontSize: 10, color: 'var(--sp)', marginTop: 4 }}>
-            ⚠ Running in local-only mode — add Supabase credentials for cloud sync
+      <div className="tbar">
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cl)' }}>🗺 Locations</div>
+        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cl)', color: '#000' }} onClick={() => openAdd()}>+ Add</button>
+      </div>
+
+      {!locations.length && (
+        <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>
+      )}
+
+      {roots.map(l => (
+        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />
+      ))}
+      {/* Orphans */}
+      {locations.filter(l => l.parent_id && !locations.find(p => p.id === l.parent_id)).map(l => (
+        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />
+      ))}
+
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color="var(--cl)">
+        <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--cl)" db={db} />
+      </Modal>
+
+      {confirmId && (
+        <div className="confirm-overlay open">
+          <div className="confirm-box">
+            <p>Delete <strong>{locations.find(l=>l.id===confirmId)?.name}</strong>?<br /><span style={{fontSize:10,color:'var(--mut)'}}>Children will be detached, not deleted.</span></p>
+            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
+            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(confirmId)}>Delete</button>
           </div>
-        )}
-      </div>
-
-      <div className="dash-grid">
-        <div className="dash-card">
-          <div className="dash-num" style={{ color: 'var(--cc)' }}>{tot}</div>
-          <div className="dash-label">Total Entries</div>
         </div>
-        <div className="dash-card">
-          <div className="dash-num" style={{ color: 'var(--sl)' }}>{lk}</div>
-          <div className="dash-label">Locked</div>
-        </div>
-        <div className="dash-card">
-          <div className="dash-num" style={{ color: 'var(--sp)' }}>{pv}</div>
-          <div className="dash-label">Provisional</div>
-        </div>
-        <div className="dash-card">
-          <div className="dash-num" style={{ color: 'var(--so)' }}>{op}</div>
-          <div className="dash-label">Open</div>
-        </div>
-        <div className="dash-card" onClick={() => goTo('flags')} style={{ cursor: 'pointer' }}>
-          <div className="dash-num" style={{ color: 'var(--cfl)' }}>{fl}</div>
-          <div className="dash-label">🚩 Flags</div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 12 }}>
-        <input
-          className="sx"
-          style={{ width: '100%' }}
-          placeholder="Search everything…"
-          onChange={e => {
-            // Global search — could expand to show results
-          }}
-        />
-      </div>
-
-      <div style={{ marginTop: 12 }}>
-        {Object.entries(CATS).filter(([k]) => k !== 'dashboard').map(([k, c], i) => {
-          const count = k === 'flags' ? fl : (data[k] || []).length
-          const rc = rainbow[i % rainbow.length]
-          return (
-            <div
-              key={k}
-              className="dash-card"
-              style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', padding: '6px 10px', borderLeft: `3px solid ${rc}`, marginBottom: 4 }}
-              onClick={() => goTo(k)}
-            >
-              <span style={{ fontSize: 11 }}>{c.i} {c.l}</span>
-              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: rc }}>{count}</span>
-            </div>
-          )
-        })}
-      </div>
+      )}
     </div>
   )
 }

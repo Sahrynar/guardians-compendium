@@ -1,237 +1,181 @@
-import { useState, useEffect } from 'react'
-import { BKS, STS, SL, uid } from '../../constants'
+import { useState } from 'react'
+import Modal from './Modal'
+import EntryForm from './EntryForm'
+import { SL, highlight } from '../../constants'
+import { uid } from '../../constants'
 
-export default function EntryForm({
-  fields, entry = {}, onSave, onCancel,
-  color = 'var(--cc)', label = 'Entry',
-  db
+export default function GenericListTab({
+  catKey, color, icon, label, fields, db,
+  renderDetail, extraActions
 }) {
-  const [form, setForm] = useState(() => {
-    const base = { status: '', books: [], notes: '', ...entry }
-    return base
+  const entries = db.db[catKey] || []
+  const [search, setSearch] = useState('')
+  const [fB, setFB] = useState('all')
+  const [fS, setFS] = useState('all')
+  const [expanded, setExpanded] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
+
+  const filtered = entries.filter(e => {
+    const matchSearch = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
+    const matchBook = fB === 'all' || (e.books || []).includes(fB)
+    const matchStatus = fS === 'all' || e.status === fS
+    return matchSearch && matchBook && matchStatus
   })
 
-  useEffect(() => {
-    setForm({ status: '', books: [], notes: '', ...entry })
-  }, [entry])
+  function openAdd() { setEditing({}); setModalOpen(true) }
+  function openEdit(e) { setEditing(e); setModalOpen(true) }
+  function closeModal() { setModalOpen(false); setEditing(null) }
 
-  function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
-
-  function toggleBook(b) {
-    setForm(prev => {
-      const books = prev.books || []
-      return { ...prev, books: books.includes(b) ? books.filter(x => x !== b) : [...books, b] }
-    })
+  function handleSave(entry) {
+    db.upsertEntry(catKey, entry)
+    closeModal()
+    setExpanded(entry.id)
   }
 
-  function handleSubmit(e) {
-    e.preventDefault()
-    const result = { ...form, id: form.id || uid(), updated: new Date().toISOString() }
-    if (!form.id) result.created = result.updated
-    onSave(result)
+  function handleDelete(id) {
+    db.deleteEntry(catKey, id)
+    setConfirmId(null)
+    if (expanded === id) setExpanded(null)
   }
 
-  function renderField(f) {
-    const val = form[f.k] || ''
-    switch (f.t) {
-      case 'ta':
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}{f.r ? ' *' : ''}</label>
-            <textarea
-              value={val}
-              placeholder={f.p || ''}
-              onChange={e => set(f.k, e.target.value)}
-            />
-          </div>
-        )
-      case 'sel':
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <select value={val} onChange={e => set(f.k, e.target.value)}>
-              {(f.o || []).map(o => <option key={o} value={o}>{o || '—'}</option>)}
-            </select>
-          </div>
-        )
-      case 'color':
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input
-                type="color"
-                value={val || '#888888'}
-                onChange={e => set(f.k, e.target.value)}
-                style={{ width: 40, height: 30, padding: 0, border: '1px solid var(--brd)', borderRadius: 4, background: 'var(--card)', cursor: 'pointer' }}
-              />
-              <input
-                type="text"
-                value={val}
-                placeholder="#hex or name"
-                style={{ flex: 1 }}
-                onChange={e => set(f.k, e.target.value)}
-              />
-            </div>
-          </div>
-        )
-      case 'charsel':
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <select value={val} onChange={e => set(f.k, e.target.value)}>
-              <option value="">—</option>
-              {(db?.db?.characters || []).map(ch => (
-                <option key={ch.id} value={ch.id}>{ch.name}</option>
-              ))}
-            </select>
-          </div>
-        )
-      case 'locsel':
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <select value={val} onChange={e => set(f.k, e.target.value)}>
-              <option value="">— None —</option>
-              {(db?.db?.locations || []).map(l => (
-                <option key={l.id} value={l.id}>{l.name}</option>
-              ))}
-            </select>
-          </div>
-        )
-      case 'charpick': {
-        const cur = (val || '').split(',').map(s => s.trim()).filter(Boolean)
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <input
-              type="text"
-              value={val}
-              placeholder="Click names below or type"
-              onChange={e => set(f.k, e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
-              {(db?.db?.characters || []).map(ch => {
-                const sel = cur.some(c => c.toLowerCase() === ch.name.toLowerCase())
-                return (
-                  <span
-                    key={ch.id}
-                    onClick={() => {
-                      const next = sel ? cur.filter(c => c.toLowerCase() !== ch.name.toLowerCase()) : [...cur, ch.name]
-                      set(f.k, next.join(', '))
-                    }}
-                    style={{
-                      padding: '2px 7px', borderRadius: 10, fontSize: 9, cursor: 'pointer',
-                      border: `1px solid ${sel ? 'var(--cc)' : 'var(--brd)'}`,
-                      color: sel ? 'var(--cc)' : 'var(--dim)',
-                      background: sel ? 'rgba(201,102,255,.1)' : 'transparent'
-                    }}
-                  >
-                    {ch.display_name || ch.name}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )
-      }
-      case 'itempick': {
-        const cur = (val || '').split(',').map(s => s.trim()).filter(Boolean)
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}</label>
-            <input
-              type="text"
-              value={val}
-              placeholder="Click items below or type"
-              onChange={e => set(f.k, e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
-              {(db?.db?.items || []).map(it => {
-                const sel = cur.some(c => c.toLowerCase() === it.name.toLowerCase())
-                return (
-                  <span
-                    key={it.id}
-                    onClick={() => {
-                      const next = sel ? cur.filter(c => c.toLowerCase() !== it.name.toLowerCase()) : [...cur, it.name]
-                      set(f.k, next.join(', '))
-                    }}
-                    style={{
-                      padding: '2px 7px', borderRadius: 10, fontSize: 9, cursor: 'pointer',
-                      border: `1px solid ${sel ? 'var(--ci)' : 'var(--brd)'}`,
-                      color: sel ? 'var(--ci)' : 'var(--dim)',
-                      background: sel ? 'rgba(255,112,64,.1)' : 'transparent'
-                    }}
-                  >
-                    {it.name}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )
-      }
-      default:
-        return (
-          <div className="field" key={f.k}>
-            <label>{f.l}{f.r ? ' *' : ''}</label>
-            <input
-              type="text"
-              value={val}
-              placeholder={f.p || ''}
-              required={f.r}
-              onChange={e => set(f.k, e.target.value)}
-            />
-          </div>
-        )
-    }
+  function badges(e) {
+    const parts = []
+    if (e.status) parts.push(
+      <span key="s" className={`badge badge-${e.status}`}>{SL[e.status]}</span>
+    )
+    ;(e.books || []).forEach(b => parts.push(
+      <span key={b} className="badge badge-book">{b}</span>
+    ))
+    if (e.flagged) parts.push(
+      <span key="f" className="badge badge-flag">🚩</span>
+    )
+    return parts
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {fields.map(renderField)}
+    <div>
+      {/* Toolbar */}
+      <div className="tbar">
+        <input
+          className="sx"
+          placeholder="Search…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ background: color }}
+          onClick={openAdd}
+        >+ Add</button>
+      </div>
 
-      {/* Status + Books */}
-      <div className="field-row">
-        <div className="field">
-          <label>Status</label>
-          <select value={form.status || ''} onChange={e => set('status', e.target.value)}>
-            <option value="">—</option>
-            {STS.map(s => <option key={s} value={s}>{SL[s]}</option>)}
-          </select>
+      {/* Filter pills */}
+      <div className="tbar" style={{ paddingTop: 0 }}>
+        <div className="filter-group">
+          {['all','locked','provisional','open','exploratory'].map(s => (
+            <button
+              key={s}
+              className={`fp ${fS === s ? 'active' : ''}`}
+              style={s !== 'all' ? { color: `var(--s${s[0]})` } : {}}
+              onClick={() => setFS(s)}
+            >
+              {s === 'all' ? 'All statuses' : SL[s]}
+            </button>
+          ))}
         </div>
-        <div className="field">
-          <label>Books</label>
-          <div className="check-group">
-            {BKS.map(b => (
-              <label key={b}>
-                <input
-                  type="checkbox"
-                  checked={(form.books || []).includes(b)}
-                  onChange={() => toggleBook(b)}
-                />
-                {b}
-              </label>
-            ))}
+      </div>
+
+      {/* List */}
+      <div className="cg">
+        {!filtered.length && (
+          <div className="empty">
+            <div className="empty-icon">{icon}</div>
+            <p>No {label.toLowerCase()} yet.</p>
+            <button className="btn btn-primary" style={{ background: color }} onClick={openAdd}>
+              + Add {label.slice(0,-1)}
+            </button>
+          </div>
+        )}
+        {filtered.map((e, i) => {
+          const isOpen = expanded === e.id
+          return (
+            <div
+              key={e.id}
+              className="entry-card"
+              style={{ '--card-color': color, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined }}
+              onClick={() => setExpanded(isOpen ? null : e.id)}
+            >
+              <div
+                className="entry-title"
+                dangerouslySetInnerHTML={{ __html: highlight(e.display_name || e.name || '', search) }}
+              />
+              <div className="entry-meta">{badges(e)}</div>
+
+              {isOpen && (
+                <>
+                  <div className="entry-detail">
+                    {renderDetail ? renderDetail(e) : (
+                      fields.filter(f => f.k !== 'name' && e[f.k]).map(f => (
+                        <div key={f.k} style={{ marginBottom: 3 }}>
+                          <strong style={{ color, fontSize: 9, textTransform: 'uppercase' }}>{f.l}: </strong>
+                          {String(e[f.k])}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {e.notes && <div className="entry-notes">{e.notes}</div>}
+                  <div className="entry-actions">
+                    <button
+                      className="btn btn-sm btn-outline"
+                      style={{ color, borderColor: color }}
+                      onClick={ev => { ev.stopPropagation(); openEdit(e) }}
+                    >✎ Edit</button>
+                    {extraActions && extraActions(e)}
+                    <button
+                      className="btn btn-sm btn-outline"
+                      style={{ color: '#ff3355', borderColor: '#ff335544' }}
+                      onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}
+                    >✕</button>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Add/Edit modal */}
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={`${editing?.id ? 'Edit' : 'Add'} ${label.slice(0,-1)}`}
+        color={color}
+      >
+        <EntryForm
+          fields={fields}
+          entry={editing || {}}
+          onSave={handleSave}
+          onCancel={closeModal}
+          color={color}
+          label={label}
+          db={db}
+        />
+      </Modal>
+
+      {/* Confirm delete */}
+      {confirmId && (
+        <div className="confirm-overlay open">
+          <div className="confirm-box">
+            <p>Delete <strong>{entries.find(e=>e.id===confirmId)?.name || 'this entry'}</strong>?<br/>
+              <span style={{ fontSize: 10, color: 'var(--mut)' }}>Cannot be undone.</span>
+            </p>
+            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
+            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(confirmId)}>Delete</button>
           </div>
         </div>
-      </div>
-
-      <div className="field">
-        <label>Notes</label>
-        <textarea value={form.notes || ''} onChange={e => set('notes', e.target.value)} />
-      </div>
-
-      <div className="modal-actions">
-        <button type="button" className="btn btn-outline" onClick={onCancel}>Cancel</button>
-        <button
-          type="submit"
-          className="btn btn-primary"
-          style={{ background: color }}
-        >
-          {form.id && entry.id ? 'Save' : 'Add'}
-        </button>
-      </div>
-    </form>
+      )}
+    </div>
   )
 }

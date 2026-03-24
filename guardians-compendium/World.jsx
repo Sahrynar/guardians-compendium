@@ -1,120 +1,120 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
+import Modal from '../components/common/Modal'
+import { uid } from '../constants'
 
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-const SCOPE = 'https://www.googleapis.com/auth/drive.file'
-const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000 // 24 hours
-const LS_LAST_BACKUP = 'gcomp_last_backup'
-const LS_GDRIVE_FOLDER = 'gcomp_gdrive_folder'
+export default function Flags({ db }) {
+  const flags = db.db.flags || []
+  const [filter, setFilter] = useState('active') // 'active' | 'resolved' | 'all'
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState({ name: '', priority: 'high', detail: '' })
+  const [confirmId, setConfirmId] = useState(null)
 
-export function useAutoBackup(db) {
-  const tokenRef = useRef(null)
-  const timerRef = useRef(null)
+  const filtered = flags.filter(f => {
+    if (filter === 'active') return !f.resolved
+    if (filter === 'resolved') return !!f.resolved
+    return true
+  }).sort((a, b) => {
+    const order = { urgent: 0, high: 1, medium: 2, low: 3 }
+    return (order[a.priority||'']||4) - (order[b.priority||'']||4)
+  })
 
-  const isConfigured = !!CLIENT_ID
+  const priCol = { urgent: '#ff3355', high: '#ff7040', medium: '#ffcc00', low: '#7acc7a' }
 
-  // Load GIS script
-  useEffect(() => {
-    if (!isConfigured) return
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    document.head.appendChild(script)
-    return () => { if (script.parentNode) script.parentNode.removeChild(script) }
-  }, [isConfigured])
+  function addFlag() {
+    if (!form.name.trim()) return
+    db.upsertEntry('flags', { id: uid(), ...form, resolved: false, created: new Date().toISOString() })
+    setForm({ name: '', priority: 'high', detail: '' })
+    setModalOpen(false)
+  }
 
-  const signIn = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      if (!window.google) { reject(new Error('Google API not loaded')); return }
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPE,
-        callback: (response) => {
-          if (response.error) reject(new Error(response.error))
-          else { tokenRef.current = response.access_token; resolve(response.access_token) }
-        }
-      })
-      client.requestAccessToken()
-    })
-  }, [])
+  function resolve(f) {
+    db.upsertEntry('flags', { ...f, resolved: true, resolved_at: new Date().toISOString() })
+  }
 
-  const getOrCreateFolder = useCallback(async (token) => {
-    const existing = localStorage.getItem(LS_GDRIVE_FOLDER)
-    if (existing) return existing
+  function reopen(f) {
+    db.upsertEntry('flags', { ...f, resolved: false, resolved_at: null })
+  }
 
-    // Check if folder exists
-    const search = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=name='Guardians Compendium Backups' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    const searchData = await search.json()
-    if (searchData.files && searchData.files.length > 0) {
-      const id = searchData.files[0].id
-      localStorage.setItem(LS_GDRIVE_FOLDER, id)
-      return id
-    }
+  return (
+    <div>
+      <div className="tbar">
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
+        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
+      </div>
 
-    // Create folder
-    const create = await fetch('https://www.googleapis.com/drive/v3/files', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Guardians Compendium Backups', mimeType: 'application/vnd.google-apps.folder' })
-    })
-    const createData = await create.json()
-    localStorage.setItem(LS_GDRIVE_FOLDER, createData.id)
-    return createData.id
-  }, [])
+      {/* Filter */}
+      <div className="tbar" style={{ paddingTop: 0 }}>
+        <div className="filter-group">
+          {[['active','Active'],['resolved','Resolved'],['all','All']].map(([k,l]) => (
+            <button key={k} className={`fp ${filter===k?'active':''}`} style={{ color: 'var(--cfl)' }} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+        </div>
+        <span style={{ fontSize: 10, color: 'var(--mut)', marginLeft: 8 }}>
+          {flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved
+        </span>
+      </div>
 
-  const doBackup = useCallback(async (dbData, silent = false) => {
-    if (!isConfigured) return { success: false, reason: 'not_configured' }
-    try {
-      let token = tokenRef.current
-      if (!token) {
-        if (silent) return { success: false, reason: 'no_token' }
-        token = await signIn()
-      }
+      {!filtered.length && (
+        <div className="empty">
+          <div className="empty-icon">🚩</div>
+          <p>{filter === 'resolved' ? 'No resolved flags.' : filter === 'active' ? 'No active flags!' : 'No flags.'}</p>
+        </div>
+      )}
 
-      const folderId = await getOrCreateFolder(token)
-      const filename = `guardians_backup_${new Date().toISOString().slice(0,10)}.json`
-      const content = JSON.stringify(dbData, null, 2)
+      {filtered.map(f => {
+        const pc = priCol[f.priority] || 'var(--dim)'
+        return (
+          <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
+                {f.name}
+              </div>
+              <span className="flag-pri" style={{ background: `${pc}22`, color: pc, border: `1px solid ${pc}44` }}>
+                {f.priority || 'none'}
+              </span>
+            </div>
+            {f.detail && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
+            {f.resolved && f.resolved_at && (
+              <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
+            )}
+            <div className="entry-actions" style={{ marginTop: 4 }}>
+              {!f.resolved
+                ? <button className="btn btn-sm btn-outline" style={{ color: 'var(--sl)', borderColor: 'var(--sl)' }} onClick={() => resolve(f)}>✓ Resolve</button>
+                : <button className="btn btn-sm btn-outline" style={{ color: 'var(--sp)', borderColor: 'var(--sp)' }} onClick={() => reopen(f)}>↩ Reopen</button>
+              }
+              <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(f.id)}>✕ Delete</button>
+            </div>
+          </div>
+        )
+      })}
 
-      const metadata = { name: filename, mimeType: 'application/json', parents: [folderId] }
-      const form = new FormData()
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
-      form.append('file', new Blob([content], { type: 'application/json' }))
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Flag" color="var(--cfl)">
+        <div className="field"><label>Description *</label>
+          <input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} placeholder="What needs attention?" />
+        </div>
+        <div className="field"><label>Priority</label>
+          <select value={form.priority} onChange={e => setForm(p => ({...p, priority: e.target.value}))}>
+            {['urgent','high','medium','low'].map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>Detail</label>
+          <textarea value={form.detail} onChange={e => setForm(p => ({...p, detail: e.target.value}))} placeholder="Optional detail…" />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-outline" onClick={() => setModalOpen(false)}>Cancel</button>
+          <button className="btn btn-primary" style={{ background: 'var(--cfl)', color: '#000' }} onClick={addFlag}>Add Flag</button>
+        </div>
+      </Modal>
 
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form
-      })
-
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
-      localStorage.setItem(LS_LAST_BACKUP, Date.now().toString())
-      return { success: true, filename }
-    } catch (err) {
-      console.error('Backup error:', err)
-      return { success: false, reason: err.message }
-    }
-  }, [isConfigured, signIn, getOrCreateFolder])
-
-  // Auto-backup timer
-  useEffect(() => {
-    if (!isConfigured) return
-    const checkAndBackup = () => {
-      const last = parseInt(localStorage.getItem(LS_LAST_BACKUP) || '0')
-      const now = Date.now()
-      if (now - last > BACKUP_INTERVAL_MS) {
-        doBackup(db, true) // silent — don't prompt sign-in automatically
-      }
-    }
-    timerRef.current = setInterval(checkAndBackup, 60 * 60 * 1000) // check every hour
-    checkAndBackup() // check on mount
-    return () => clearInterval(timerRef.current)
-  }, [db, doBackup, isConfigured])
-
-  const lastBackup = localStorage.getItem(LS_LAST_BACKUP)
-    ? new Date(parseInt(localStorage.getItem(LS_LAST_BACKUP))).toLocaleString()
-    : 'Never'
-
-  return { doBackup, signIn, lastBackup, isConfigured }
+      {confirmId && (
+        <div className="confirm-overlay open">
+          <div className="confirm-box">
+            <p>Permanently delete this flag?</p>
+            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
+            <button className="btn btn-danger btn-sm" onClick={() => { db.deleteEntry('flags', confirmId); setConfirmId(null) }}>Delete</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }

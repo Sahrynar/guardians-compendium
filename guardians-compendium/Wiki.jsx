@@ -1,126 +1,190 @@
 import { useState } from 'react'
 import Modal from '../components/common/Modal'
-import EntryForm from '../components/common/EntryForm'
-import { uid } from '../constants'
+import { MONTHS, WEEKDAYS, SEASON_TAG_COLORS, uid } from '../constants'
 
-const LOC_FIELDS = [
-  { k: 'name',        l: 'Name',            t: 'text', r: true },
-  { k: 'loc_type',    l: 'Type',            t: 'sel', o: ['','World','Continent','Country','City/Town','Building','Room/Area','Landmark','Island','Body of Water','Portal','Other'] },
-  { k: 'parent_id',   l: 'Inside / Part of',t: 'locsel' },
-  { k: 'description', l: 'Description',     t: 'ta' },
-]
+const MC = ['#00ffcc','#66cc99','#ff3366','#f4c430','#cc6622','#990000','#4477cc','#7799cc','#a9c0d3','#7fff00','#bb77cc','#9400d3']
 
-function locPath(id, locations) {
-  const parts = []
-  let cur = locations.find(l => l.id === id)
-  while (cur) { parts.unshift(cur.name); cur = cur.parent_id ? locations.find(l => l.id === cur.parent_id) : null }
-  return parts.join(' → ')
+function moonSVG(day) {
+  const r = 5
+  if (day === 1 || day === 30) return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="${r}" fill="#ccc"/></svg>`
+  if (day <= 8) {
+    const f = 1 - (day-1)/7
+    return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="${r}" fill="#333"/><circle cx="6" cy="6" r="${r}" fill="#aaa" clip-path="inset(0 ${f*10}px 0 0)"/></svg>`
+  }
+  if (day <= 15) return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="${r}" fill="#333"/></svg>`
+  if (day <= 22) {
+    const f = (day-15)/7
+    return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="${r}" fill="#333"/><circle cx="6" cy="6" r="${r}" fill="#aaa" clip-path="inset(0 0 0 ${(1-f)*10}px)"/></svg>`
+  }
+  return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="${r}" fill="#aaa"/></svg>`
 }
 
-function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddChild }) {
-  const kids = locations.filter(l => l.parent_id === loc.id)
-  const isOpen = expanded.has(loc.id)
-  return (
-    <div style={{ marginBottom: 2 }}>
-      <div className="loc-node" onClick={() => onToggle(loc.id)}>
-        {kids.length > 0
-          ? <span style={{ fontSize: 9, color: 'var(--cl)', transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>►</span>
-          : <span style={{ width: 12 }} />
-        }
-        <span style={{ fontSize: 12, fontWeight: 600 }}>{loc.name}</span>
-        {loc.status && <span className={`badge badge-${loc.status}`} style={{ marginLeft: 4 }}>{loc.status}</span>}
-        <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 'auto' }}>{loc.loc_type || ''}</span>
-      </div>
-      {isOpen && (
-        <div style={{ padding: '6px 8px 6px 24px', fontSize: 11, color: 'var(--dim)' }}>
-          {loc.description && <div>{loc.description}</div>}
-          {loc.notes && <div className="entry-notes">{loc.notes}</div>}
-          <div className="entry-actions" style={{ marginTop: 4 }}>
-            <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={e => { e.stopPropagation(); onEdit(loc) }}>✎</button>
-            <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={e => { e.stopPropagation(); onAddChild(loc.id) }}>+ Child</button>
-            <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); onDelete(loc.id) }}>✕</button>
-          </div>
-        </div>
-      )}
-      {isOpen && kids.length > 0 && (
-        <div className="loc-children">
-          {kids.map(k => (
-            <LocNode key={k.id} loc={k} locations={locations} expanded={expanded} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+export default function CalendarTab({ db }) {
+  const [expandedMonth, setExpandedMonth] = useState(null)
+  const [dayModal, setDayModal] = useState(null) // { mi, day }
+  const [dayText, setDayText] = useState('')
+  const [editingEntry, setEditingEntry] = useState(null)
 
-export default function Locations({ db }) {
-  const locations = db.db.locations || []
-  const [expanded, setExpanded] = useState(new Set())
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [confirmId, setConfirmId] = useState(null)
+  const calEntries = db.db.calendar_entries || []
+  const timelineEvents = db.db.timeline || []
+  const chars = db.db.characters || []
 
-  function toggle(id) {
-    setExpanded(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
-      return next
-    })
+  function getEntriesForDay(mi, day) {
+    return calEntries.filter(e => e.month_idx === mi && e.day === day)
   }
 
-  function openAdd(parentId) {
-    setEditing(parentId ? { parent_id: parentId } : {})
-    setModalOpen(true)
+  // Auto-pull birthday events from characters
+  function getCharBirthdays(monthName) {
+    return chars.filter(c => c.birthday_lajen && c.birthday_lajen.toLowerCase().includes(monthName.toLowerCase()))
   }
 
-  function handleSave(entry) {
-    db.upsertEntry('locations', entry)
-    setModalOpen(false); setEditing(null)
+  // Auto-pull timeline events that mention this month
+  function getTimelineForMonth(monthName) {
+    return timelineEvents.filter(e => (e.date_hc||'').toLowerCase().includes(monthName.toLowerCase()))
   }
 
-  function handleDelete(id) {
-    db.deleteEntry('locations', id)
-    // Orphan children
-    ;(db.db.locations || []).filter(l => l.parent_id === id).forEach(l => {
-      db.upsertEntry('locations', { ...l, parent_id: '' })
-    })
-    setConfirmId(null)
+  function openDayModal(mi, day) {
+    setDayModal({ mi, day })
+    setDayText('')
+    setEditingEntry(null)
   }
 
-  const roots = locations.filter(l => !l.parent_id)
+  function saveEntry() {
+    if (!dayText.trim() || !dayModal) return
+    if (editingEntry) {
+      db.upsertEntry('calendar_entries', { ...editingEntry, text: dayText })
+    } else {
+      db.upsertEntry('calendar_entries', {
+        id: uid(), month_idx: dayModal.mi, day: dayModal.day,
+        text: dayText, created: new Date().toISOString()
+      })
+    }
+    setDayModal(null); setDayText(''); setEditingEntry(null)
+  }
+
+  function deleteEntry(id) {
+    db.deleteEntry('calendar_entries', id)
+  }
 
   return (
     <div>
-      <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cl)' }}>🗺 Locations</div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cl)', color: '#000' }} onClick={() => openAdd()}>+ Add</button>
+      <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cca)' }}>🌙 The Lajen Calendar</div>
+        <div style={{ fontSize: 10, color: 'var(--mut)' }}>12 months × 30 days · 5-day week · 4 seasons × 90 days</div>
       </div>
 
-      {!locations.length && (
-        <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>
-      )}
+      <div className="cal-grid">
+        {MONTHS.map((m, mi) => {
+          const mc = MC[mi]
+          const stc = SEASON_TAG_COLORS[m.ssn] || '#888'
+          const isExp = expandedMonth === mi
+          const birthdays = getCharBirthdays(m.n)
+          const events = getTimelineForMonth(m.n)
+          const dayEntries = calEntries.filter(e => e.month_idx === mi)
 
-      {roots.map(l => (
-        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />
-      ))}
-      {/* Orphans */}
-      {locations.filter(l => l.parent_id && !locations.find(p => p.id === l.parent_id)).map(l => (
-        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />
-      ))}
+          return (
+            <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}` }} onClick={() => setExpandedMonth(isExp ? null : mi)}>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
+              <div style={{ fontSize: 9, color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
+              <div style={{ fontSize: 9, padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
+              <div style={{ fontSize: 8, color: 'var(--mut)' }}>{m.eq}</div>
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color="var(--cl)">
-        <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--cl)" db={db} />
+              {/* Birthdays and events preview */}
+              {birthdays.map(c => (
+                <div key={c.id} style={{ borderLeft: '2px solid var(--cc)', fontSize: 9, paddingLeft: 4, marginTop: 2 }}>🎂 {c.name}</div>
+              ))}
+              {events.map(e => (
+                <div key={e.id} style={{ borderLeft: '2px solid var(--ct)', fontSize: 9, paddingLeft: 4, marginTop: 2 }}>⏳ {e.name}</div>
+              ))}
+              {dayEntries.length > 0 && (
+                <div style={{ fontSize: 8, color: 'var(--cc)', marginTop: 2 }}>📝 {dayEntries.length} note{dayEntries.length > 1 ? 's' : ''}</div>
+              )}
+
+              {!birthdays.length && !events.length && !dayEntries.length && !isExp && (
+                <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>
+              )}
+
+              {/* Expanded day grid */}
+              {isExp && (
+                <div style={{ marginTop: 6, borderTop: '1px solid var(--brd)', paddingTop: 6 }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 1, marginBottom: 4 }}>
+                    {WEEKDAYS.map(d => (
+                      <div key={d} style={{ fontSize: 7, color: 'var(--mut)', textAlign: 'center' }}>{d.slice(0,3)}</div>
+                    ))}
+                  </div>
+                  <div className="day-grid">
+                    {Array.from({ length: 30 }, (_, di) => {
+                      const day = di + 1
+                      const stored = getEntriesForDay(mi, day)
+                      const hasEntry = stored.length > 0
+                      return (
+                        <div
+                          key={day}
+                          className={`day-cell${hasEntry ? ' has-entry' : ''}`}
+                          title={`Day ${day} (${WEEKDAYS[di%5]}) — click to add note`}
+                          onClick={() => openDayModal(mi, day)}
+                        >
+                          <div style={{ fontWeight: 600, fontSize: 10 }}>{day}</div>
+                          <div dangerouslySetInnerHTML={{ __html: moonSVG(day) }} />
+                          {hasEntry && (
+                            <div style={{ fontSize: 7, color: 'var(--cc)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {stored[0].text.slice(0, 8)}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Day modal */}
+      <Modal
+        open={!!dayModal}
+        onClose={() => { setDayModal(null); setDayText(''); setEditingEntry(null) }}
+        title={dayModal ? `${MONTHS[dayModal.mi]?.n}, Day ${dayModal.day}` : ''}
+        color="var(--cca)"
+      >
+        {dayModal && (
+          <>
+            {/* Existing entries */}
+            {getEntriesForDay(dayModal.mi, dayModal.day).map(e => (
+              <div key={e.id} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderLeft: '2px solid var(--cc)', borderRadius: 4, padding: '6px 8px', marginBottom: 4, fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{e.text}</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button
+                    style={{ background: 'none', border: 'none', color: 'var(--cc)', cursor: 'pointer', fontSize: 11 }}
+                    onClick={() => { setEditingEntry(e); setDayText(e.text) }}
+                  >✎</button>
+                  <button
+                    style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', fontSize: 11 }}
+                    onClick={() => deleteEntry(e.id)}
+                  >✕</button>
+                </div>
+              </div>
+            ))}
+
+            <div className="field">
+              <label>{editingEntry ? 'Edit Note' : 'Add Note'}</label>
+              <textarea
+                value={dayText}
+                placeholder={`e.g. Thomas's birthday (Day 30 of Rhamilune)`}
+                onChange={e => setDayText(e.target.value)}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-outline" onClick={() => { setDayModal(null); setDayText(''); setEditingEntry(null) }}>Cancel</button>
+              <button className="btn btn-primary" style={{ background: 'var(--cca)' }} onClick={saveEntry}>
+                {editingEntry ? 'Update' : 'Save'}
+              </button>
+            </div>
+          </>
+        )}
       </Modal>
-
-      {confirmId && (
-        <div className="confirm-overlay open">
-          <div className="confirm-box">
-            <p>Delete <strong>{locations.find(l=>l.id===confirmId)?.name}</strong>?<br /><span style={{fontSize:10,color:'var(--mut)'}}>Children will be detached, not deleted.</span></p>
-            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
-            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(confirmId)}>Delete</button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
