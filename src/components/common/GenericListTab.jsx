@@ -17,12 +17,21 @@ export default function GenericListTab({
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
 
-  const filtered = entries.filter(e => {
-    const matchSearch = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
-    const matchBook = fB === 'all' || (e.books || []).includes(fB)
-    const matchStatus = fS === 'all' || e.status === fS
-    return matchSearch && matchBook && matchStatus
-  })
+  const [sortMode, setSortMode] = useState('alpha')
+
+  const filtered = entries
+    .filter(e => {
+      const matchSearch = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
+      const matchBook = fB === 'all' || (e.books || []).includes(fB)
+      const matchStatus = fS === 'all' || e.status === fS
+      return matchSearch && matchBook && matchStatus
+    })
+    .sort((a, b) => {
+      if (sortMode === 'alpha') return (a.display_name || a.name || '').localeCompare(b.display_name || b.name || '')
+      if (sortMode === 'newest') return new Date(b.created || 0) - new Date(a.created || 0)
+      if (sortMode === 'oldest') return new Date(a.created || 0) - new Date(b.created || 0)
+      return 0
+    })
 
   function openAdd() { setEditing({}); setModalOpen(true) }
   function openEdit(e) { setEditing(e); setModalOpen(true) }
@@ -64,6 +73,16 @@ export default function GenericListTab({
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
+        <select
+          value={sortMode}
+          onChange={e => setSortMode(e.target.value)}
+          style={{ fontSize: 10, padding: '4px 8px', borderRadius: 'var(--r)', border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }}
+          title="Sort order"
+        >
+          <option value="alpha">A → Z</option>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
         <button
           className="btn btn-primary btn-sm"
           style={{ background: color }}

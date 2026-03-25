@@ -341,8 +341,11 @@ export default function FamilyTree({ db }) {
   const [zoom,     setZoom]     = useState(1)
   const [pan,      setPan]      = useState({ x: 0, y: 0 })
   const [panning,  setPanning]  = useState(false)
-  const panRef = useRef(null)
-  const bgRef  = useRef()
+  const [syncToast,    setSyncToast]    = useState(null)
+  const [deleteConfirm,setDeleteConfirm]= useState(null)
+  const panRef  = useRef(null)
+  const bgRef   = useRef()
+  const pinchRef = useRef(null)
 
   const [customEdgeTypes,  setCustomEdgeTypes]  = useState(() => Array.isArray(raw.custom_edge_types)  ? raw.custom_edge_types  : (Array.isArray(db.db.custom_edge_types)  ? db.db.custom_edge_types  : []))
   const [customNodeTypes,  setCustomNodeTypes]  = useState(() => Array.isArray(raw.custom_node_types)  ? raw.custom_node_types  : (Array.isArray(db.db.custom_node_types)  ? db.db.custom_node_types  : []))
@@ -398,8 +401,13 @@ export default function FamilyTree({ db }) {
     setNodes(nn); persist(nn, null, null, undefined); setNodeModal(null)
   }
   function deleteNode(id) {
+    const node = nodes.find(n => n.id === id)
+    setDeleteConfirm({ id, name: node?.name || 'this person' })
+  }
+  function confirmDeleteNode() {
+    const { id } = deleteConfirm
     const nn = nodes.filter(n => n.id !== id), ne = edges.filter(e => e.from !== id && e.to !== id)
-    setNodes(nn); setEdges(ne); persist(nn, ne, null, undefined); setSel(null)
+    setNodes(nn); setEdges(ne); persist(nn, ne, null, undefined); setSel(null); setDeleteConfirm(null)
   }
   function handleDrag(id, x, y) {
     setNodePos(p => ({ ...p, [id]: { x, y } }))
@@ -440,8 +448,13 @@ export default function FamilyTree({ db }) {
   function syncChars() {
     const chars = db.db.characters || []
     if (!chars.length) { alert('No characters found.'); return }
+    const prevCount = nodes.length
     const { nodes: nn, edges: ne } = mergeFromChars(chars, nodes, edges)
+    const added = nn.length - prevCount
     setNodes(nn); setEdges(ne); persist(nn, ne, null, undefined)
+    const msg = added > 0 ? `✓ Added ${added} node${added !== 1 ? 's' : ''}` : '✓ All characters already in tree'
+    setSyncToast(msg)
+    setTimeout(() => setSyncToast(null), 3000)
   }
 
   // ── Zoom / Pan ───────────────────────────────────────────────
@@ -453,6 +466,39 @@ export default function FamilyTree({ db }) {
   }
   function onBgMove(e) { if (panning && panRef.current) setPan({ x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y }) }
   function onBgUp() { setPanning(false); panRef.current = null }
+
+  // Pinch-to-zoom
+  function onTouchStartCanvas(e) {
+    const isNode = e.target.closest && e.target.closest('[data-tree-node]')
+    if (e.touches.length === 2) {
+      // pinch — record initial distance
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      pinchRef.current = { dist: Math.sqrt(dx*dx + dy*dy), zoom }
+      setPanning(false)
+    } else if (e.touches.length === 1 && !isNode) {
+      setPanning(true)
+      panRef.current = { x: e.touches[0].clientX - pan.x, y: e.touches[0].clientY - pan.y }
+    }
+  }
+  function onTouchMoveCanvas(e) {
+    if (e.touches.length === 2 && pinchRef.current) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx*dx + dy*dy)
+      const scale = dist / pinchRef.current.dist
+      setZoom(Math.max(0.25, Math.min(3, pinchRef.current.zoom * scale)))
+    } else if (e.touches.length === 1 && panning && panRef.current) {
+      e.preventDefault()
+      setPan({ x: e.touches[0].clientX - panRef.current.x, y: e.touches[0].clientY - panRef.current.y })
+    }
+  }
+  function onTouchEndCanvas() {
+    setPanning(false)
+    panRef.current = null
+    pinchRef.current = null
+  }
 
   function clearTree() { setNodes([]); setEdges([]); setNodePos({}); persist([], [], null, null); setClearDlg(false); setSel(null) }
 
@@ -534,13 +580,19 @@ export default function FamilyTree({ db }) {
       {nodes.length > 0 && (
         <div style={{ overflow:'hidden', maxHeight:'72vh', minHeight:300, border:'1px solid var(--brd)', borderRadius:'var(--rl)', background: bgImage ? `url(${bgImage}) center/cover` : bgColor, position:'relative', cursor: panning ? 'grabbing' : 'default' }}
           onWheel={onWheel} onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
-          onTouchStart={e => {
-            // Only pan if touch starts on canvas bg, not on a node card
-            const isNode = e.target.closest && e.target.closest('[data-tree-node]')
-            if(e.touches.length===1 && !isNode){ setPanning(true); panRef.current={x:e.touches[0].clientX-pan.x,y:e.touches[0].clientY-pan.y} }
-          }}
-          onTouchMove={e => { if(panning && panRef.current && e.touches.length===1){ e.preventDefault(); setPan({x:e.touches[0].clientX-panRef.current.x,y:e.touches[0].clientY-panRef.current.y}) }}}
-          onTouchEnd={() => { setPanning(false); panRef.current=null }}>
+          onTouchStart={onTouchStartCanvas}
+          onTouchMove={onTouchMoveCanvas}
+          onTouchEnd={onTouchEndCanvas}>
+
+          {/* Sync toast */}
+          {syncToast && (
+            <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', zIndex:50,
+              background:'rgba(0,0,0,.85)', border:'1px solid var(--sl)', borderRadius:6,
+              padding:'5px 14px', fontSize:11, color:'var(--sl)', whiteSpace:'nowrap', pointerEvents:'none' }}>
+              {syncToast}
+            </div>
+          )}
+
           <div style={{ transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`, transformOrigin:'0 0', position:'relative', width:maxX, height:maxY }}>
             <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible' }}>
               <defs>
@@ -621,6 +673,21 @@ export default function FamilyTree({ db }) {
           <button className="btn btn-outline" onClick={() => setClearDlg(false)}>Cancel</button>
           <button className="btn btn-primary" style={{ background:'#ff3355' }} onClick={clearTree}>Clear Tree</button>
         </div>
+      </Modal>
+
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Person" color="#ff3355">
+        {deleteConfirm && (
+          <>
+            <p style={{ fontSize:12, color:'var(--dim)', marginBottom:16 }}>
+              Remove <strong style={{ color:'var(--tx)' }}>{deleteConfirm.name}</strong> from the tree?
+              All their relationships will also be removed. This cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-outline" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{ background:'#ff3355' }} onClick={confirmDeleteNode}>Delete</button>
+            </div>
+          </>
+        )}
       </Modal>
     </div>
   )

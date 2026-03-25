@@ -68,6 +68,7 @@ export const CATS = {
   map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
   wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
   notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
+  journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
   familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
   flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
 }

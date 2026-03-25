@@ -72,6 +72,7 @@ export default function IOBar({ db, backup }) {
   const importRef = useRef()
   const asterRef = useRef()
   const [msg, setMsg] = useState('')
+  const [asterModal, setAsterModal] = useState(null) // holds the pending File object
 
   function flash(text, ms = 2500) {
     setMsg(text)
@@ -123,13 +124,48 @@ export default function IOBar({ db, backup }) {
   async function handleAster(e) {
     const file = e.target.files[0]
     if (!file) return
+    // Show merge/overwrite choice modal
+    setAsterModal(file)
+    e.target.value = ''
+  }
+
+  async function doAsterImport(mode) {
+    const file = asterModal
+    setAsterModal(null)
+    if (!file) return
     try {
-      const count = await db.importAster(file)
-      flash(`✓ Imported ${count} entries from Aster`)
+      if (mode === 'overwrite') {
+        const count = await db.importAster(file)
+        flash(`✓ Replaced with ${count} entries from Aster`)
+      } else {
+        // merge: read file, use same mergeImport logic
+        const text = await file.text()
+        const incoming = JSON.parse(text)
+        const merged = mergeImport(db.db, incoming)
+        let added = 0
+        Object.keys(merged).forEach(k => {
+          const exLen = (db.db[k] || []).length
+          const newLen = (merged[k] || []).length
+          added += Math.max(0, newLen - exLen)
+        })
+        const upsertPromises = []
+        Object.keys(merged).forEach(k => {
+          const arr = merged[k]
+          if (!Array.isArray(arr)) return
+          if (k === 'family_tree') {
+            if (arr[0]) upsertPromises.push(db.upsertEntry('family_tree', arr[0]))
+            return
+          }
+          arr.forEach(entry => {
+            if (entry?.id) upsertPromises.push(db.upsertEntry(k, entry))
+          })
+        })
+        await Promise.all(upsertPromises)
+        flash(`✓ Aster merged: ${added} new entries added`)
+      }
     } catch (err) {
       flash(`✗ Aster import failed: ${err.message}`)
     }
-    e.target.value = ''
   }
 
   async function handleBackup() {
@@ -141,51 +177,81 @@ export default function IOBar({ db, backup }) {
   }
 
   return (
-    <div className="iobar">
-      {msg && (
-        <span style={{ fontSize: 10, color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
+    <>
+      {/* ── Aster import mode modal ── */}
+      {asterModal && (
+        <div style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,.8)',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+          <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:12,
+            padding:20, maxWidth:340, width:'100%', textAlign:'center' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, marginBottom:8, color:'var(--cca)' }}>
+              ⬆ Aster Import
+            </div>
+            <p style={{ fontSize:11, color:'var(--dim)', marginBottom:16, lineHeight:1.5 }}>
+              <strong style={{ color:'var(--tx)' }}>{asterModal.name}</strong><br/>
+              How do you want to import this?
+            </p>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
+              <button className="btn btn-primary btn-sm" style={{ background:'var(--cl)', color:'#000', padding:'8px 14px', fontSize:11 }}
+                onClick={() => doAsterImport('merge')}>
+                Merge — add new entries, keep existing
+              </button>
+              <button className="btn btn-outline btn-sm" style={{ color:'var(--ccn)', borderColor:'var(--ccn)44', padding:'8px 14px', fontSize:11 }}
+                onClick={() => doAsterImport('overwrite')}>
+                Replace — overwrite with Aster data
+              </button>
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={() => setAsterModal(null)}>Cancel</button>
+          </div>
+        </div>
       )}
 
-      <button className="btn btn-sm btn-outline" onClick={db.exportJSON}>⬇ Export</button>
+      <div className="iobar">
+        {msg && (
+          <span style={{ fontSize: 10, color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
+        )}
 
-      <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}
-        title="Merges with existing data — new entries added, existing entries preserved">
-        ⬆ Import (merge)
-        <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
-      </label>
+        <button className="btn btn-sm btn-outline" onClick={db.exportJSON}>⬇ Export</button>
 
-      <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}>
-        ⬆ Aster Import
-        <input ref={asterRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleAster} />
-      </label>
+        <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}
+          title="Merges with existing data — new entries added, existing entries preserved">
+          ⬆ Import (merge)
+          <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+        </label>
 
-      <button className="btn btn-sm btn-outline" onClick={db.exportAster}>⬇ Aster Export</button>
+        <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}>
+          ⬆ Aster Import
+          <input ref={asterRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleAster} />
+        </label>
 
-      <button className="btn btn-sm btn-outline" onClick={db.exportCSV || (() => {})}>📋 CSV</button>
+        <button className="btn btn-sm btn-outline" onClick={db.exportAster}>⬇ Aster Export</button>
 
-      {backup?.isConfigured && (
-        <button className="btn btn-sm btn-outline" onClick={handleBackup}
-          title={`Last backup: ${backup.lastBackup || 'never'}`}>
-          ☁ Backup
+        <button className="btn btn-sm btn-outline" onClick={db.exportCSV || (() => {})}>📋 CSV</button>
+
+        {backup?.isConfigured && (
+          <button className="btn btn-sm btn-outline" onClick={handleBackup}
+            title={`Last backup: ${backup.lastBackup || 'never'}`}>
+            ☁ Backup
+          </button>
+        )}
+
+        <button
+          className="btn btn-sm btn-outline"
+          style={{ color: '#ff3355', borderColor: '#ff335544' }}
+          onClick={() => {
+            if (confirm('Clear all data? This cannot be undone.')) {
+              // selective clear modal — pending
+            }
+          }}
+        >
+          🗑 Clear
         </button>
-      )}
 
-      <button
-        className="btn btn-sm btn-outline"
-        style={{ color: '#ff3355', borderColor: '#ff335544' }}
-        onClick={() => {
-          if (confirm('Clear all data? This cannot be undone.')) {
-            // selective clear modal — pending
-          }
-        }}
-      >
-        🗑 Clear
-      </button>
-
-      <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 4 }}>
-        <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
-        {db.hasSupabase ? 'Cloud sync on' : 'Local only'}
-      </span>
-    </div>
+        <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 4 }}>
+          <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
+          {db.hasSupabase ? 'Cloud sync on' : 'Local only'}
+        </span>
+      </div>
+    </>
   )
 }
