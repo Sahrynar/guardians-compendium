@@ -282,6 +282,50 @@ export default function Characters({ db }) {
                     )}
 
                     {(() => {
+                      const myItems = (db.db.items||[]).filter(it =>
+                        it.holder === e.id ||
+                        (it.shared_with === e.id) ||
+                        (it.holder && typeof it.holder === 'string' &&
+                          it.holder.toLowerCase() === (e.name||'').toLowerCase())
+                      )
+                      if (!myItems.length) return null
+                      return (
+                        <div style={{ marginTop: 8 }} onClick={ev => ev.stopPropagation()}>
+                          <div style={{ fontSize: 10, color: 'var(--ci)', fontWeight: 700,
+                            marginBottom: 6 }}>⚔ Items & Weapons</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {myItems.map(it => (
+                              <div key={it.id} style={{ background: 'var(--card)',
+                                border: '1px solid var(--brd)', borderRadius: 7,
+                                padding: 6, minWidth: 80, maxWidth: 120,
+                                cursor: 'pointer', position: 'relative' }}
+                                title={it.name}
+                                onClick={ev => { ev.stopPropagation() }}>
+                                {it.image && (
+                                  <img src={it.image} alt={it.name}
+                                    style={{ width: '100%', height: 50, objectFit: 'cover',
+                                      borderRadius: 4, marginBottom: 3, display: 'block' }}
+                                    onError={e => e.target.style.display='none'} />
+                                )}
+                                {(it.transfers||[]).length > 0 && (
+                                  <span style={{ position: 'absolute', top: 3, right: 3,
+                                    fontSize: 8, color: 'var(--sp)', background: 'rgba(0,0,0,.5)',
+                                    padding: '1px 3px', borderRadius: 3 }}>↔</span>
+                                )}
+                                <div style={{ fontSize: 9, fontWeight: 600,
+                                  color: 'var(--tx)', lineHeight: 1.2 }}>{it.name}</div>
+                                {it.item_type && (
+                                  <div style={{ fontSize: 8, color: 'var(--ci)',
+                                    textTransform: 'uppercase' }}>{it.item_type}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {(() => {
                       const myWR = (db.db.wardrobe||[]).filter(w => w.character === e.id)
                       if (!myWR.length) return null
                       return (

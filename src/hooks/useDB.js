@@ -251,10 +251,28 @@ export function useDB() {
     a.click()
   }, [db])
 
+  const exportCSV = useCallback(() => {
+    let csv = 'Category,Name,Status,Books,Notes\n'
+    Object.keys(db).forEach(cat => {
+      ;(db[cat] || []).forEach(e => {
+        csv += [cat, e.name||'', e.status||'',
+          (e.books||[]).join(';'),
+          (e.notes||'').replace(/"/g,'""')]
+          .map(v => `"${v}"`).join(',') + '\n'
+      })
+    })
+    const blob = new Blob([csv], { type:'text/csv' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `guardians_${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }, [db])
+
   return {
     db, settings, loading, syncStatus,
     upsertEntry, deleteEntry, save, saveSetting,
-    exportJSON, importJSON, importAster, exportAster,
+    exportJSON, importJSON, importAster, exportAster, exportCSV,
     hasSupabase, CATEGORIES
   }
 }

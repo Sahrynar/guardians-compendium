@@ -11,6 +11,7 @@ const TOOLS = [
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
   { id: 'pronun',    label: 'Pronunciation Helper',   emoji: '🔊', color: 'var(--cwr)' },
   { id: 'backfill',  label: 'Birthday Backfill',      emoji: '🗓', color: 'var(--cfl)' },
+  { id: 'images',    label: 'Image Library',           emoji: '🖼', color: 'var(--cwr)' },
 ]
 
 function Row({ label, value }) {
@@ -538,6 +539,47 @@ export default function Tools({ db }) {
   const [tuFrom, setTuFrom] = useState('days')
 
   const events = db.db.timeline || []
+  const [imgLightbox, setImgLightbox] = useState(null)
+  const [imgSearch, setImgSearch] = useState('')
+  const [imgFilterCat, setImgFilterCat] = useState('all')
+  const [imgSort, setImgSort] = useState('name')
+
+  const IMG_CATS = [
+    { key:'items',      label:'Items',      field:'image' },
+    { key:'characters', label:'Characters', field:'reference_image' },
+    { key:'locations',  label:'Locations',  field:'image' },
+    { key:'wardrobe',   label:'Wardrobe',   field:'image' },
+  ]
+
+  const allImages = useMemo(() => {
+    const imgs = []
+    IMG_CATS.forEach(({ key, label, field }) => {
+      ;(db.db[key] || []).forEach(entry => {
+        const url = entry[field] || (field === 'reference_image' ? entry.portrait_canvas : null)
+        if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+          imgs.push({
+            url, cat: key, catLabel: label,
+            name: entry.display_name || entry.name || entry.id,
+            entryId: entry.id,
+            entry,
+          })
+        }
+      })
+    })
+    return imgs
+  }, [db.db])
+
+  const filteredImages = useMemo(() => {
+    return allImages
+      .filter(img => {
+        const mc = imgFilterCat === 'all' || img.cat === imgFilterCat
+        const ms = !imgSearch || img.name.toLowerCase().includes(imgSearch.toLowerCase())
+        return mc && ms
+      })
+      .sort((a,b) => imgSort === 'cat'
+        ? a.catLabel.localeCompare(b.catLabel) || a.name.localeCompare(b.name)
+        : a.name.localeCompare(b.name))
+  }, [allImages, imgFilterCat, imgSearch, imgSort])
   const chars = db.db.characters || []
 
   const l2m = useCallback(() => {
@@ -807,11 +849,74 @@ export default function Tools({ db }) {
 
       </div>{/* end two-column grid */}
 
+      {/* ── Image Library ── */}
+      <div className="tool-card" id="tool-images" style={{ marginTop:10 }}>
+        <h3 style={{ color:'var(--cwr)' }}>🖼 Image Library</h3>
+        <p style={{ fontSize:11, color:'var(--dim)', marginBottom:12, lineHeight:1.5 }}>
+          All images uploaded across the Compendium. Click to expand. Images are shared — upload once, use anywhere.
+        </p>
+
+        {/* Controls */}
+        <div style={{ display:'flex', gap:8, marginBottom:10, flexWrap:'wrap' }}>
+          <input className="sx" style={{ flex:1, minWidth:120, fontSize:11 }}
+            placeholder="Search by name…" value={imgSearch}
+            onChange={e => setImgSearch(e.target.value)} />
+          <select value={imgFilterCat} onChange={e => setImgFilterCat(e.target.value)}
+            style={{ fontSize:10, padding:'4px 8px', background:'var(--sf)',
+              border:'1px solid var(--brd)', borderRadius:6, color:'var(--dim)' }}>
+            <option value="all">All categories</option>
+            {IMG_CATS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+          <select value={imgSort} onChange={e => setImgSort(e.target.value)}
+            style={{ fontSize:10, padding:'4px 8px', background:'var(--sf)',
+              border:'1px solid var(--brd)', borderRadius:6, color:'var(--dim)' }}>
+            <option value="name">Sort: A → Z</option>
+            <option value="cat">Sort: By category</option>
+          </select>
+        </div>
+
+        <div style={{ fontSize:10, color:'var(--mut)', marginBottom:8 }}>
+          {filteredImages.length} of {allImages.length} image{allImages.length!==1?'s':''}
+        </div>
+
+        {allImages.length === 0 && (
+          <div style={{ textAlign:'center', padding:'20px 0', color:'var(--mut)', fontSize:11 }}>
+            No images uploaded yet. Add images to items, characters, or locations.
+          </div>
+        )}
+
+        <div style={{ display:'grid',
+          gridTemplateColumns:'repeat(auto-fill, minmax(120px, 1fr))', gap:8 }}>
+          {filteredImages.map((img, i) => (
+            <div key={`${img.entryId}-${i}`}
+              style={{ background:'var(--card)', border:'1px solid var(--brd)',
+                borderRadius:8, overflow:'hidden', cursor:'pointer' }}
+              onClick={() => setImgLightbox(img.url)}>
+              <img src={img.url} alt={img.name}
+                style={{ width:'100%', height:80, objectFit:'cover', display:'block' }}
+                onError={e => e.target.style.display='none'} />
+              <div style={{ padding:'5px 7px' }}>
+                <div style={{ fontSize:10, fontWeight:600, color:'var(--tx)',
+                  whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  {img.name}
+                </div>
+                <div style={{ fontSize:9, color:'var(--cwr)' }}>{img.catLabel}</div>
+                <div style={{ fontSize:9, color:'var(--mut)', marginTop:2 }}>
+                  Used in: <span style={{ color:'var(--tx)' }}>{img.name}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+
       {/* ── Full-width converters ── */}
       <div style={{ marginTop:10 }}>
         <IxCitlatlTool />
         <PronunciationTool />
       </div>
+      <Lightbox src={imgLightbox} onClose={() => setImgLightbox(null)} />
     </div>
   )
 }

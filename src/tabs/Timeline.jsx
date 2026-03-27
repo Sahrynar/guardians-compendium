@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, SL, uid } from '../constants'
@@ -32,15 +32,53 @@ export default function Timeline({ db }) {
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [showVisual, setShowVisual] = useState(true)
+  const [listSort, setListSort] = useState('order')
+  const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
+  const [zoom, setZoom] = useState(1)
   const trackRef = useRef()
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, scrollLeft: 0 })
 
+  function handleWheel(e) {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.85 : 1.18
+    setZoom(z => Math.max(0.3, Math.min(8, z * delta)))
+  }
+
+  function handleMouseDown(e) {
+    isDragging.current = true
+    dragStart.current = { x: e.pageX, scrollLeft: trackRef.current?.scrollLeft || 0 }
+    if (trackRef.current) trackRef.current.style.cursor = 'grabbing'
+  }
+
+  function handleMouseMove(e) {
+    if (!isDragging.current || !trackRef.current) return
+    const dx = e.pageX - dragStart.current.x
+    trackRef.current.scrollLeft = dragStart.current.scrollLeft - dx
+  }
+
+  function handleMouseUp() {
+    isDragging.current = false
+    if (trackRef.current) trackRef.current.style.cursor = 'grab'
+  }
+
+  // Visual track: filtered by visualFilter era, always sorted by sort_order
+  const visualEvents = [...events]
+    .filter(e => visualFilter === 'all' || e.era === visualFilter)
+    .sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
+
+  // List: filtered by search + filterEra, sortable independently
   const sorted = [...events]
     .filter(e => {
       const ms = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
       const me = filterEra === 'all' || e.era === filterEra
       return ms && me
     })
-    .sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
+    .sort((a,b) => {
+      if (listSort === 'alpha') return (a.name||'').localeCompare(b.name||'')
+      if (listSort === 'era') return (a.era||'').localeCompare(b.era||'') || (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0)
+      return (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0)
+    })
 
   const eras = [...new Set(events.map(e => e.era).filter(Boolean))]
 
@@ -53,9 +91,9 @@ export default function Timeline({ db }) {
   }
 
   // Visual timeline calculations
-  const hasVisual = sorted.length > 0
-  const w = Math.max(800, sorted.length * 170)
-  const nums = sorted.map(e => parseFloat(e.sort_order)||0)
+  const hasVisual = visualEvents.length > 0
+  const w = Math.max(800, visualEvents.length * 170) * zoom
+  const nums = visualEvents.map(e => parseFloat(e.sort_order)||0)
   const mn = Math.min(...nums), mx = Math.max(...nums)
   const rng = Math.max(1, mx - mn)
   function xPos(e) { return 30 + (w - 60) * ((parseFloat(e.sort_order)||0) - mn) / rng }
@@ -81,12 +119,47 @@ export default function Timeline({ db }) {
       </div>
 
       {/* Visual track */}
-      {showVisual && hasVisual && (
-        <div style={{ overflowX: 'auto', cursor: 'grab', padding: '12px 0 16px', WebkitOverflowScrolling: 'touch' }} ref={trackRef}>
+      {showVisual && (
+        <>
+          {/* Visual track independent filter */}
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:6 }}>
+            <span style={{ fontSize:10, color:'var(--mut)', alignSelf:'center' }}>Track filter:</span>
+            <button className={`fp ${visualFilter==='all'?'active':''}`}
+              style={{ fontSize:10 }} onClick={() => setVisualFilter('all')}>All</button>
+            {eras.map(era => (
+              <button key={era} className={`fp ${visualFilter===era?'active':''}`}
+                style={{ fontSize:10, background: visualFilter===era ? ERA_BANDS[era]||'' : '' }}
+                onClick={() => setVisualFilter(visualFilter===era?'all':era)}>{era}</button>
+            ))}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, paddingLeft:4 }}>
+            <span style={{ fontSize:10, color:'var(--mut)' }}>Zoom:</span>
+            <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
+              onClick={() => setZoom(z => Math.max(0.3, z * 0.75))}>−</button>
+            <span style={{ fontSize:10, color:'var(--dim)', minWidth:36, textAlign:'center' }}>
+              {Math.round(zoom * 100)}%
+            </span>
+            <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
+              onClick={() => setZoom(z => Math.min(8, z * 1.33))}>+</button>
+            <button className="btn btn-sm btn-outline" style={{ fontSize:10, padding:'2px 8px' }}
+              onClick={() => setZoom(1)}>Reset</button>
+            <span style={{ fontSize:9, color:'var(--mut)', marginLeft:4 }}>
+              scroll or pinch to zoom · drag to pan
+            </span>
+          </div>
+          <div
+            ref={trackRef}
+            style={{ overflowX:'auto', cursor:'grab', padding:'12px 0 16px',
+              WebkitOverflowScrolling:'touch', userSelect:'none' }}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}>
           <div style={{ position: 'relative', minHeight: 180, padding: '0 30px', width: w }}>
             {/* Era bands */}
             {Object.entries(ERA_BANDS).map(([era, bg]) => {
-              const eraEs = sorted.filter(e => e.era === era)
+              const eraEs = visualEvents.filter(e => e.era === era)
               if (!eraEs.length) return null
               const xs = eraEs.map(xPos)
               const x1 = Math.max(0, Math.min(...xs) - 20)
@@ -100,7 +173,7 @@ export default function Timeline({ db }) {
             {/* Line */}
             <div style={{ position: 'absolute', top: 50, left: 15, right: 15, height: 3, borderRadius: 2, background: 'linear-gradient(90deg,var(--ct),var(--cc),var(--ccn),var(--cca),var(--cl))' }} />
             {/* Dots and labels */}
-            {sorted.map((e, i) => {
+            {visualEvents.map((e, i) => {
               const x = xPos(e)
               const col = DOT_COLS[i % DOT_COLS.length]
               return (
@@ -114,11 +187,24 @@ export default function Timeline({ db }) {
               )
             })}
           </div>
-        </div>
+          </div>
+        </>
       )}
 
+      {/* List controls */}
+      <div style={{ display:'flex', gap:8, alignItems:'center', marginTop:12, marginBottom:4,
+        flexWrap:'wrap' }}>
+        <span style={{ fontSize:10, color:'var(--mut)' }}>List sort:</span>
+        <button className={`fp ${listSort==='order'?'active':''}`}
+          style={{ fontSize:10 }} onClick={() => setListSort('order')}>Story Order</button>
+        <button className={`fp ${listSort==='alpha'?'active':''}`}
+          style={{ fontSize:10 }} onClick={() => setListSort('alpha')}>A → Z</button>
+        <button className={`fp ${listSort==='era'?'active':''}`}
+          style={{ fontSize:10 }} onClick={() => setListSort('era')}>By Era</button>
+      </div>
+
       {/* List */}
-      <div className="cg" style={{ marginTop: 10 }}>
+      <div className="cg" style={{ marginTop: 4 }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>

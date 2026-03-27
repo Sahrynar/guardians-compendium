@@ -24,12 +24,13 @@ import Wiki from './tabs/Wiki'
 import FamilyTree from './tabs/FamilyTree'
 import Notes from './tabs/Notes'
 import Journal from './tabs/Journal'
+import SessionLog from './tabs/SessionLog'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
   'dashboard','characters','wardrobe','items','locations',
   'timeline','scenes','calendar','tools','canon','world',
-  'questions','eras','spellings','map','wiki','notes','journal','familytree','flags'
+  'questions','eras','spellings','map','wiki','notes','journal','sessionlog','familytree','flags'
 ]
 
 const VALID_TABS = new Set(TAB_ORDER)
@@ -159,6 +160,7 @@ export default function App() {
       case 'wiki':       return <Wiki {...tabProps} />
       case 'notes':      return <Notes {...tabProps} />
       case 'journal':    return <Journal {...tabProps} />
+      case 'sessionlog': return <SessionLog />
       case 'familytree': return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
       default:           return <Dashboard {...tabProps} />
