@@ -6,7 +6,7 @@ import { uid } from '../../constants'
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
-  renderDetail, extraActions
+  renderDetail, extraActions, columns = 1, tileSize = 'normal'
 }) {
   const entries = db.db[catKey] || []
   const [search, setSearch] = useState('')
@@ -63,8 +63,9 @@ export default function GenericListTab({
     return parts
   }
 
+  const tileSz = tileSize === 'compact' ? { fontSize: 10 } : tileSize === 'large' ? { fontSize: 14 } : {}
   return (
-    <div>
+    <div style={tileSz}>
       {/* Toolbar */}
       <div className="tbar">
         <input
@@ -107,7 +108,7 @@ export default function GenericListTab({
       </div>
 
       {/* List */}
-      <div className="cg" style={columns > 1 ? { display:"grid", gridTemplateColumns:`repeat(${columns},1fr)`, gap:4 } : {}}>
+      <div style={columns > 1 ? { columns: columns, columnGap: 10, columnRule: "1px solid var(--brd)" } : {}}>
         {!filtered.length && (
           <div className="empty">
             <div className="empty-icon">{icon}</div>
@@ -123,7 +124,7 @@ export default function GenericListTab({
             <div
               key={e.id}
               className="entry-card"
-              style={{ '--card-color': color, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined }}
+              style={{ '--card-color': color, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, breakInside: 'avoid', marginBottom: 6 }}
               onClick={() => setExpanded(isOpen ? null : e.id)}
             >
               <div

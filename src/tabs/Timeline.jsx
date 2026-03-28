@@ -26,6 +26,8 @@ const DOT_COLS = ['var(--ct)','var(--cc)','var(--ccn)','var(--cl)','var(--ci)','
 export default function Timeline({ db }) {
   const events = db.db.timeline || []
   const [search, setSearch] = useState('')
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('tl_cols') || '2'))
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('tl_cols', String(n)) }
   const [filterEra, setFilterEra] = useState('all')
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -101,6 +103,16 @@ export default function Timeline({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display:'flex', gap:3 }}>
+          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--ct)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--ct)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search events…" value={search} onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-sm btn-outline" onClick={() => setShowVisual(v => !v)}>
           {showVisual ? 'Hide' : 'Show'} Track
@@ -204,7 +216,7 @@ export default function Timeline({ db }) {
       </div>
 
       {/* List */}
-      <div className="cg" style={{ marginTop: 4, display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:4 }}>
+      <div className="cg" style={{ marginTop: 4, columns: 2, columnGap: 10, columnRule: "1px solid var(--brd)" }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
@@ -213,7 +225,7 @@ export default function Timeline({ db }) {
         {sorted.map((e, i) => {
           const isOpen = expanded === e.id
           return (
-            <div key={e.id} className="entry-card" style={{ '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
+            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }} style={{ '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
                 <div style={{ fontSize: 10, color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>

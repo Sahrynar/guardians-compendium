@@ -53,8 +53,7 @@ export const SEASON_TAG_COLORS = {
 export const CATS = {
   dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
   characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
-  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
-  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
+  inventory:  { l: 'Inventory',    i: '🎒', c: 'var(--ci)' },
   locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
   timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
   scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },

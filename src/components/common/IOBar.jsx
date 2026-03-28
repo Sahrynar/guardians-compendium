@@ -112,7 +112,18 @@ export default function IOBar({ db, backup }) {
         })
         await Promise.all(upsertPromises)
 
-        flash(`✓ Merged: ${added} new entries added`)
+        // Build per-category summary
+        const catSummary = []
+        Object.keys(merged).forEach(k => {
+          const exLen = (db.db[k] || []).length
+          const newLen = (merged[k] || []).length
+          const diff = Math.max(0, newLen - exLen)
+          if (diff > 0) catSummary.push(`${diff} ${k}`)
+        })
+        const summaryStr = catSummary.length > 0
+          ? `✓ Merged ${added} new entries: ${catSummary.join(', ')}`
+          : '✓ Import complete — no new entries (all already present)'
+        flash(summaryStr, 5000)
       } catch (err) {
         flash(`✗ Import failed: ${err.message}`)
       }

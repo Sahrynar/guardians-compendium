@@ -4,7 +4,9 @@ import { uid } from '../constants'
 
 export default function Flags({ db }) {
   const flags = db.db.flags || []
-  const [filter, setFilter] = useState('active') // 'active' | 'resolved' | 'all'
+  const [filter, setFilter] = useState('active')
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('fl_cols') || '2'))
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('fl_cols', String(n)) } // 'active' | 'resolved' | 'all'
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ name: '', priority: 'high', detail: '' })
   const [confirmId, setConfirmId] = useState(null)
@@ -39,6 +41,16 @@ export default function Flags({ db }) {
     <div>
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
+        <div style={{ display:'flex', gap:3 }}>
+          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--cfl)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--cfl)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
       </div>
 
@@ -61,11 +73,11 @@ export default function Flags({ db }) {
         </div>
       )}
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:4 }}>
+      <div style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
       {filtered.map(f => {
         const pc = priCol[f.priority] || 'var(--dim)'
         return (
-          <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1 }}>
+          <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1, breakInside: 'avoid', marginBottom: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
                 {f.name}

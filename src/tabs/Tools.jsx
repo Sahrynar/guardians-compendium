@@ -229,7 +229,7 @@ function DateTimeTool({ chars, events }) {
   )
 
   return (
-    <div className="tool-card" id="tool-dates">
+    <div className="tool-card" id="tool-dates" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color: 'var(--cca)' }}>🌍 Date & Time</h3>
 
       {/* ── Bidirectional Converter ── */}
@@ -419,7 +419,7 @@ function UnitTool() {
     ['Months (30-day)',mins/43200],['Years (Lajen/360-day)',mins/518400],
     ['Years (Mnaerah/365.25-day)',mins/525960],['Decades',mins/5259600],['Centuries',mins/52596000]]
   return (
-    <div className="tool-card" id="tool-units">
+    <div className="tool-card" id="tool-units" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color:'var(--csp)' }}>📐 Time Unit Converter</h3>
       <div className="field-row">
         <div className="field"><label>Amount</label>
@@ -536,7 +536,7 @@ function IxCitlatlTool() {
   }
 
   return (
-    <div className="tool-card" id="tool-ixcitlatl">
+    <div className="tool-card" id="tool-ixcitlatl" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color:'var(--cl)' }}>✦ Ix'Citlatl Name Converter</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Converts any name across Mesoamerican language systems. Female names begin with <strong style={{ color:'var(--cl)' }}>Ix</strong>, male with <strong style={{ color:'var(--cca)' }}>Ah</strong>. Results are always computed — no overrides.
@@ -691,7 +691,7 @@ function PronunciationTool() {
   ]
 
   return (
-    <div className="tool-card" id="tool-pronun">
+    <div className="tool-card" id="tool-pronun" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color:'var(--cwr)' }}>🔊 Pronunciation Helper</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Generate and hear how any name or word sounds. Systems marked ⚠ have phonology not yet confirmed.
@@ -869,7 +869,7 @@ function ScotsTool() {
   }
 
   return (
-    <div className="tool-card" id="tool-scots">
+    <div className="tool-card" id="tool-scots" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color:'var(--ct)' }}>🏴 Scots Dialogue Converter</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Type or paste plain English dialogue and see how Silvia and/or Elizabeth would say it.
@@ -969,7 +969,7 @@ function BackfillTool({ db }) {
   }
 
   return (
-    <div className="tool-card" id="tool-backfill">
+    <div className="tool-card" id="tool-backfill" style={{ breakInside:"avoid", marginBottom:12 }}>
       <h3 style={{ color:'var(--cfl)' }}>🗓 Birthday Backfill</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Auto-creates a timeline entry for every character who has a Lajen birthday set, but doesn't yet have a matching "Birthday: [Name]" event in the timeline. Safe to run multiple times — won't create duplicates.
@@ -1095,16 +1095,14 @@ export default function Tools({ db }) {
         ))}
       </div>
 
-      {/* Two-column grid for tools */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:10 }}>
+      {/* Pinterest masonry — cards flow down each column */}
+      <div style={{ columns: 2, columnGap: 12, columnRule: '1px solid var(--brd)' }}>
         <DateTimeTool chars={chars} events={events} />
         <UnitTool />
         <IxCitlatlTool />
         <PronunciationTool />
         <ScotsTool />
-        <div className="tool-card" id="tool-backfill" style={{ alignSelf:'start' }}>
-          <BackfillTool db={db} />
-        </div>
+        <BackfillTool db={db} />
       </div>
 
       <ImageLibrary db={db} setLightbox={setLightbox} />

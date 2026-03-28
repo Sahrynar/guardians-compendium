@@ -3,9 +3,9 @@ import { supabase, hasSupabase } from '../supabase'
 
 const LS_KEY = 'gcomp3'
 const CATEGORIES = [
-  'characters','wardrobe','items','locations','timeline',
+  'characters','wardrobe','items','inventory','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps','wiki','notes','family_tree'
+  'calendar_entries','flags','maps','wiki','notes','family_tree','journal','sessionlog'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -272,6 +272,7 @@ export function useDB() {
   return {
     db, settings, loading, syncStatus,
     upsertEntry, deleteEntry, save, saveSetting,
+    getSetting: (key, def='') => settings[key] ?? def,
     exportJSON, importJSON, importAster, exportAster, exportCSV,
     hasSupabase, CATEGORIES
   }

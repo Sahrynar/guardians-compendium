@@ -37,6 +37,8 @@ export default function Scenes({ db }) {
   const scenes = db.db.scenes || []
   const [bookFilter, setBookFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('sc_cols') || '2'))
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('sc_cols', String(n)) }
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
@@ -378,6 +380,16 @@ export default function Scenes({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display:'flex', gap:3 }}>
+          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--ccn)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--ccn)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search scenes…" value={search}
           onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-primary btn-sm"
@@ -423,7 +435,7 @@ export default function Scenes({ db }) {
               </div>
             )}
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:4 }}>{bookScenes.map(s => <SceneCard key={s.id} s={s} />)}</div>
+              <div style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>{bookScenes.map(s => <SceneCard key={s.id} s={s} />)}</div>
             </div>
           </div>
         )

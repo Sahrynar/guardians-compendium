@@ -324,6 +324,243 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
 const bs = col => ({ background: 'none', border: `1px solid ${col}44`, color: col, fontSize: 9, cursor: 'pointer', padding: '1px 5px', borderRadius: 3 })
 
 // ── Main component ──────────────────────────────────────────────
+
+// ── Relationship Web (force-directed) ────────────────────────────
+function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode, setEdgeModal, setNodeModal }) {
+  const canvasRef = useRef(null)
+  const [positions, setPositions] = useState(() => {
+    const pos = {}
+    nodes.forEach((n, i) => {
+      const angle = (i / nodes.length) * 2 * Math.PI
+      const r = Math.min(300, 80 + nodes.length * 8)
+      pos[n.id] = { x: 500 + r * Math.cos(angle), y: 400 + r * Math.sin(angle), vx: 0, vy: 0 }
+    })
+    return pos
+  })
+  const [dragging, setDragging] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const panRef = useRef(null)
+  const animRef = useRef(null)
+  const posRef = useRef(positions)
+  posRef.current = positions
+
+  // Simple force simulation
+  useEffect(() => {
+    let running = true
+    function tick() {
+      if (!running) return
+      setPositions(prev => {
+        const next = {}
+        const ids = Object.keys(prev)
+        ids.forEach(id => { next[id] = { ...prev[id] } })
+
+        // Repulsion between all nodes
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = next[ids[i]], b = next[ids[j]]
+            const dx = b.x - a.x, dy = b.y - a.y
+            const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy))
+            const force = Math.min(2000, 800 / (dist * dist))
+            const fx = (dx / dist) * force, fy = (dy / dist) * force
+            a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy
+          }
+        }
+
+        // Attraction along edges
+        edges.forEach(e => {
+          const a = next[e.from], b = next[e.to]
+          if (!a || !b) return
+          const dx = b.x - a.x, dy = b.y - a.y
+          const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy))
+          const target = 180
+          const force = (dist - target) * 0.03
+          const fx = (dx / dist) * force, fy = (dy / dist) * force
+          a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy
+        })
+
+        // Center gravity
+        ids.forEach(id => {
+          const n = next[id]
+          n.vx += (500 - n.x) * 0.002
+          n.vy += (400 - n.y) * 0.002
+        })
+
+        // Apply velocity with damping
+        ids.forEach(id => {
+          const n = next[id]
+          n.vx *= 0.85; n.vy *= 0.85
+          n.x += n.vx; n.y += n.vy
+        })
+
+        return next
+      })
+      animRef.current = requestAnimationFrame(tick)
+    }
+    // Run for 3 seconds then stop
+    animRef.current = requestAnimationFrame(tick)
+    setTimeout(() => { running = false; cancelAnimationFrame(animRef.current) }, 3000)
+    return () => { running = false; cancelAnimationFrame(animRef.current) }
+  }, [nodes.length, edges.length])
+
+  const W = 1000, H = 800
+  const NODE_R = 36
+
+  function handleNodeDrag(id, e) {
+    e.stopPropagation()
+    const startX = e.clientX, startY = e.clientY
+    const startPos = { ...posRef.current[id] }
+    function onMove(me) {
+      const dx = (me.clientX - startX) / zoom
+      const dy = (me.clientY - startY) / zoom
+      setPositions(prev => ({ ...prev, [id]: { ...prev[id], x: startPos.x + dx, y: startPos.y + dy, vx: 0, vy: 0 } }))
+    }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  function onBgDown(e) {
+    if (e.button !== 0) return
+    panRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
+  }
+  function onBgMove(e) {
+    if (!panRef.current) return
+    setPan({ x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y })
+  }
+  function onBgUp() { panRef.current = null }
+
+  const sel = selected ? nodes.find(n => n.id === selected) : null
+  const selEdges = selected ? edges.filter(e => e.from === selected || e.to === selected) : []
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* Web canvas */}
+      <div style={{ overflow: 'hidden', maxHeight: '72vh', minHeight: 400, border: '1px solid var(--brd)',
+        borderRadius: 'var(--rl)', background: '#060608', position: 'relative', cursor: 'grab' }}
+        onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
+        onWheel={e => { e.preventDefault(); setZoom(z => Math.max(0.2, Math.min(3, z - e.deltaY * 0.001))) }}>
+
+        <svg width="100%" height="100%" style={{ minHeight: 400 }}
+          viewBox={`${-pan.x/zoom} ${-pan.y/zoom} ${W/zoom} ${H/zoom}`}>
+
+          {/* Edges */}
+          {edges.map((e, i) => {
+            const a = positions[e.from], b = positions[e.to]
+            if (!a || !b) return null
+            const c = allEdgeColors[e.type] || '#666688'
+            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
+            const isSelected = selected === e.from || selected === e.to
+            return (
+              <g key={e.id || i} style={{ cursor: editMode ? 'pointer' : 'default' }}
+                onClick={() => editMode && setEdgeModal(e)}>
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                  stroke={c} strokeWidth={isSelected ? 2.5 : 1.5}
+                  opacity={selected && !isSelected ? 0.15 : 0.8} />
+                <text x={mx} y={my - 5} textAnchor="middle" fontSize={9} fill={c}
+                  opacity={isSelected || !selected ? 0.9 : 0.2}
+                  style={{ pointerEvents: 'none' }}>{e.type}</text>
+              </g>
+            )
+          })}
+
+          {/* Nodes */}
+          {nodes.map(n => {
+            const pos = positions[n.id]
+            if (!pos) return null
+            const col = allNodeColors[n.node_type] || '#8899bb'
+            const isSel = selected === n.id
+            const isDim = selected && !selEdges.some(e => e.from === n.id || e.to === n.id) && n.id !== selected
+            return (
+              <g key={n.id} style={{ cursor: 'pointer' }}
+                onMouseDown={e => handleNodeDrag(n.id, e)}
+                onClick={e => { e.stopPropagation(); setSelected(s => s === n.id ? null : n.id) }}
+                onDoubleClick={() => editMode && setNodeModal(n)}
+                opacity={isDim ? 0.2 : 1}>
+                <circle cx={pos.x} cy={pos.y} r={NODE_R}
+                  fill={`${col}22`} stroke={col}
+                  strokeWidth={isSel ? 3 : 1.5} />
+                {n.image ? (
+                  <image href={n.image} x={pos.x - NODE_R + 4} y={pos.y - NODE_R + 4}
+                    width={NODE_R * 2 - 8} height={NODE_R * 2 - 8}
+                    style={{ clipPath: 'circle()', borderRadius: '50%' }}
+                    preserveAspectRatio="xMidYMid slice" />
+                ) : (
+                  <text x={pos.x} y={pos.y - 2} textAnchor="middle" fontSize={10}
+                    fill={col} fontWeight="600" style={{ pointerEvents: 'none' }}>
+                    {(n.name || '').split(' ')[0]}
+                  </text>
+                )}
+                <text x={pos.x} y={pos.y + NODE_R + 13} textAnchor="middle" fontSize={9}
+                  fill={col} opacity={0.85} style={{ pointerEvents: 'none' }}>
+                  {n.name}
+                </text>
+                {n.title && (
+                  <text x={pos.x} y={pos.y + NODE_R + 23} textAnchor="middle" fontSize={8}
+                    fill="rgba(255,255,255,.4)" style={{ pointerEvents: 'none' }}>
+                    {n.title}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+
+        {/* Zoom controls */}
+        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4 }}>
+          {[['−',-.2],['+', .2],['⊙',0]].map(([l,d]) => (
+            <button key={l} onClick={() => d === 0 ? (setZoom(1), setPan({x:0,y:0})) : setZoom(z => Math.max(0.2, Math.min(3, z+d)))}
+              style={{ width:28, height:28, borderRadius:6, background:'rgba(0,0,0,.6)',
+                border:'1px solid var(--brd)', color:'var(--dim)', cursor:'pointer', fontSize:14 }}>{l}</button>
+          ))}
+          <span style={{ fontSize:9, color:'var(--mut)', alignSelf:'center', marginLeft:4 }}>{Math.round(zoom*100)}%</span>
+        </div>
+      </div>
+
+      {/* Selected node info panel */}
+      {sel && (
+        <div style={{ marginTop: 8, padding: '10px 14px', background: 'var(--card)',
+          border: '1px solid var(--brd)', borderRadius: 8 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, color: allNodeColors[sel.node_type]||'var(--cc)' }}>
+              {sel.name}
+            </div>
+            <button onClick={() => setSelected(null)}
+              style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize:16 }}>✕</button>
+          </div>
+          {sel.title && <div style={{ fontSize:10, color:'var(--mut)', marginBottom:6 }}>{sel.title}</div>}
+          {selEdges.length > 0 && (
+            <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+              {selEdges.map((e, i) => {
+                const other = nodes.find(n => n.id === (e.from === sel.id ? e.to : e.from))
+                const c = allEdgeColors[e.type] || '#666688'
+                return (
+                  <span key={i} style={{ fontSize:10, padding:'2px 8px', borderRadius:10,
+                    background:`${c}22`, color:c, border:`1px solid ${c}44` }}>
+                    {e.type}: {other?.name || '?'}
+                  </span>
+                )
+              })}
+            </div>
+          )}
+          {editMode && (
+            <div style={{ display:'flex', gap:6, marginTop:8 }}>
+              <button className="btn btn-sm btn-outline" style={{ fontSize:10 }}
+                onClick={() => setNodeModal(sel)}>✎ Edit</button>
+              <button className="btn btn-sm btn-outline" style={{ fontSize:10, color:'var(--cl)', borderColor:'var(--cl)' }}
+                onClick={() => setEdgeModal({ from: sel.id })}>+ Add Relation</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FamilyTree({ db }) {
   const raw = (db.db.family_tree || [{ id: '_root', nodes: [], edges: [], bg_color: '#060608', bg_image: null }])[0]
 
@@ -336,6 +573,7 @@ export default function FamilyTree({ db }) {
   const [nodeModal,setNodeModal]= useState(null)
   const [edgeModal,setEdgeModal]= useState(null)
   const [editMode, setEditMode] = useState(false)
+  const [viewMode, setViewMode] = useState('tree') // 'tree' | 'web'
   const [clearDlg, setClearDlg] = useState(false)
   const [showUnk,  setShowUnk]  = useState(false)
   const [zoom,     setZoom]     = useState(1)
@@ -509,6 +747,16 @@ export default function FamilyTree({ db }) {
       {/* ── Toolbar ── */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cl)' }}>🌳 Family Tree</div>
+        <div style={{ display:'flex', gap:3 }}>
+          {[['🌳 Tree','tree'],['🕸 Web','web']].map(([l,v]) => (
+            <button key={v} onClick={() => setViewMode(v)}
+              style={{ fontSize:10, padding:'3px 10px', borderRadius:10,
+                background: viewMode===v ? 'var(--cl)' : 'none',
+                color: viewMode===v ? '#000' : 'var(--dim)',
+                border: `1px solid ${viewMode===v ? 'var(--cl)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <button className="btn btn-sm btn-outline" style={{ color: editMode ? 'var(--cc)' : 'var(--dim)', borderColor: editMode ? 'var(--cc)' : 'var(--brd)' }} onClick={() => setEditMode(v => !v)}>
           {editMode ? '✓ Editing' : '✎ Edit Mode'}
         </button>
@@ -576,8 +824,13 @@ export default function FamilyTree({ db }) {
         </div>
       )}
 
-      {/* ── Canvas ── */}
-      {nodes.length > 0 && (
+      {/* ── Canvas / Web ── */}
+      {nodes.length > 0 && viewMode === 'web' && (
+        <RelationshipWeb nodes={nodes} edges={edges}
+          allEdgeColors={allEdgeColors} allNodeColors={allNodeColors}
+          editMode={editMode} setEdgeModal={setEdgeModal} setNodeModal={setNodeModal} />
+      )}
+      {nodes.length > 0 && viewMode === 'tree' && (
         <div style={{ overflow:'hidden', maxHeight:'72vh', minHeight:300, border:'1px solid var(--brd)', borderRadius:'var(--rl)', background: bgImage ? `url(${bgImage}) center/cover` : bgColor, position:'relative', cursor: panning ? 'grabbing' : 'default' }}
           onWheel={onWheel} onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
           onTouchStart={onTouchStartCanvas}

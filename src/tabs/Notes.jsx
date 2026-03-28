@@ -7,6 +7,8 @@ const NOTE_CATS = ['General', 'Canon', 'Brainstorm', 'Research', 'Todo', 'Quote'
 export default function Notes({ db }) {
   const notes = db.db.notes || []
   const [search, setSearch] = useState('')
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('nt_cols') || '2'))
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('nt_cols', String(n)) }
   const [catFilter, setCatFilter] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -33,6 +35,16 @@ export default function Notes({ db }) {
       </div>
 
       <div className="tbar" style={{ padding: '0 0 8px' }}>
+        <div style={{ display:'flex', gap:3 }}>
+          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--cw)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--cw)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search notes…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
@@ -52,9 +64,9 @@ export default function Notes({ db }) {
         </div>
       )}
 
-      <div className="cg" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:4 }}>
+      <div className="cg" style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
         {filtered.map((n, i) => (
-          <div key={n.id} className="entry-card" style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
+          <div key={n.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }} style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               {n.title && <div className="entry-title" style={{ fontSize: 13 }}>{n.title}</div>}
               {n.category && <span className="badge" style={{ color: 'var(--cw)', borderColor: 'rgba(255,204,0,.3)', flexShrink: 0, marginLeft: 8 }}>{n.category}</span>}

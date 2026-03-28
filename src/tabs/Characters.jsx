@@ -63,6 +63,9 @@ function isDeadByBook(e, filterBook) {
 export default function Characters({ db }) {
   const chars = db.db.characters || []
   const [search, setSearch] = useState('')
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('char_cols') || '3'))
+
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('char_cols', String(n)) }
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -159,6 +162,16 @@ export default function Characters({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display:'flex', gap:3, marginRight:'auto' }}>
+          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--cc)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
         {/* Alive/Deceased filter */}
         <div style={{ display: 'flex', gap: 3 }}>
@@ -176,7 +189,7 @@ export default function Characters({ db }) {
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div className="cg" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:6 }}>
+      <div className="cg" style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
@@ -191,7 +204,7 @@ export default function Characters({ db }) {
           const dead = isDeceased(e)
 
           return (
-            <div key={e.id} className="entry-card"
+            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }}
               style={{
                 '--card-color': 'var(--cc)',
                 background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined,
