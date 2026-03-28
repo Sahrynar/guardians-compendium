@@ -107,7 +107,7 @@ export default function GenericListTab({
       </div>
 
       {/* List */}
-      <div className="cg">
+      <div className="cg" style={columns > 1 ? { display:"grid", gridTemplateColumns:`repeat(${columns},1fr)`, gap:4 } : {}}>
         {!filtered.length && (
           <div className="empty">
             <div className="empty-icon">{icon}</div>

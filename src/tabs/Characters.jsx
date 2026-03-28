@@ -176,7 +176,7 @@ export default function Characters({ db }) {
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div className="cg">
+      <div className="cg" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:6 }}>
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>

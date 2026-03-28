@@ -204,7 +204,7 @@ export default function Timeline({ db }) {
       </div>
 
       {/* List */}
-      <div className="cg" style={{ marginTop: 4 }}>
+      <div className="cg" style={{ marginTop: 4, display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:4 }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>

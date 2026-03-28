@@ -61,6 +61,7 @@ export default function Flags({ db }) {
         </div>
       )}
 
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:4 }}>
       {filtered.map(f => {
         const pc = priCol[f.priority] || 'var(--dim)'
         return (
@@ -87,6 +88,7 @@ export default function Flags({ db }) {
           </div>
         )
       })}
+      </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Flag" color="var(--cfl)">
         <div className="field"><label>Description *</label>

@@ -97,6 +97,8 @@ export const CHAR_FIELDS = [
   { k: 'deceased',        l: 'Deceased',            t: 'sel',    o: ['','Yes','No','Unknown'] },
   { k: 'dies_in',         l: 'Dies In',             t: 'sel',    o: ['','Before Series','Book 1','Book 2','Book 3','Book 4','Book 5','Future'] },
   { k: 'traits',          l: 'Traits',              t: 'ta' },
+  { k: 'bubble_color',    l: 'Bubble Colour',       t: 'color', p: 'Colour for Items/Wardrobe bubble' },
+  { k: 'bubble_order',    l: 'Bubble Order',         t: 'text', p: 'Number for sorting bubbles (e.g. 1, 2, 3)' },
 ]
 
 // ── Era timeline data ──────────────────────────────────────────

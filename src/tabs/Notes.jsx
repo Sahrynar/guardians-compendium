@@ -52,7 +52,7 @@ export default function Notes({ db }) {
         </div>
       )}
 
-      <div className="cg">
+      <div className="cg" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:4 }}>
         {filtered.map((n, i) => (
           <div key={n.id} className="entry-card" style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
