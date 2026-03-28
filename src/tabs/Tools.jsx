@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { RATIO, LDAYS, MDAYS, LDPM, MONTHS } from '../constants'
+import Lightbox from '../components/common/Lightbox'
 
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
