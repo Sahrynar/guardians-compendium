@@ -1,6 +1,6 @@
 [build]
   base = ""
-  command = "npm run build"
+  command = "rm -rf node_modules && npm install && vite build"
   publish = "dist"
 
 [[redirects]]
