@@ -298,8 +298,6 @@ export default function Timeline({ db }) {
             </div>
           </div>
         )
-          </div>
-        </div>
       })()}
 
       {/* List controls */}
@@ -406,6 +404,5 @@ export default function Timeline({ db }) {
         </div>
       )}
     </div>
-  </div>
   )
 }
