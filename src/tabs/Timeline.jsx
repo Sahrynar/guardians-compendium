@@ -298,9 +298,9 @@ export default function Timeline({ db }) {
             </div>
           </div>
         )
-      })()}
           </div>
         </div>
+      })()}
 
       {/* List controls */}
       <div style={{ display:'flex', gap:8, alignItems:'center', marginTop:12, marginBottom:4,
