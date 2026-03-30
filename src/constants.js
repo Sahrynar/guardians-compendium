@@ -52,9 +52,8 @@ export const SEASON_TAG_COLORS = {
 // ── Category config ─────────────────────────────────────────────
 export const CATS = {
   dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
-  characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
-  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
-  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
+  characters: { l: 'Characters',     i: '👤', c: 'var(--cc)' },
+  inventory:  { l: 'Inventory',      i: '🎒', c: 'var(--ci)' },
   locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
   timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
   scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
@@ -69,8 +68,10 @@ export const CATS = {
   wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
   notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
   journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
-  sessionlog: { l: 'Session Log',  i: '📋', c: 'var(--cca)' },
-  familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
+  sessionlog:     { l: 'Session Log',     i: '📋', c: 'var(--cca)' },
+  manuscript:     { l: 'Manuscript',      i: '📜', c: 'var(--ccn)' },
+  outfitsnapshot: { l: 'Outfit Snapshot', i: '👘', c: 'var(--cwr)' },
+  familytree:     { l: 'Family Tree',     i: '🌳', c: 'var(--cl)' },
   flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
 }
 

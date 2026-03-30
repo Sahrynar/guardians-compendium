@@ -8,6 +8,7 @@ import Dashboard from './tabs/Dashboard'
 import Characters from './tabs/Characters'
 import Wardrobe from './tabs/Wardrobe'
 import Items from './tabs/Items'
+import Inventory from './tabs/Inventory'
 import Locations from './tabs/Locations'
 import Timeline from './tabs/Timeline'
 import Scenes from './tabs/Scenes'
@@ -25,12 +26,15 @@ import FamilyTree from './tabs/FamilyTree'
 import Notes from './tabs/Notes'
 import Journal from './tabs/Journal'
 import SessionLog from './tabs/SessionLog'
+import Manuscript from './tabs/Manuscript'
+import OutfitSnapshot from './tabs/OutfitSnapshot'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
-  'dashboard','characters','wardrobe','items','locations',
+  'dashboard','characters','inventory','locations',
   'timeline','scenes','calendar','tools','canon','world',
-  'questions','eras','spellings','map','wiki','notes','journal','sessionlog','familytree','flags'
+  'questions','eras','spellings','map','wiki','notes','journal',
+  'sessionlog','manuscript','outfitsnapshot','familytree','flags'
 ]
 
 const VALID_TABS = new Set(TAB_ORDER)
@@ -144,8 +148,7 @@ export default function App() {
     switch (tab) {
       case 'dashboard':  return <Dashboard {...tabProps} />
       case 'characters': return <Characters {...tabProps} />
-      case 'wardrobe':   return <Wardrobe {...tabProps} />
-      case 'items':      return <Items {...tabProps} />
+      case 'inventory':   return <Inventory {...tabProps} />
       case 'locations':  return <Locations {...tabProps} />
       case 'timeline':   return <Timeline {...tabProps} />
       case 'scenes':     return <Scenes {...tabProps} />
@@ -159,9 +162,11 @@ export default function App() {
       case 'map':        return <MapTab {...tabProps} />
       case 'wiki':       return <Wiki {...tabProps} />
       case 'notes':      return <Notes {...tabProps} />
-      case 'journal':    return <Journal {...tabProps} />
-      case 'sessionlog': return <SessionLog />
-      case 'familytree': return <FamilyTree {...tabProps} />
+      case 'journal':         return <Journal {...tabProps} />
+      case 'sessionlog':      return <SessionLog />
+      case 'manuscript':      return <Manuscript {...tabProps} />
+      case 'outfitsnapshot':  return <OutfitSnapshot db={db} chars={db.db.characters||[]} allEntries={db.db} />
+      case 'familytree':      return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
       default:           return <Dashboard {...tabProps} />
     }
