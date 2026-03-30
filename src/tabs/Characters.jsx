@@ -214,12 +214,7 @@ export default function Characters({ db }) {
           const dead = isDeceased(e)
 
           return (
-            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }}
-              style={{
-                '--card-color': 'var(--cc)',
-                background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined,
-                opacity: dead === true ? 0.8 : 1,
-              }}
+            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--cc)', background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined, opacity: dead === true ? 0.8 : 1 }}
               onClick={() => setExpanded(isOpen?null:e.id)}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -8,7 +8,6 @@ import Dashboard from './tabs/Dashboard'
 import Characters from './tabs/Characters'
 import Wardrobe from './tabs/Wardrobe'
 import Items from './tabs/Items'
-import Inventory from './tabs/Inventory'
 import Locations from './tabs/Locations'
 import Timeline from './tabs/Timeline'
 import Scenes from './tabs/Scenes'
@@ -28,6 +27,7 @@ import Journal from './tabs/Journal'
 import SessionLog from './tabs/SessionLog'
 import Manuscript from './tabs/Manuscript'
 import OutfitSnapshot from './tabs/OutfitSnapshot'
+import Inventory from './tabs/Inventory'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
@@ -148,7 +148,7 @@ export default function App() {
     switch (tab) {
       case 'dashboard':  return <Dashboard {...tabProps} />
       case 'characters': return <Characters {...tabProps} />
-      case 'inventory':   return <Inventory {...tabProps} />
+      case 'inventory':      return <Inventory {...tabProps} />
       case 'locations':  return <Locations {...tabProps} />
       case 'timeline':   return <Timeline {...tabProps} />
       case 'scenes':     return <Scenes {...tabProps} />
@@ -162,11 +162,11 @@ export default function App() {
       case 'map':        return <MapTab {...tabProps} />
       case 'wiki':       return <Wiki {...tabProps} />
       case 'notes':      return <Notes {...tabProps} />
-      case 'journal':         return <Journal {...tabProps} />
-      case 'sessionlog':      return <SessionLog />
-      case 'manuscript':      return <Manuscript {...tabProps} />
-      case 'outfitsnapshot':  return <OutfitSnapshot db={db} chars={db.db.characters||[]} allEntries={db.db} />
-      case 'familytree':      return <FamilyTree {...tabProps} />
+      case 'journal':    return <Journal {...tabProps} />
+      case 'sessionlog':     return <SessionLog />
+      case 'manuscript':     return <Manuscript {...tabProps} />
+      case 'outfitsnapshot': return <OutfitSnapshot db={db} chars={db.db.characters||[]} allEntries={db.db} />
+      case 'familytree': return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
       default:           return <Dashboard {...tabProps} />
     }

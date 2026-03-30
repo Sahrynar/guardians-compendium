@@ -101,8 +101,7 @@ export default function Scenes({ db }) {
     const chars = charTags(s.characters_present)
     const bookCol = BOOK_COLORS[s.book] || 'var(--csc)'
     return (
-      <div className="scene-card" style={{ breakInside: 'avoid', marginBottom: 6 }}
-        style={{ borderLeft: `3px solid ${bookCol}`, cursor:'pointer' }}
+      <div className="scene-card" style={{ breakInside: 'avoid', marginBottom: 6, borderLeft: `3px solid ${bookCol}`, cursor:'pointer' }}
         onDoubleClick={e => { e.stopPropagation(); setViewPopup(s) }}
         draggable
         onDragStart={() => { dragIdx = filtered.indexOf(s) }}

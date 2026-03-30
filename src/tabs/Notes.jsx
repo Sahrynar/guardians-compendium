@@ -76,7 +76,7 @@ export default function Notes({ db }) {
 
       <div  style={{ columns: colCount, columnGap: 10, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
         {filtered.map((n, i) => (
-          <div key={n.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }} style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
+          <div key={n.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               {n.title && <div className="entry-title" style={{ fontSize: 13 }}>{n.title}</div>}
               {n.category && <span className="badge" style={{ color: 'var(--cw)', borderColor: 'rgba(255,204,0,.3)', flexShrink: 0, marginLeft: 8 }}>{n.category}</span>}

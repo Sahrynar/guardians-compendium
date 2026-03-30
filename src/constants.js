@@ -67,7 +67,7 @@ export const CATS = {
   map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
   wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
   notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
-  journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
+  journal:        { l: 'Journal',         i: '📓', c: 'var(--cc)' },
   sessionlog:     { l: 'Session Log',     i: '📋', c: 'var(--cca)' },
   manuscript:     { l: 'Manuscript',      i: '📜', c: 'var(--ccn)' },
   outfitsnapshot: { l: 'Outfit Snapshot', i: '👘', c: 'var(--cwr)' },

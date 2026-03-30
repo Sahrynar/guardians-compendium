@@ -151,6 +151,7 @@ export default function Timeline({ db }) {
         </button>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
+      </div>
 
       {/* Era filter pills */}
       <div className="tbar" style={{ paddingTop: 0 }}>
@@ -298,6 +299,8 @@ export default function Timeline({ db }) {
           </div>
         )
       })()}
+          </div>
+        </div>
 
       {/* List controls */}
       <div style={{ display:'flex', gap:8, alignItems:'center', marginTop:12, marginBottom:4,
@@ -321,7 +324,7 @@ export default function Timeline({ db }) {
         {sorted.map((e, i) => {
           const isOpen = expanded === e.id
           return (
-            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }} style={{ '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
+            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
                 <div style={{ fontSize: 10, color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
@@ -403,9 +406,6 @@ export default function Timeline({ db }) {
         </div>
       )}
     </div>
-  </div>
-  </div>
-  </div>
   </div>
   )
 }
