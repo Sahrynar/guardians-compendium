@@ -443,7 +443,25 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
       <div style={{ overflow: 'hidden', maxHeight: '72vh', minHeight: 400, border: '1px solid var(--brd)',
         borderRadius: 'var(--rl)', background: '#060608', position: 'relative', cursor: 'grab' }}
         onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
-        onWheel={e => { e.preventDefault(); setZoom(z => Math.max(0.2, Math.min(3, z - e.deltaY * 0.001))) }}>
+        onWheel={e => { e.preventDefault(); setZoom(z => Math.max(0.1, Math.min(4, z - e.deltaY * 0.001))) }}
+        onTouchStart={e => {
+          if (e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX
+            const dy = e.touches[0].clientY - e.touches[1].clientY
+            e.currentTarget._pinchDist = Math.sqrt(dx*dx + dy*dy)
+            e.currentTarget._pinchZoom = zoom
+          }
+        }}
+        onTouchMove={e => {
+          if (e.touches.length === 2 && e.currentTarget._pinchDist) {
+            e.preventDefault()
+            const dx = e.touches[0].clientX - e.touches[1].clientX
+            const dy = e.touches[0].clientY - e.touches[1].clientY
+            const dist = Math.sqrt(dx*dx + dy*dy)
+            const scale = dist / e.currentTarget._pinchDist
+            setZoom(Math.max(0.1, Math.min(4, e.currentTarget._pinchZoom * scale)))
+          }
+        }}>
 
         <svg width="100%" height="100%" style={{ minHeight: 400 }}
           viewBox={`${-pan.x/zoom} ${-pan.y/zoom} ${W/zoom} ${H/zoom}`}>
@@ -511,13 +529,14 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
         </svg>
 
         {/* Zoom controls */}
-        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4 }}>
-          {[['−',-.2],['+', .2],['⊙',0]].map(([l,d]) => (
-            <button key={l} onClick={() => d === 0 ? (setZoom(1), setPan({x:0,y:0})) : setZoom(z => Math.max(0.2, Math.min(3, z+d)))}
-              style={{ width:28, height:28, borderRadius:6, background:'rgba(0,0,0,.6)',
-                border:'1px solid var(--brd)', color:'var(--dim)', cursor:'pointer', fontSize:14 }}>{l}</button>
-          ))}
-          <span style={{ fontSize:9, color:'var(--mut)', alignSelf:'center', marginLeft:4 }}>{Math.round(zoom*100)}%</span>
+        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4, alignItems:'center', background:'rgba(0,0,0,.5)', borderRadius:8, padding:'4px 8px' }}>
+          <button onClick={() => setZoom(z => Math.max(0.1, z - 0.15))}
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize:16 }}>−</button>
+          <span style={{ fontSize:10, color:'var(--cca)', minWidth:40, textAlign:'center', fontWeight:700 }}>{Math.round(zoom*100)}%</span>
+          <button onClick={() => setZoom(z => Math.min(4, z + 0.15))}
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize:16 }}>+</button>
+          <button onClick={() => { setZoom(1); setPan({x:0,y:0}) }}
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--mut)', cursor:'pointer', fontSize:12 }}>⊙</button>
         </div>
       </div>
 

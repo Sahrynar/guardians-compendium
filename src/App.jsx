@@ -6,7 +6,8 @@ import { CATS } from './constants'
 // Tab components
 import Dashboard from './tabs/Dashboard'
 import Characters from './tabs/Characters'
-import Inventory from './tabs/Inventory'
+import Wardrobe from './tabs/Wardrobe'
+import Items from './tabs/Items'
 import Locations from './tabs/Locations'
 import Timeline from './tabs/Timeline'
 import Scenes from './tabs/Scenes'
@@ -27,7 +28,7 @@ import SessionLog from './tabs/SessionLog'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
-  'dashboard','characters','inventory','locations',
+  'dashboard','characters','wardrobe','items','locations',
   'timeline','scenes','calendar','tools','canon','world',
   'questions','eras','spellings','map','wiki','notes','journal','sessionlog','familytree','flags'
 ]
@@ -143,7 +144,8 @@ export default function App() {
     switch (tab) {
       case 'dashboard':  return <Dashboard {...tabProps} />
       case 'characters': return <Characters {...tabProps} />
-      case 'inventory':  return <Inventory {...tabProps} />
+      case 'wardrobe':   return <Wardrobe {...tabProps} />
+      case 'items':      return <Items {...tabProps} />
       case 'locations':  return <Locations {...tabProps} />
       case 'timeline':   return <Timeline {...tabProps} />
       case 'scenes':     return <Scenes {...tabProps} />

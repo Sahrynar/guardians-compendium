@@ -340,7 +340,8 @@ export default function Items({ db }) {
           )}
           {holderOrder.map((holderId, idx) => {
             const char = holderId === '__unassigned__' ? null : chars.find(c => c.id === holderId)
-            const bubbleColor = char?.bubble_color || DEFAULT_BUBBLE_COLORS[idx % DEFAULT_BUBBLE_COLORS.length]
+            const stableIdx = holderId === '__unassigned__' ? 0 : Math.abs(holderId.split('').reduce((a,c) => a+c.charCodeAt(0),0))
+            const bubbleColor = char?.bubble_color || DEFAULT_BUBBLE_COLORS[stableIdx % DEFAULT_BUBBLE_COLORS.length]
             return (
               <CharBubble
                 key={holderId}

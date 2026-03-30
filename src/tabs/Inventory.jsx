@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useRef } from 'react'
+import OutfitSnapshot from './OutfitSnapshot'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import Lightbox from '../components/common/Lightbox'
@@ -208,7 +209,7 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
 }
 
 // ── Full entry popup ──────────────────────────────────────────────
-function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
+function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer, bubbleColor,
   setLightbox, setPickerFor, uploadingImg, handleImageUpload }) {
   function holderName(id) {
     if (!id) return 'Unassigned'
@@ -216,7 +217,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
     return ch ? ch.name : id
   }
   const cat = CAT_MAP[entry.category]
-  const tileColor = entry.entry_color || 'var(--ci)'
+  const tileColor = entry.entry_color || bubbleColor || 'var(--ci)'
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.85)',
@@ -355,9 +356,11 @@ export default function Inventory({ db }) {
 
   // ── State ──
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState('bubble') // 'bubble' | 'list'
+  const [viewMode, setViewMode] = useState('bubble') // 'bubble' | 'list' | 'outfit'
   const [filterCat, setFilterCat] = useState('all')
   const [filterChar, setFilterChar] = useState('all')
+  const [filterGroup, setFilterGroup] = useState('all')
+  const [filterChars, setFilterChars] = useState(new Set()) // multi-select characters
   const [sortBy, setSortBy] = useState('holder') // 'holder' | 'name' | 'category'
   const [columns, setColumns] = useState(() => {
     try { return parseInt(db.getSetting?.('inv_columns') || '2') } catch { return 2 }
@@ -401,17 +404,22 @@ export default function Inventory({ db }) {
     if (ch) db.upsertEntry('characters', { ...ch, bubble_color: color })
   }
 
+  const dropSaveRef = React.useRef(null)
   function handleDrop(fromIdx, toIdx) {
     if (fromIdx === null || fromIdx === toIdx) { setDragIdx(null); setDragOverIdx(null); return }
     const newOrder = [...holderOrder]
     const [moved] = newOrder.splice(fromIdx, 1)
     newOrder.splice(toIdx, 0, moved)
-    newOrder.forEach((holderId, idx) => {
-      if (holderId === '__unassigned__') return
-      const ch = chars.find(c => c.id === holderId)
-      if (ch) db.upsertEntry('characters', { ...ch, bubble_order: String(idx + 1) })
-    })
     setDragIdx(null); setDragOverIdx(null)
+    // Debounce Supabase save - only save after drag ends
+    clearTimeout(dropSaveRef.current)
+    dropSaveRef.current = setTimeout(() => {
+      newOrder.forEach((holderId, idx) => {
+        if (holderId === '__unassigned__') return
+        const ch = chars.find(c => c.id === holderId)
+        if (ch) db.upsertEntry('characters', { ...ch, bubble_order: String(idx + 1) })
+      })
+    }, 600)
   }
 
   function doTransfer() {
@@ -433,12 +441,28 @@ export default function Inventory({ db }) {
   }
 
   // ── Filtering ──
+  // Collect all unique groups from characters
+  const allGroups = useMemo(() => {
+    const gs = new Set()
+    chars.forEach(c => { if (c.groups) c.groups.split(',').forEach(g => { const t=g.trim(); if(t) gs.add(t) }) })
+    return [...gs].sort()
+  }, [chars])
+
   const filtered = useMemo(() => allEntries.filter(e => {
     const ms = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
     const mc = filterCat === 'all' || (e.category || 'Other') === filterCat
-    const mch = filterChar === 'all' || (e.character || e.holder || '__unassigned__') === filterChar
-    return ms && mc && mch
-  }), [allEntries, search, filterCat, filterChar])
+    const holderId = e.character || e.holder || '__unassigned__'
+    // Multi-char filter
+    const mch = filterChars.size === 0
+      ? (filterChar === 'all' || holderId === filterChar)
+      : filterChars.has(holderId)
+    // Group filter
+    const mchg = filterGroup === 'all' ? true : (() => {
+      const ch = chars.find(c => c.id === holderId)
+      return ch?.groups?.split(',').map(g => g.trim()).includes(filterGroup)
+    })()
+    return ms && mc && mch && mchg
+  }), [allEntries, search, filterCat, filterChar, filterChars, filterGroup, chars])
 
   // ── Grouping for bubble view ──
   const grouped = useMemo(() => {
@@ -490,17 +514,26 @@ export default function Inventory({ db }) {
         </select>
 
         {/* Character filter */}
-        <select value={filterChar} onChange={e => setFilterChar(e.target.value)}
+        <select value={filterChar} onChange={e => { setFilterChar(e.target.value); setFilterChars(new Set()) }}
           style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All characters</option>
           {usedChars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           {grouped['__unassigned__'] && <option value="__unassigned__">Unassigned</option>}
         </select>
+        {/* Group filter */}
+        {allGroups.length > 0 && (
+          <select value={filterGroup} onChange={e => setFilterGroup(e.target.value)}
+            style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+              border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+            <option value="all">All groups</option>
+            {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        )}
 
         {/* View toggle */}
         <div style={{ display: 'flex', gap: 3 }}>
-          {[['bubble','🫧 Bubbles'],['list','☰ List']].map(([v,l]) => (
+          {[['bubble','🫧 Bubbles'],['list','☰ List'],['outfit','👗 Outfits']].map(([v,l]) => (
             <button key={v} className={`btn btn-sm btn-outline ${viewMode===v?'active':''}`}
               style={{ fontSize: 10 }} onClick={() => setViewMode(v)}>{l}</button>
           ))}
@@ -526,7 +559,7 @@ export default function Inventory({ db }) {
             <div style={{ position: 'absolute', right: 0, top: 30, zIndex: 100,
               background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 8,
               padding: 10, display: 'flex', gap: 6 }}>
-              {[1,2,3,4].map(n => (
+              {[1,2,3,4,5,8].map(n => (
                 <button key={n} onClick={() => { saveColumns(n); setShowColPicker(false) }}
                   style={{ width: 30, height: 30, borderRadius: 6, fontSize: 12, fontWeight: 700,
                     background: columns === n ? 'var(--ci)' : 'var(--card)',
@@ -560,7 +593,9 @@ export default function Inventory({ db }) {
           )}
           {holderOrder.map((holderId, idx) => {
             const charObj = holderId === '__unassigned__' ? null : chars.find(c => c.id === holderId)
-            const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length]
+            // Use stable hash of charId for default color, not position index
+            const stableIdx = holderId === '__unassigned__' ? 0 : Math.abs(holderId.split('').reduce((a,c) => a + c.charCodeAt(0), 0))
+            const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[stableIdx % DEFAULT_COLORS.length]
             return (
               <div key={holderId} style={{ breakInside: 'avoid', marginBottom: 10 }}>
                 <CharBubble
@@ -575,7 +610,7 @@ export default function Inventory({ db }) {
                   onDragStart={() => setDragIdx(idx)}
                   onDragOver={() => setDragOverIdx(idx)}
                   onDrop={() => handleDrop(dragIdx, dragOverIdx)}
-                  onOpenEntry={entry => setViewPopup(entry)}
+                  onOpenEntry={(entry, bColor) => setViewPopup({ entry, bubbleColor: bColor })}
                 />
               </div>
             )
@@ -623,9 +658,14 @@ export default function Inventory({ db }) {
         </div>
       )}
 
+      {/* ── Outfit Snapshot view ── */}
+      {viewMode === 'outfit' && (
+        <OutfitSnapshot db={db} chars={chars} allEntries={allEntries} />
+      )}
+
       {/* ── Popups ── */}
       {viewPopup && (
-        <EntryPopup entry={viewPopup} allEntries={allEntries} chars={chars} db={db}
+        <EntryPopup entry={viewPopup.entry || viewPopup} bubbleColor={viewPopup.bubbleColor} allEntries={allEntries} chars={chars} db={db}
           onClose={() => setViewPopup(null)}
           onEdit={e => { setEditing(e); setModalOpen(true) }}
           onTransfer={id => setTransferId(id)}

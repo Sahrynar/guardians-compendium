@@ -28,14 +28,24 @@ export default function Timeline({ db }) {
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('tl_cols') || '2'))
   function saveColCount(n) { setColCount(n); db.saveSetting?.('tl_cols', String(n)) }
+  const [dividers, setDividers] = useState(() => db.getSetting?.('tl_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('tl_cols_div', next ? 'on' : 'off') }
   const [filterEra, setFilterEra] = useState('all')
   const [expanded, setExpanded] = useState(null)
+  const [trackPopup, setTrackPopup] = useState(null) // event shown in track dot popup
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [showVisual, setShowVisual] = useState(true)
   const [listSort, setListSort] = useState('order')
   const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
+  const [rangeMin, setRangeMin] = useState('') // HC date range filter min
+  const [rangeMax, setRangeMax] = useState('') // HC date range filter max
+  const [eraMarkers, setEraMarkers] = useState(() => {
+    try { return JSON.parse(db.getSetting?.('timeline_era_markers') || '[]') } catch { return [] }
+  })
+  const [eraEditor, setEraEditor] = useState(false)
+  const [editingMarker, setEditingMarker] = useState(null)
   const [zoom, setZoom] = useState(1)
   const trackRef = useRef()
   const isDragging = useRef(false)
@@ -44,7 +54,7 @@ export default function Timeline({ db }) {
   function handleWheel(e) {
     e.preventDefault()
     const delta = e.deltaY > 0 ? 0.85 : 1.18
-    setZoom(z => Math.max(0.3, Math.min(8, z * delta)))
+    setZoom(z => Math.max(0.05, Math.min(12, z * delta)))
   }
 
   function handleMouseDown(e) {
@@ -66,7 +76,18 @@ export default function Timeline({ db }) {
 
   // Visual track: filtered by visualFilter era, always sorted by sort_order
   const visualEvents = [...events]
-    .filter(e => visualFilter === 'all' || e.era === visualFilter)
+    .filter(e => {
+      if (visualFilter !== 'all' && e.era !== visualFilter) return false
+      if (rangeMin !== '') {
+        const so = parseFloat(e.sort_order) || 0
+        if (so < parseFloat(rangeMin)) return false
+      }
+      if (rangeMax !== '') {
+        const so = parseFloat(e.sort_order) || 0
+        if (so > parseFloat(rangeMax)) return false
+      }
+      return true
+    })
     .sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
 
   // List: filtered by search + filterEra, sortable independently
@@ -83,6 +104,11 @@ export default function Timeline({ db }) {
     })
 
   const eras = [...new Set(events.map(e => e.era).filter(Boolean))]
+
+  function saveEraMarkers(markers) {
+    setEraMarkers(markers)
+    db.saveSetting?.('timeline_era_markers', JSON.stringify(markers))
+  }
 
   function handleSave(entry) {
     db.upsertEntry('timeline', entry)
@@ -104,7 +130,7 @@ export default function Timeline({ db }) {
     <div>
       <div className="tbar">
         <div style={{ display:'flex', gap:3 }}>
-          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--ct)' : 'none',
@@ -112,7 +138,13 @@ export default function Timeline({ db }) {
                 border: `1px solid ${colCount===n ? 'var(--ct)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
-        </div>
+          <button onClick={toggleDividers}
+            style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+              background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+              color: dividers ? 'var(--tx)' : 'var(--mut)',
+              border:'1px solid var(--brd)', cursor:'pointer' }}>
+            {dividers ? '┃ on' : '┃ off'}
+          </button>
         <input className="sx" placeholder="Search events…" value={search} onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-sm btn-outline" onClick={() => setShowVisual(v => !v)}>
           {showVisual ? 'Hide' : 'Show'} Track
@@ -147,17 +179,33 @@ export default function Timeline({ db }) {
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, paddingLeft:4 }}>
             <span style={{ fontSize:10, color:'var(--mut)' }}>Zoom:</span>
             <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
-              onClick={() => setZoom(z => Math.max(0.3, z * 0.75))}>−</button>
+              onClick={() => setZoom(z => Math.max(0.05, z * 0.75))}>−</button>
             <span style={{ fontSize:10, color:'var(--dim)', minWidth:36, textAlign:'center' }}>
               {Math.round(zoom * 100)}%
             </span>
             <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
-              onClick={() => setZoom(z => Math.min(8, z * 1.33))}>+</button>
+              onClick={() => setZoom(z => Math.min(12, z * 1.33))}>+</button>
             <button className="btn btn-sm btn-outline" style={{ fontSize:10, padding:'2px 8px' }}
               onClick={() => setZoom(1)}>Reset</button>
             <span style={{ fontSize:9, color:'var(--mut)', marginLeft:4 }}>
               scroll or pinch to zoom · drag to pan
             </span>
+            <span style={{ fontSize:9, color:'var(--dim)', marginLeft:8 }}>Range:</span>
+            <input type="number" value={rangeMin} onChange={e => setRangeMin(e.target.value)}
+              placeholder="Min sort#" title="Min sort order (leave blank for all)"
+              style={{ width:70, fontSize:9, padding:'2px 5px', background:'var(--sf)',
+                border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }} />
+            <span style={{ fontSize:9, color:'var(--dim)' }}>–</span>
+            <input type="number" value={rangeMax} onChange={e => setRangeMax(e.target.value)}
+              placeholder="Max sort#"
+              style={{ width:70, fontSize:9, padding:'2px 5px', background:'var(--sf)',
+                border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }} />
+            {(rangeMin || rangeMax) && (
+              <button className="btn btn-sm btn-outline" style={{ fontSize:9, padding:'1px 6px' }}
+                onClick={() => { setRangeMin(''); setRangeMax('') }}>Clear</button>
+            )}
+            <button className="btn btn-sm btn-outline" style={{ fontSize:9, padding:'1px 6px', color:'var(--cca)', borderColor:'var(--cca)' }}
+              onClick={() => setEraEditor(true)} title="Manage era markers">⧖ Eras</button>
           </div>
           <div
             ref={trackRef}
@@ -169,6 +217,24 @@ export default function Timeline({ db }) {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}>
           <div style={{ position: 'relative', minHeight: 180, padding: '0 30px', width: w }}>
+            {/* Custom era markers — positioned divs */}
+            {eraMarkers.map((marker, mi) => {
+              const x1 = 30 + (w - 60) * ((parseFloat(marker.start)||mn) - mn) / Math.max(1, rng)
+              const x2 = 30 + (w - 60) * ((parseFloat(marker.end)||mx) - mn) / Math.max(1, rng)
+              const col = marker.color || '#4488ff'
+              return (
+                <div key={mi} style={{ position:'absolute', left:x1, width:Math.max(2,x2-x1),
+                  top:0, height:'100%', background:`${col}12`,
+                  borderLeft:`2px solid ${col}88`, borderRight:`2px dashed ${col}66`,
+                  pointerEvents:'none', zIndex:0 }}>
+                  <div style={{ position:'absolute', top:4, left:4, fontSize:9,
+                    color:col, fontWeight:700, whiteSpace:'nowrap', opacity:0.9 }}>
+                    {marker.name}
+                  </div>
+                </div>
+              )
+            })}
+
             {/* Era bands */}
             {Object.entries(ERA_BANDS).map(([era, bg]) => {
               const eraEs = visualEvents.filter(e => e.era === era)
@@ -188,10 +254,12 @@ export default function Timeline({ db }) {
             {visualEvents.map((e, i) => {
               const x = xPos(e)
               const col = DOT_COLS[i % DOT_COLS.length]
+              const labelRow = [62, 95, 128, 161][i % 4]
+              const isSelected = trackPopup === e.id
               return (
                 <div key={e.id}>
-                  <div className="timeline-dot" style={{ left: x-6, background: col }} onClick={() => setExpanded(exp => exp===e.id?null:e.id)} title={e.name} />
-                  <div className="timeline-label" style={{ left: Math.max(0, Math.min(w-170, x-80)), top: i%2 ? 72 : 115, borderTop: `2px solid ${col}` }}>
+                  <div className="timeline-dot" style={{ left: x-6, background: col, outline: isSelected ? `2px solid #fff` : 'none', outlineOffset:2 }} onClick={() => setTrackPopup(tp => tp===e.id ? null : e.id)} title={e.name} />
+                  <div className="timeline-label" style={{ left: Math.max(0, Math.min(w-170, x-80)), top: labelRow, borderTop: `2px solid ${col}`, background: isSelected ? `${col}22` : undefined, borderRadius: isSelected ? 4 : undefined }}>
                     <div style={{ fontWeight: 700, fontSize: 10 }}>{e.name}</div>
                     <div style={{ color: 'var(--dim)', fontSize: 9 }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
                   </div>
@@ -202,6 +270,34 @@ export default function Timeline({ db }) {
           </div>
         </>
       )}
+
+      {/* Track popup */}
+      {trackPopup && (() => {
+        const ev = events.find(e => e.id === trackPopup)
+        if (!ev) return null
+        return (
+          <div style={{ margin: '6px 0 10px', padding: '10px 14px',
+            background: 'var(--card)', border: '1px solid var(--ct)',
+            borderRadius: 8, position: 'relative' }}>
+            <button onClick={() => setTrackPopup(null)}
+              style={{ position:'absolute', top:8, right:10, background:'none',
+                border:'none', color:'var(--mut)', cursor:'pointer', fontSize:16 }}>✕</button>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, color:'var(--ct)', marginBottom:4 }}>{ev.name}</div>
+            <div style={{ fontSize:10, color:'var(--cca)', marginBottom:6 }}>
+              {[ev.date_hc, ev.date_mnaerah].filter(Boolean).join(' / ')}
+              {ev.era && <span style={{ marginLeft:8, color:'var(--dim)' }}>{ev.era}</span>}
+            </div>
+            {ev.detail && <div style={{ fontSize:11, color:'var(--dim)', lineHeight:1.6, marginBottom:8 }}>{ev.detail}</div>}
+            {ev.notes && <div style={{ fontSize:11, color:'var(--mut)', fontStyle:'italic' }}>{ev.notes}</div>}
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <button className="btn btn-sm btn-outline" style={{ color:'var(--ct)', borderColor:'var(--ct)' }}
+                onClick={() => { setEditing(ev); setModalOpen(true); setTrackPopup(null) }}>✎ Edit</button>
+              <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544' }}
+                onClick={() => { setConfirmId(ev.id); setTrackPopup(null) }}>✕ Delete</button>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* List controls */}
       <div style={{ display:'flex', gap:8, alignItems:'center', marginTop:12, marginBottom:4,
@@ -216,7 +312,7 @@ export default function Timeline({ db }) {
       </div>
 
       {/* List */}
-      <div className="cg" style={{ marginTop: 4, columns: 2, columnGap: 10, columnRule: "1px solid var(--brd)" }}>
+      <div className="cg" style={{ marginTop: 4, columns: colCount, columnGap: 12, columnRule: '1px solid var(--brd)' }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
@@ -250,6 +346,48 @@ export default function Timeline({ db }) {
           )
         })}
       </div>
+
+      {/* Era Marker Editor */}
+      {eraEditor && (
+        <div style={{ position:'fixed', inset:0, zIndex:300, background:'rgba(0,0,0,.85)',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          onClick={() => setEraEditor(false)}>
+          <div style={{ background:'var(--sf)', border:'1px solid var(--cca)',
+            borderRadius:12, padding:20, maxWidth:480, width:'100%', maxHeight:'80vh', overflowY:'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:14, color:'var(--cca)', marginBottom:14 }}>⧖ Era Markers</div>
+            <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10 }}>
+              Markers appear as bands on the visual track. Use sort# values to set start/end positions.
+            </div>
+            {eraMarkers.map((m, i) => (
+              <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6, padding:'6px 8px',
+                background:'var(--card)', borderRadius:6, borderLeft:`3px solid ${m.color||'#4488ff'}` }}>
+                <input value={m.name} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],name:e.target.value}; saveEraMarkers(n) }}
+                  style={{ flex:1, fontSize:11, padding:'3px 6px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  placeholder="Era name" />
+                <input type="number" value={m.start} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],start:e.target.value}; saveEraMarkers(n) }}
+                  style={{ width:60, fontSize:10, padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  placeholder="Start#" />
+                <span style={{ fontSize:10, color:'var(--mut)' }}>–</span>
+                <input type="number" value={m.end} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],end:e.target.value}; saveEraMarkers(n) }}
+                  style={{ width:60, fontSize:10, padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  placeholder="End#" />
+                <input type="color" value={m.color||'#4488ff'} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],color:e.target.value}; saveEraMarkers(n) }}
+                  style={{ width:28, height:26, border:'none', borderRadius:4, cursor:'pointer', background:'none' }} />
+                <button onClick={() => saveEraMarkers(eraMarkers.filter((_,j) => j!==i))}
+                  style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:14 }}>✕</button>
+              </div>
+            ))}
+            <button className="btn btn-sm btn-outline" style={{ marginTop:8, color:'var(--cca)', borderColor:'var(--cca)' }}
+              onClick={() => saveEraMarkers([...eraMarkers, { name:'New Era', start:'', end:'', color:'#4488ff' }])}>
+              + Add Marker
+            </button>
+            <div style={{ display:'flex', justifyContent:'flex-end', marginTop:14 }}>
+              <button className="btn btn-outline btn-sm" onClick={() => setEraEditor(false)}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id?'Edit':'Add'} Event`} color="var(--ct)">
         <EntryForm fields={TL_FIELDS} entry={editing||{}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--ct)" db={db} />

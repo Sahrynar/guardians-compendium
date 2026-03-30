@@ -9,6 +9,8 @@ export default function Notes({ db }) {
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('nt_cols') || '2'))
   function saveColCount(n) { setColCount(n); db.saveSetting?.('nt_cols', String(n)) }
+  const [dividers, setDividers] = useState(() => db.getSetting?.('nt_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('nt_cols_div', next ? 'on' : 'off') }
   const [catFilter, setCatFilter] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -36,7 +38,7 @@ export default function Notes({ db }) {
 
       <div className="tbar" style={{ padding: '0 0 8px' }}>
         <div style={{ display:'flex', gap:3 }}>
-          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cw)' : 'none',
@@ -44,6 +46,14 @@ export default function Notes({ db }) {
                 border: `1px solid ${colCount===n ? 'var(--cw)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
+        
+        <button onClick={toggleDividers}
+          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+            color: dividers ? 'var(--tx)' : 'var(--mut)',
+            border:'1px solid var(--brd)', cursor:'pointer' }}>
+          {dividers ? '┃ on' : '┃ off'}
+        </button>
         </div>
         <input className="sx" placeholder="Search notes…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
@@ -64,7 +74,7 @@ export default function Notes({ db }) {
         </div>
       )}
 
-      <div className="cg" style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
+      <div  style={{ columns: colCount, columnGap: 10, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
         {filtered.map((n, i) => (
           <div key={n.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6 }} style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

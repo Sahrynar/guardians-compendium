@@ -7,6 +7,8 @@ export default function Flags({ db }) {
   const [filter, setFilter] = useState('active')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('fl_cols') || '2'))
   function saveColCount(n) { setColCount(n); db.saveSetting?.('fl_cols', String(n)) } // 'active' | 'resolved' | 'all'
+  const [dividers, setDividers] = useState(() => db.getSetting?.('fl_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('fl_cols_div', next ? 'on' : 'off') }
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ name: '', priority: 'high', detail: '' })
   const [confirmId, setConfirmId] = useState(null)
@@ -42,7 +44,7 @@ export default function Flags({ db }) {
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
         <div style={{ display:'flex', gap:3 }}>
-          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cfl)' : 'none',
@@ -50,6 +52,14 @@ export default function Flags({ db }) {
                 border: `1px solid ${colCount===n ? 'var(--cfl)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
+        
+        <button onClick={toggleDividers}
+          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+            color: dividers ? 'var(--tx)' : 'var(--mut)',
+            border:'1px solid var(--brd)', cursor:'pointer' }}>
+          {dividers ? '┃ on' : '┃ off'}
+        </button>
         </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
       </div>
@@ -73,7 +83,7 @@ export default function Flags({ db }) {
         </div>
       )}
 
-      <div style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
+      <div style={{ columns: colCount, columnGap: 12, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
       {filtered.map(f => {
         const pc = priCol[f.priority] || 'var(--dim)'
         return (

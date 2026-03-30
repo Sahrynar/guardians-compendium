@@ -342,9 +342,9 @@ export default function Wiki({ db }) {
         </div>
       )}
 
-      <div className="cg">
+      <div style={{ columns: colCount, columnGap:12, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
         {filtered.map(a => (
-          <div key={a.id} className="entry-card" style={{ '--card-color': 'var(--cc)' }}>
+          <div key={a.id} className="entry-card" style={{ '--card-color': 'var(--cc)', breakInside: 'avoid', marginBottom: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>

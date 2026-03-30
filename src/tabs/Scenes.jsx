@@ -39,6 +39,8 @@ export default function Scenes({ db }) {
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('sc_cols') || '2'))
   function saveColCount(n) { setColCount(n); db.saveSetting?.('sc_cols', String(n)) }
+  const [dividers, setDividers] = useState(() => db.getSetting?.('sc_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('sc_cols_div', next ? 'on' : 'off') }
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
@@ -99,7 +101,7 @@ export default function Scenes({ db }) {
     const chars = charTags(s.characters_present)
     const bookCol = BOOK_COLORS[s.book] || 'var(--csc)'
     return (
-      <div className="scene-card"
+      <div className="scene-card" style={{ breakInside: 'avoid', marginBottom: 6 }}
         style={{ borderLeft: `3px solid ${bookCol}`, cursor:'pointer' }}
         onDoubleClick={e => { e.stopPropagation(); setViewPopup(s) }}
         draggable
@@ -381,7 +383,7 @@ export default function Scenes({ db }) {
     <div>
       <div className="tbar">
         <div style={{ display:'flex', gap:3 }}>
-          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--ccn)' : 'none',
@@ -389,6 +391,14 @@ export default function Scenes({ db }) {
                 border: `1px solid ${colCount===n ? 'var(--ccn)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
+        
+        <button onClick={toggleDividers}
+          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+            color: dividers ? 'var(--tx)' : 'var(--mut)',
+            border:'1px solid var(--brd)', cursor:'pointer' }}>
+          {dividers ? '┃ on' : '┃ off'}
+        </button>
         </div>
         <input className="sx" placeholder="Search scenes…" value={search}
           onChange={e => setSearch(e.target.value)} />
@@ -435,7 +445,7 @@ export default function Scenes({ db }) {
               </div>
             )}
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              <div style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>{bookScenes.map(s => <SceneCard key={s.id} s={s} />)}</div>
+              <div style={{ columns: colCount, columnGap: 10, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>{bookScenes.map(s => <SceneCard key={s.id} s={s} />)}</div>
             </div>
           </div>
         )

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { uid } from '../constants'
+import { supabase, hasSupabase } from '../supabase'
 
 // ── Default starter tags ─────────────────────────────────────────
 const DEFAULT_TAGS = [
@@ -455,32 +456,59 @@ function TagManager({ tags, onUpdate, onClose }) {
 // ── Main Journal tab ─────────────────────────────────────────────
 export default function Journal({ db }) {
   const [tags, setTags] = useState(() => loadLocal('gcomp_journal_tags', DEFAULT_TAGS))
+  const [captures, setCaptures] = useState(() => loadLocal('gcomp_captures', []))
   const [showTagManager, setShowTagManager] = useState(false)
   const [activeZone, setActiveZone] = useState('capture')
 
-  // Supabase-backed captures via db.db.journal; localStorage as fallback
-  const dbCaptures = db?.db?.journal || []
-  const lsCaptures = loadLocal('gcomp_captures', [])
-  const captures = dbCaptures.length > 0 ? dbCaptures : lsCaptures
+  // Load from Supabase on mount, fall back to localStorage
+  useEffect(() => {
+    async function init() {
+      if (!hasSupabase) return
+      try {
+        const { supabase: sb } = await import('../supabase')
+        const { data: capData } = await sb.from('entries').select('*').eq('category', 'journal_captures')
+        if (capData && capData.length > 0) {
+          const loaded = capData.map(r => ({ id: r.id, ...r.data }))
+          setCaptures(loaded)
+          saveLocal('gcomp_captures', loaded)
+        }
+        const { data: tagData } = await sb.from('entries').select('*').eq('category', 'journal_tags')
+        if (tagData && tagData.length > 0) {
+          const loadedTags = tagData.map(r => ({ id: r.id, ...r.data }))
+          if (loadedTags.length > 0) {
+            setTags(loadedTags)
+            saveLocal('gcomp_journal_tags', loadedTags)
+          }
+        }
+      } catch (err) { console.error('Journal Supabase load error:', err) }
+    }
+    init()
+  }, [])
 
-  function saveTags(t) {
+  async function saveTags(t) {
     setTags(t)
     saveLocal('gcomp_journal_tags', t)
+    if (db?.upsertEntry) t.forEach(tag => db.upsertEntry('journal_tags', tag))
+  }
+
+  async function saveCaptures(c) {
+    setCaptures(c)
+    saveLocal('gcomp_captures', c)
+    if (db?.upsertEntry) c.forEach(cap => db.upsertEntry('journal_captures', cap))
   }
 
   function addCapture(item) {
-    saveLocal('gcomp_captures', [item, ...lsCaptures])
-    if (db?.upsertEntry) db.upsertEntry('journal', item)
+    const updated = [item, ...captures]
+    saveCaptures(updated)
   }
 
   function deleteCapture(id) {
-    saveLocal('gcomp_captures', lsCaptures.filter(c => c.id !== id))
-    if (db?.deleteEntry) db.deleteEntry('journal', id)
+    saveCaptures(captures.filter(c => c.id !== id))
+    if (db?.deleteEntry) db.deleteEntry('journal_captures', id)
   }
 
   function editCapture(item) {
-    saveLocal('gcomp_captures', lsCaptures.map(c => c.id === item.id ? item : c))
-    if (db?.upsertEntry) db.upsertEntry('journal', item)
+    saveCaptures(captures.map(c => c.id === item.id ? item : c))
   }
 
   const zones = [

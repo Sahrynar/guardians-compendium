@@ -3,9 +3,9 @@ import { supabase, hasSupabase } from '../supabase'
 
 const LS_KEY = 'gcomp3'
 const CATEGORIES = [
-  'characters','wardrobe','items','inventory','locations','timeline',
+  'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps','wiki','notes','family_tree','journal','sessionlog'
+  'calendar_entries','flags','maps','wiki','notes','family_tree','session_logs'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -198,25 +198,79 @@ export function useDB() {
         try {
           const p = JSON.parse(ev.target.result)
           let count = 0
-          const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7)
+          const genUid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7)
+
+          // Detect if this is a full Compendium JSON (not Aster-format)
+          const isFullFormat = CATEGORIES.some(k => Array.isArray(p[k]) && p[k].length > 0)
+          if (isFullFormat) {
+            // Treat as regular import — merge all categories
+            setDbState(prev => {
+              const next = { ...prev }
+              CATEGORIES.forEach(k => {
+                if (!p[k] || !Array.isArray(p[k])) return
+                if (k === 'family_tree') {
+                  const exRoot = (prev[k] || [])[0] || { id: '_root', nodes: [], edges: [] }
+                  const incRoot = p[k][0]
+                  if (!incRoot) return
+                  const exNodeIds = new Set((exRoot.nodes || []).map(n => n.id))
+                  const exEdgeIds = new Set((exRoot.edges || []).map(e => e.id))
+                  next[k] = [{ ...exRoot, ...incRoot,
+                    nodes: [...(exRoot.nodes||[]), ...(incRoot.nodes||[]).filter(n => !exNodeIds.has(n.id))],
+                    edges: [...(exRoot.edges||[]), ...(incRoot.edges||[]).filter(e => !exEdgeIds.has(e.id))],
+                  }]
+                  return
+                }
+                const existingIds = new Set((prev[k] || []).map(e => e.id).filter(Boolean))
+                const newEntries = p[k].filter(e => e.id && !existingIds.has(e.id))
+                next[k] = [...(prev[k] || []), ...newEntries]
+                count += newEntries.length
+              })
+              lsSave(next)
+              return next
+            })
+            resolve(count)
+            return
+          }
+
+          // Aster-format: map Aster field names to Compendium fields
           setDbState(prev => {
             const next = { ...prev }
             if (p.characters) p.characters.forEach(ch => {
-              const entry = { id: uid(), name: ch.name || '', aliases: (ch.aliases||[]).join(', '),
+              const id = ch.id || genUid()
+              const existingIds = new Set((next.characters || []).map(e => e.id))
+              if (existingIds.has(id)) return
+              next.characters = [...(next.characters||[]), {
+                id, name: ch.name||'', aliases: (ch.aliases||[]).join(', '),
                 birthday: ch.birthYear||'', age_b1: ch.ageNotes||'', notes: ch.notes||'',
-                status: ch.status==='locked'?'locked':'provisional', books: [], relationships: [] }
-              next.characters = [...next.characters, entry]; count++
+                status: ch.status==='locked'?'locked':'provisional', books: [], relationships: []
+              }]; count++
             })
             if (p.events) p.events.forEach(ev => {
-              const entry = { id: uid(), name: ev.title||'', date_hc: ev.displayYear||'',
+              const id = ev.id || genUid()
+              const existingIds = new Set((next.timeline || []).map(e => e.id))
+              if (existingIds.has(id)) return
+              next.timeline = [...(next.timeline||[]), {
+                id, name: ev.title||'', date_hc: ev.displayYear||'',
                 sort_order: String(ev.sortKey||''), era: ev.category||'', detail: ev.notes||'',
-                status: ev.status==='locked'?'locked':'provisional', books: [], relationships: [] }
-              next.timeline = [...next.timeline, entry]; count++
+                status: ev.status==='locked'?'locked':'provisional', books: [], relationships: []
+              }]; count++
             })
             if (p.places) p.places.forEach(pl => {
-              const entry = { id: uid(), name: pl.name||'', loc_type: pl.type||'',
-                parent_id: '', description: pl.notes||'', status: 'provisional', books: [], relationships: [] }
-              next.locations = [...next.locations, entry]; count++
+              const id = pl.id || genUid()
+              const existingIds = new Set((next.locations || []).map(e => e.id))
+              if (existingIds.has(id)) return
+              next.locations = [...(next.locations||[]), {
+                id, name: pl.name||'', loc_type: pl.type||'',
+                parent_id: '', description: pl.notes||'', status: 'provisional', books: [], relationships: []
+              }]; count++
+            })
+            // Handle any other categories present in Aster export if they match Compendium keys
+            CATEGORIES.filter(k => !['characters','timeline','locations','family_tree'].includes(k)).forEach(k => {
+              if (!p[k] || !Array.isArray(p[k])) return
+              const existingIds = new Set((next[k] || []).map(e => e.id).filter(Boolean))
+              const newEntries = p[k].filter(e => e.id && !existingIds.has(e.id))
+              next[k] = [...(next[k] || []), ...newEntries]
+              count += newEntries.length
             })
             lsSave(next)
             return next
@@ -251,29 +305,10 @@ export function useDB() {
     a.click()
   }, [db])
 
-  const exportCSV = useCallback(() => {
-    let csv = 'Category,Name,Status,Books,Notes\n'
-    Object.keys(db).forEach(cat => {
-      ;(db[cat] || []).forEach(e => {
-        csv += [cat, e.name||'', e.status||'',
-          (e.books||[]).join(';'),
-          (e.notes||'').replace(/"/g,'""')]
-          .map(v => `"${v}"`).join(',') + '\n'
-      })
-    })
-    const blob = new Blob([csv], { type:'text/csv' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `guardians_${new Date().toISOString().slice(0,10)}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }, [db])
-
   return {
     db, settings, loading, syncStatus,
     upsertEntry, deleteEntry, save, saveSetting,
-    getSetting: (key, def='') => settings[key] ?? def,
-    exportJSON, importJSON, importAster, exportAster, exportCSV,
+    exportJSON, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }
 }

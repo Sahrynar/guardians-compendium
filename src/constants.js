@@ -53,7 +53,8 @@ export const SEASON_TAG_COLORS = {
 export const CATS = {
   dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
   characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
-  inventory:  { l: 'Inventory',    i: '🎒', c: 'var(--ci)' },
+  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
+  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
   locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
   timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
   scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
@@ -68,7 +69,7 @@ export const CATS = {
   wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
   notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
   journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
-  sessionlog: { l: 'Session Log',  i: '📋', c: 'var(--cc)' },
+  sessionlog: { l: 'Session Log',  i: '📋', c: 'var(--cca)' },
   familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
   flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
 }
@@ -96,8 +97,6 @@ export const CHAR_FIELDS = [
   { k: 'deceased',        l: 'Deceased',            t: 'sel',    o: ['','Yes','No','Unknown'] },
   { k: 'dies_in',         l: 'Dies In',             t: 'sel',    o: ['','Before Series','Book 1','Book 2','Book 3','Book 4','Book 5','Future'] },
   { k: 'traits',          l: 'Traits',              t: 'ta' },
-  { k: 'bubble_color',    l: 'Bubble Colour',       t: 'color', p: 'Colour for Items/Wardrobe bubble' },
-  { k: 'bubble_order',    l: 'Bubble Order',         t: 'text', p: 'Number for sorting bubbles (e.g. 1, 2, 3)' },
 ]
 
 // ── Era timeline data ──────────────────────────────────────────

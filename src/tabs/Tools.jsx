@@ -145,27 +145,39 @@ function DateTimeTool({ chars, events }) {
     return lajenToMnaerah(yf, mf, df)
   }
 
+  function parseEventDate(ev) {
+    const dateStr = ev.date_mnaerah || ev.date_hc || ''
+    const m = dateStr.match(/-?\d+(\.\d+)?/)
+    if (!m) return null
+    const num = parseFloat(m[0])
+    if (isNaN(num)) return null
+    if (!ev.date_mnaerah && ev.date_hc) return lajenToMnaerah(num)
+    return num
+  }
+
   function calcElapsed() {
-    let t1, t2
+    let t1 = null, t2 = null, err1 = null, err2 = null
     if (seg1Ev) {
       const ev = events.find(e => e.id === seg1Ev)
-      if (ev) {
-        const m = (ev.date_mnaerah || ev.date_hc || '').match(/-?\d+(\.\d+)?/)
-        if (m) t1 = parseFloat(m[0])
-        if (ev.date_hc && !ev.date_mnaerah) t1 = lajenToMnaerah(t1)
-      }
-    } else { t1 = segToMnaerah(seg1Cal, seg1Y, seg1M, seg1D) }
+      if (ev) { t1 = parseEventDate(ev); if (t1 === null) err1 = 'Start event has no parseable date' }
+      else err1 = 'Start event not found'
+    } else {
+      const y = parseFloat(seg1Y)
+      if (!seg1Y || isNaN(y)) err1 = 'Enter a start year'
+      else t1 = segToMnaerah(seg1Cal, seg1Y, seg1M, seg1D)
+    }
     if (seg2Ev) {
       const ev = events.find(e => e.id === seg2Ev)
-      if (ev) {
-        const m = (ev.date_mnaerah || ev.date_hc || '').match(/-?\d+(\.\d+)?/)
-        if (m) t2 = parseFloat(m[0])
-        if (ev.date_hc && !ev.date_mnaerah) t2 = lajenToMnaerah(t2)
-      }
-    } else { t2 = segToMnaerah(seg2Cal, seg2Y, seg2M, seg2D) }
-    if (t1 === undefined || t2 === undefined) return
+      if (ev) { t2 = parseEventDate(ev); if (t2 === null) err2 = 'End event has no parseable date' }
+      else err2 = 'End event not found'
+    } else {
+      const y = parseFloat(seg2Y)
+      if (!seg2Y || isNaN(y)) err2 = 'Enter an end year'
+      else t2 = segToMnaerah(seg2Cal, seg2Y, seg2M, seg2D)
+    }
+    if (err1 || err2) { setElapResult({ error: [err1,err2].filter(Boolean).join(' · ') }); return }
     const mElapsed = Math.abs(t2 - t1)
-    setElapsedResult({ mElapsed, lElapsed: mElapsed * RATIO, days: Math.round(mElapsed * 365.25) })
+    setElapResult({ mElapsed, lElapsed: mElapsed * RATIO, days: Math.round(mElapsed * 365.25) })
   }
 
   function calcLifetime() {
@@ -219,7 +231,7 @@ function DateTimeTool({ chars, events }) {
   const DateInput = ({ y, m, d, onY, onM, onD, fuzzy: fz, showFuzzy }) => (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
       <input type="number" value={y} onChange={e => onY(e.target.value)} placeholder="Year"
-        style={{ width: 70, fontSize: 11, padding: '4px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
+        style={{ width: 90, fontSize: 11, padding: '4px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
       <input type="number" value={m} onChange={e => onM(e.target.value)} placeholder="Mo" min={1} max={12}
         style={{ width: 44, fontSize: 11, padding: '4px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
       <input type="number" value={d} onChange={e => onD(e.target.value)} placeholder="Day" min={1} max={30}
@@ -229,7 +241,7 @@ function DateTimeTool({ chars, events }) {
   )
 
   return (
-    <div className="tool-card" id="tool-dates" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-dates" >
       <h3 style={{ color: 'var(--cca)' }}>🌍 Date & Time</h3>
 
       {/* ── Bidirectional Converter ── */}
@@ -254,7 +266,7 @@ function DateTimeTool({ chars, events }) {
           <>
             <div className="field-row">
               <div className="field"><label>Lajen Year (HC)</label>
-                <input type="number" value={lYear} onChange={e => setLYear(parseInt(e.target.value) || 0)} />
+                <input type="number" value={lYear} min={-99999} onChange={e => setLYear(parseInt(e.target.value) || 0)} style={{ minWidth: 90 }} />
               </div>
               <div className="field"><label>Lajen Month</label>
                 <select value={lMonth} onChange={e => setLMonth(parseInt(e.target.value))}>
@@ -266,11 +278,12 @@ function DateTimeTool({ chars, events }) {
               <input type="number" value={lDay} min={1} max={30} onChange={e => setLDay(parseInt(e.target.value) || 1)} />
             </div>
             <div className="calc-result">
-              <Row label="Lajen Date" value={fmtLajenDate(lYear, lMonth, lDay)} />
-              <Row label="Mnaerah Year (AD)" value={fmtMnaerahDate(l2mResult.mYearAD, true)} color="var(--cca)" />
-              <Row label="Approx. Mnaerah Month" value={`Month ${l2mResult.mMonthApprox} of 12`} />
-              <Row label="Lajen Season" value={l2mResult.season} />
-              <Row label="Total Lajen Days from HC 1" value={l2mResult.totalLDays.toLocaleString()} />
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--cl)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>Lajen</div>
+              <Row label="Date" value={fmtLajenDate(lYear, lMonth, lDay)} />
+              <Row label="Season" value={l2mResult.season} />
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--cca)', textTransform: 'uppercase', letterSpacing: '.06em', margin: '6px 0 4px' }}>Mnaerah equivalent (approximate)</div>
+              <Row label="Year" value={fmtMnaerahDate(l2mResult.mYearAD, true)} color="var(--cca)" />
+              <Row label="Approx. month" value={`~Month ${l2mResult.mMonthApprox} of 12 (${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][l2mResult.mMonthApprox-1]||''})`} />
             </div>
           </>
         )}
@@ -279,7 +292,7 @@ function DateTimeTool({ chars, events }) {
           <>
             <div className="field-row">
               <div className="field"><label>Mnaerah Year (AD, negative for BC)</label>
-                <input type="number" value={mYear} placeholder="e.g. 1554 or -2500" onChange={e => setMYear(e.target.value)} />
+                <input type="number" value={mYear} placeholder="e.g. 1554 or -2500" onChange={e => setMYear(e.target.value)} style={{ minWidth: 120 }} />
               </div>
               <div className="field"><label>Mnaerah Month (1–12)</label>
                 <input type="number" value={mMonth} min={1} max={12} onChange={e => setMMonth(parseInt(e.target.value) || 1)} />
@@ -419,7 +432,7 @@ function UnitTool() {
     ['Months (30-day)',mins/43200],['Years (Lajen/360-day)',mins/518400],
     ['Years (Mnaerah/365.25-day)',mins/525960],['Decades',mins/5259600],['Centuries',mins/52596000]]
   return (
-    <div className="tool-card" id="tool-units" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-units" >
       <h3 style={{ color:'var(--csp)' }}>📐 Time Unit Converter</h3>
       <div className="field-row">
         <div className="field"><label>Amount</label>
@@ -536,7 +549,7 @@ function IxCitlatlTool() {
   }
 
   return (
-    <div className="tool-card" id="tool-ixcitlatl" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-ixcitlatl" >
       <h3 style={{ color:'var(--cl)' }}>✦ Ix'Citlatl Name Converter</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Converts any name across Mesoamerican language systems. Female names begin with <strong style={{ color:'var(--cl)' }}>Ix</strong>, male with <strong style={{ color:'var(--cca)' }}>Ah</strong>. Results are always computed — no overrides.
@@ -691,7 +704,7 @@ function PronunciationTool() {
   ]
 
   return (
-    <div className="tool-card" id="tool-pronun" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-pronun" >
       <h3 style={{ color:'var(--cwr)' }}>🔊 Pronunciation Helper</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Generate and hear how any name or word sounds. Systems marked ⚠ have phonology not yet confirmed.
@@ -801,49 +814,31 @@ function PronunciationTool() {
 const SCOTS_RULES = {
   silvia: {
     label: 'Silvia MacLeod', color: 'var(--ct)',
-    note: 'Educated Edinburgh Scots — strong but not broad. Measured use of Scots markers.',
+    note: 'Old and wise, quirky — a light Scots touch. Only the most recognisable markers.',
     rules: [
-      [/\bdo not\b/gi, "dinnae"], [/\bdoes not\b/gi, "doesnae"], [/\bdid not\b/gi, "didnae"],
-      [/\bwill not\b/gi, "willnae"], [/\bcannot\b/gi, "cannae"], [/\bcan not\b/gi, "cannae"],
-      [/\bhave not\b/gi, "havenae"], [/\bwould not\b/gi, "wouldnae"], [/\bshould not\b/gi, "shouldnae"],
-      [/\bis not\b/gi, "isnae"], [/\bwas not\b/gi, "wasnae"], [/\bare not\b/gi, "arnae"],
-      [/\bI am\b/gi, "I'm"], [/\byes\b/gi, "aye"], [/\bno\b/gi, "nae"],
-      [/\bchild\b/gi, "bairn"], [/\bchildren\b/gi, "bairns"], [/\bhome\b/gi, "hame"],
-      [/\bgirl\b/gi, "lass"], [/\bboy\b/gi, "lad"], [/\bwoman\b/gi, "woman"],
-      [/\bold\b/gi, "auld"], [/\bgood\b/gi, "guid"], [/\bknow\b/gi, "ken"],
-      [/\bwhat\b/gi, "whit"], [/\bthat\b/gi, "thae"], [/\bthose\b/gi, "thae"],
-      [/\bwhere\b/gi, "whaur"], [/\bwho\b/gi, "wha"], [/\bwhy\b/gi, "why"],
-      [/\bhow\b/gi, "hoo"], [/\bthink\b/gi, "think"], [/\bwee\b/gi, "wee"],
-      [/\bvery\b/gi, "gey"], [/\bmuch\b/gi, "muckle"], [/\blittle\b/gi, "wee"],
-      [/\btowards?\b/gi, "tae"], [/\bfrom\b/gi, "frae"], [/\bover\b/gi, "ower"],
-      [/\bthere\b/gi, "there"], [/\bthough\b/gi, "though"], [/\benough\b/gi, "eneugh"],
-      [/ing\b/g, "in'"],
+      [/\bdo not\b/gi, "dinnae"], [/\bdon't\b/gi, "dinnae"],
+      [/\bdoes not\b/gi, "doesnae"], [/\bdoesn't\b/gi, "doesnae"],
+      [/\bwill not\b/gi, "willnae"], [/\bwon't\b/gi, "willnae"],
+      [/\bcannot\b/gi, "cannae"], [/\bcan't\b/gi, "cannae"],
+      [/\byes\b/gi, "aye"],
+      [/\bknow\b/gi, "ken"], [/\bknows\b/gi, "kens"],
+      [/\bwee\b/gi, "wee"],
+      [/\bgood\b/gi, "guid"],
+      [/\bwhere\b/gi, "whaur"],
+      [/\bwho\b/gi, "wha"],
     ]
   },
   elizabeth: {
     label: 'Elizabeth MacLeod', color: 'var(--cca)',
-    note: 'Younger, broader Scots than Silvia — more rural inflection, more casual.',
+    note: 'Younger, mostly English-sounding — only the most common Scots words slip through.',
     rules: [
-      [/\bdo not\b/gi, "dinnae"], [/\bdoes not\b/gi, "doesnae"], [/\bdid not\b/gi, "didnae"],
-      [/\bwill not\b/gi, "willnae"], [/\bcannot\b/gi, "cannae"], [/\bcan not\b/gi, "cannae"],
-      [/\bhave not\b/gi, "havenae"], [/\bwould not\b/gi, "widnae"], [/\bshould not\b/gi, "shouldnae"],
-      [/\bis not\b/gi, "isnae"], [/\bwas not\b/gi, "wisnae"], [/\bare not\b/gi, "arnae"],
-      [/\bI am\b/gi, "Ah'm"], [/\byes\b/gi, "aye"], [/\bno\b/gi, "naw"],
-      [/\bchild\b/gi, "bairn"], [/\bchildren\b/gi, "weans"], [/\bhome\b/gi, "hame"],
-      [/\bgirl\b/gi, "lassie"], [/\bboy\b/gi, "laddie"], [/\bwoman\b/gi, "wumman"],
-      [/\bold\b/gi, "auld"], [/\bgood\b/gi, "guid"], [/\bknow\b/gi, "ken"],
-      [/\bwhat\b/gi, "whit"], [/\bthat\b/gi, "that"], [/\bthose\b/gi, "thae"],
-      [/\bwhere\b/gi, "whaur"], [/\bwho\b/gi, "wha"], [/\bwhy\b/gi, "how"],
-      [/\bhow\b/gi, "hoo"], [/\bwee\b/gi, "wee"], [/\bvery\b/gi, "awfy"],
-      [/\bmuch\b/gi, "awfy muckle"], [/\blittle\b/gi, "wee"],
-      [/\btowards?\b/gi, "tae"], [/\bfrom\b/gi, "frae"], [/\bover\b/gi, "ower"],
-      [/\benough\b/gi, "eneugh"], [/\bgot\b/gi, "goat"], [/\bget\b/gi, "get"],
-      [/\byou\b/gi, "ye"], [/\byour\b/gi, "yer"], [/\byourself\b/gi, "yersel"],
-      [/\bmyself\b/gi, "masel"], [/\bit is\b/gi, "it's"], [/\bthere is\b/gi, "there's"],
-      [/ing\b/g, "in'"], [/\bwhat are you\b/gi, "whit are ye"], [/\bare you\b/gi, "are ye"],
+      [/\bdo not\b/gi, "dinnae"], [/\bdon't\b/gi, "dinnae"],
+      [/\bwill not\b/gi, "willnae"], [/\bwon't\b/gi, "willnae"],
+      [/\byes\b/gi, "aye"],
     ]
   }
 }
+
 
 function ScotsTool() {
   const [input, setInput] = useState('')
@@ -869,7 +864,7 @@ function ScotsTool() {
   }
 
   return (
-    <div className="tool-card" id="tool-scots" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-scots" >
       <h3 style={{ color:'var(--ct)' }}>🏴 Scots Dialogue Converter</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Type or paste plain English dialogue and see how Silvia and/or Elizabeth would say it.
@@ -969,7 +964,7 @@ function BackfillTool({ db }) {
   }
 
   return (
-    <div className="tool-card" id="tool-backfill" style={{ breakInside:"avoid", marginBottom:12 }}>
+    <div className="tool-card" id="tool-backfill" >
       <h3 style={{ color:'var(--cfl)' }}>🗓 Birthday Backfill</h3>
       <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
         Auto-creates a timeline entry for every character who has a Lajen birthday set, but doesn't yet have a matching "Birthday: [Name]" event in the timeline. Safe to run multiple times — won't create duplicates.
@@ -1067,8 +1062,98 @@ function ImageLibrary({ db, setLightbox }) {
 // ════════════════════════════════════════════════════════════════
 // MAIN TOOLS COMPONENT
 // ════════════════════════════════════════════════════════════════
+
+// ── Accordion Tool Wrapper ────────────────────────────────────────
+function AccordionTool({ id, emoji, label, color, isOpen, isPinned, onToggle, onPin,
+  dragging, onDragStart, onDragOver, onDrop, children }) {
+  return (
+    <div
+      id={`tool-${id}`}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={e => { e.preventDefault(); onDragOver() }}
+      onDrop={onDrop}
+      style={{ marginBottom: 6, border: `1px solid ${isOpen ? color+'44' : 'var(--brd)'}`,
+        borderRadius: 10, overflow: 'hidden', opacity: dragging ? 0.4 : 1, transition: '.15s',
+        background: isOpen ? `${color}08` : 'var(--card)' }}
+    >
+      {/* Header */}
+      <div
+        onClick={onToggle}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+          cursor: 'pointer', userSelect: 'none', background: isOpen ? `${color}12` : 'transparent' }}
+      >
+        {/* Drag handle */}
+        <span style={{ color: 'var(--mut)', fontSize: 12, cursor: 'grab', flexShrink: 0 }} title="Drag to reorder">⠿</span>
+        <span style={{ fontSize: 16 }}>{emoji}</span>
+        <span style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700, color: isOpen ? color : 'var(--tx)' }}>
+          {label}
+        </span>
+        {/* Pin button */}
+        <button
+          onClick={onPin}
+          title={isPinned ? 'Unpin (will close with others)' : 'Pin open (stays expanded)'}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14,
+            color: isPinned ? color : 'var(--mut)', padding: '0 4px', flexShrink: 0 }}
+        >📌</button>
+        {/* Expand/collapse chevron */}
+        <span style={{ fontSize: 12, color: 'var(--mut)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: '.2s', flexShrink: 0 }}>▾</span>
+      </div>
+      {/* Content */}
+      {(isOpen || isPinned) && (
+        <div style={{ padding: '0 14px 14px' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Tools({ db }) {
   const [lightbox, setLightbox] = useState(null)
+  
+  // Accordion state: which tools are open, pinned, and their order
+  const [toolOpen, setToolOpen] = useState(() => {
+    try { return JSON.parse(db.getSetting?.('tools_open') || '{"dates":true}') } catch { return { dates: true } }
+  })
+  const [toolPinned, setToolPinned] = useState(() => {
+    try { return JSON.parse(db.getSetting?.('tools_pinned') || '[]') } catch { return [] }
+  })
+  const [toolOrder, setToolOrder] = useState(() => {
+    try {
+      const saved = JSON.parse(db.getSetting?.('tools_order') || 'null')
+      return saved || TOOLS.map(t => t.id)
+    } catch { return TOOLS.map(t => t.id) }
+  })
+  const [dragToolIdx, setDragToolIdx] = useState(null)
+  const [dragOverToolIdx, setDragOverToolIdx] = useState(null)
+
+  function toggleTool(id) {
+    const next = { ...toolOpen, [id]: !toolOpen[id] }
+    setToolOpen(next)
+    db.saveSetting?.('tools_open', JSON.stringify(next))
+  }
+  function togglePin(id, e) {
+    e.stopPropagation()
+    const next = toolPinned.includes(id) ? toolPinned.filter(x => x !== id) : [...toolPinned, id]
+    setToolPinned(next)
+    db.saveSetting?.('tools_pinned', JSON.stringify(next))
+    // Pinned tools are always open
+    if (!toolPinned.includes(id)) {
+      const nextOpen = { ...toolOpen, [id]: true }
+      setToolOpen(nextOpen)
+      db.saveSetting?.('tools_open', JSON.stringify(nextOpen))
+    }
+  }
+  function handleToolDrop(fromIdx, toIdx) {
+    if (fromIdx === null || fromIdx === toIdx) { setDragToolIdx(null); return }
+    const next = [...toolOrder]
+    const [moved] = next.splice(fromIdx, 1)
+    next.splice(toIdx, 0, moved)
+    setToolOrder(next)
+    db.saveSetting?.('tools_order', JSON.stringify(next))
+    setDragToolIdx(null); setDragOverToolIdx(null)
+  }
   const chars = db.db.characters || []
   const events = db.db.timeline || []
 
@@ -1095,14 +1180,38 @@ export default function Tools({ db }) {
         ))}
       </div>
 
-      {/* Pinterest masonry — cards flow down each column */}
-      <div style={{ columns: 2, columnGap: 12, columnRule: '1px solid var(--brd)' }}>
-        <DateTimeTool chars={chars} events={events} />
-        <UnitTool />
-        <IxCitlatlTool />
-        <PronunciationTool />
-        <ScotsTool />
-        <BackfillTool db={db} />
+      {/* Accordion tool list — ordered, pinnable, draggable */}
+      <div>
+        {toolOrder.map((toolId, idx) => {
+          const toolDef = TOOLS.find(t => t.id === toolId)
+          if (!toolDef) return null
+          const isOpen = !!toolOpen[toolId]
+          const isPinned = toolPinned.includes(toolId)
+          return (
+            <AccordionTool
+              key={toolId}
+              id={toolId}
+              emoji={toolDef.emoji}
+              label={toolDef.label}
+              color={toolDef.color}
+              isOpen={isOpen}
+              isPinned={isPinned}
+              onToggle={() => !isPinned && toggleTool(toolId)}
+              onPin={e => togglePin(toolId, e)}
+              dragging={dragToolIdx === idx}
+              onDragStart={() => setDragToolIdx(idx)}
+              onDragOver={() => setDragOverToolIdx(idx)}
+              onDrop={() => handleToolDrop(dragToolIdx, dragOverToolIdx)}
+            >
+              {toolId === 'dates'     && <DateTimeTool chars={chars} events={events} />}
+              {toolId === 'units'     && <UnitTool />}
+              {toolId === 'ixcitlatl' && <IxCitlatlTool />}
+              {toolId === 'pronun'    && <PronunciationTool />}
+              {toolId === 'scots'     && <ScotsTool />}
+              {toolId === 'backfill'  && <BackfillTool db={db} />}
+            </AccordionTool>
+          )
+        })}
       </div>
 
       <ImageLibrary db={db} setLightbox={setLightbox} />

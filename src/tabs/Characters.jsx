@@ -65,6 +65,8 @@ export default function Characters({ db }) {
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('char_cols') || '3'))
 
+  const [dividers, setDividers] = useState(() => db.getSetting?.('char_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('char_cols_div', next ? 'on' : 'off') }
   function saveColCount(n) { setColCount(n); db.saveSetting?.('char_cols', String(n)) }
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -163,7 +165,7 @@ export default function Characters({ db }) {
     <div>
       <div className="tbar">
         <div style={{ display:'flex', gap:3, marginRight:'auto' }}>
-          {[['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cc)' : 'none',
@@ -171,6 +173,14 @@ export default function Characters({ db }) {
                 border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
+        
+        <button onClick={toggleDividers}
+          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+            color: dividers ? 'var(--tx)' : 'var(--mut)',
+            border:'1px solid var(--brd)', cursor:'pointer' }}>
+          {dividers ? '┃ on' : '┃ off'}
+        </button>
         </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
         {/* Alive/Deceased filter */}
@@ -189,7 +199,7 @@ export default function Characters({ db }) {
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div className="cg" style={{ columns: colCount, columnGap: 10, columnRule: 'var(--brd) 1px solid' }}>
+      <div style={{ columns: colCount, columnGap: 12, columnRule: dividers ? '1px solid var(--brd)' : 'none', width: '100%' }}>
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>

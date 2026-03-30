@@ -6,7 +6,7 @@ import { uid } from '../../constants'
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
-  renderDetail, extraActions, columns = 1, tileSize = 'normal'
+  renderDetail, extraActions, columns = 1, tileSize = 'normal', columnRule = '1px solid var(--brd)'
 }) {
   const entries = db.db[catKey] || []
   const [search, setSearch] = useState('')
@@ -108,7 +108,7 @@ export default function GenericListTab({
       </div>
 
       {/* List */}
-      <div style={columns > 1 ? { columns: columns, columnGap: 10, columnRule: "1px solid var(--brd)" } : {}}>
+      <div style={{ columns: columns, columnGap: 12, columnRule: columnRule }}>
         {!filtered.length && (
           <div className="empty">
             <div className="empty-icon">{icon}</div>
