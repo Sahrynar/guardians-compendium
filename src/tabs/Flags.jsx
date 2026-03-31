@@ -26,7 +26,8 @@ export default function Flags({ db }) {
 
   function addFlag() {
     if (!form.name.trim()) return
-    db.upsertEntry('flags', { id: uid(), ...form, resolved: false, created: new Date().toISOString() })
+    const now = new Date().toISOString()
+    db.upsertEntry('flags', { id: uid(), ...form, resolved: false, created: now, updated_at: now })
     setForm({ name: '', priority: 'high', detail: '' })
     setModalOpen(false)
   }

@@ -265,7 +265,14 @@ export default function Items({ db }) {
   }
 
   function handleSave(entry) {
-    db.upsertEntry('items', entry)
+    if (!editing?.id) {
+      const newName = (entry.name || '').toLowerCase().trim()
+      const dupe = items.find(i => i.id !== entry.id && (i.name || '').toLowerCase().trim() === newName)
+      if (dupe && !window.confirm(`An item named "${dupe.name}" already exists. Save anyway?`)) return
+    }
+    const stamped = { ...entry, updated_at: new Date().toISOString() }
+    if (!editing?.id) stamped.created = stamped.created || stamped.updated_at
+    db.upsertEntry('items', stamped)
     setModalOpen(false); setEditing(null)
   }
 

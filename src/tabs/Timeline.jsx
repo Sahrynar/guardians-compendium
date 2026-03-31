@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, SL, uid } from '../constants'
@@ -23,7 +23,7 @@ const ERA_BANDS = {
 }
 const DOT_COLS = ['var(--ct)','var(--cc)','var(--ccn)','var(--cl)','var(--ci)','var(--cw)','var(--cq)']
 
-export default function Timeline({ db }) {
+export default function Timeline({ db, crossLink, clearCrossLink }) {
   const events = db.db.timeline || []
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('tl_cols') || '2'))
@@ -32,10 +32,23 @@ export default function Timeline({ db }) {
   function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('tl_cols_div', next ? 'on' : 'off') }
   const [filterEra, setFilterEra] = useState('all')
   const [expanded, setExpanded] = useState(null)
-  const [trackPopup, setTrackPopup] = useState(null) // event shown in track dot popup
+  const [trackPopup, setTrackPopup] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+
+  useEffect(() => {
+    if (crossLink?.search) {
+      setSearch(crossLink.search)
+      if (crossLink.expandName) {
+        const match = events.find(e =>
+          (e.name || '').toLowerCase() === crossLink.expandName.toLowerCase()
+        )
+        if (match) setExpanded(match.id)
+      }
+      clearCrossLink?.()
+    }
+  }, [crossLink])
   const [showVisual, setShowVisual] = useState(true)
   const [listSort, setListSort] = useState('order')
   const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
@@ -111,7 +124,14 @@ export default function Timeline({ db }) {
   }
 
   function handleSave(entry) {
-    db.upsertEntry('timeline', entry)
+    if (!editing?.id) {
+      const newName = (entry.name || '').toLowerCase().trim()
+      const dupe = events.find(e => e.id !== entry.id && (e.name || '').toLowerCase().trim() === newName)
+      if (dupe && !window.confirm(`An event named "${dupe.name}" already exists. Save anyway?`)) return
+    }
+    const stamped = { ...entry, updated_at: new Date().toISOString() }
+    if (!editing?.id) stamped.created = stamped.created || stamped.updated_at
+    db.upsertEntry('timeline', stamped)
     setModalOpen(false); setEditing(null)
     setExpanded(entry.id)
     // Auto-add to calendar if it has a Lajen date with month name

@@ -8,7 +8,7 @@ const SP_FIELDS = [
   { k: 'detail',     l: 'Notes',      t: 'ta' },
 ]
 
-export default function Spellings({ db }) {
+export default function Spellings({ db, crossLink, clearCrossLink }) {
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('sp_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('sp_cols_div') !== 'off')
   function saveColCount(n) { setColCount(n); db.saveSetting?.('sp_cols', String(n)) }
@@ -38,6 +38,7 @@ export default function Spellings({ db }) {
         catKey="spellings" color="var(--csp)" icon="✍"
         label="Spellings" fields={SP_FIELDS} db={db}
         columns={colCount} columnRule={dividers ? '1px solid var(--brd)' : 'none'}
+        crossLink={crossLink} clearCrossLink={clearCrossLink}
       />
     </div>
   )

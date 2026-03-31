@@ -50,28 +50,38 @@ export const SEASON_TAG_COLORS = {
 }
 
 // ── Category config ─────────────────────────────────────────────
+// Nav order: dashboard | wiki · characters · familytree · world · locations |
+//            manuscript · scenes · timeline · eras · calendar |
+//            inventory · wardrobe · items · flags · questions · canon · spellings |
+//            tools · map · notes · journal · sessionlog
 export const CATS = {
-  dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
-  characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
-  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
-  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
-  locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
-  timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
-  scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
-  calendar:   { l: 'Calendar',     i: '🌙', c: 'var(--cca)' },
-  tools:      { l: 'Tools',        i: '🔧', c: 'var(--ctl)' },
-  canon:      { l: 'Canon',        i: '✦',  c: 'var(--ccn)' },
-  world:      { l: 'World',        i: '🌐', c: 'var(--cw)' },
-  questions:  { l: 'Questions',    i: '❓', c: 'var(--cq)' },
-  eras:       { l: 'Eras & Dating',i: '⧖',  c: 'var(--cca)' },
-  spellings:  { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
-  map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
-  wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
-  notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
-  journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
-  familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
-  flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
-  sessionlog: { l: 'Session Log',   i: '📋', c: 'var(--csp)' },
+  dashboard:  { l: 'Dashboard',     i: '⊞',  c: 'var(--cd)' },
+  // ── Character & World ──
+  wiki:       { l: 'Wiki',          i: '📖', c: 'var(--cc)' },
+  characters: { l: 'Characters',    i: '👤', c: 'var(--cc)' },
+  familytree: { l: 'Family Tree',   i: '🌳', c: 'var(--cl)' },
+  world:      { l: 'World',         i: '🌐', c: 'var(--cw)' },
+  locations:  { l: 'Locations',     i: '🗺',  c: 'var(--cl)' },
+  // ── Story & Writing ──
+  manuscript: { l: 'Manuscript',    i: '✍',  c: 'var(--csc)' },
+  scenes:     { l: 'Scenes',        i: '🎬', c: 'var(--csc)' },
+  timeline:   { l: 'Timeline',      i: '⏳', c: 'var(--ct)' },
+  eras:       { l: 'Eras & Dating', i: '⧖',  c: 'var(--cca)' },
+  calendar:   { l: 'Calendar',      i: '🌙', c: 'var(--cca)' },
+  // ── Tracking & Craft ──
+  inventory:  { l: 'Inventory',     i: '🎒', c: 'var(--ci)' },
+  wardrobe:   { l: 'Wardrobe',      i: '👗', c: 'var(--cwr)' },
+  items:      { l: 'Items',         i: '⚔',  c: 'var(--ci)' },
+  flags:      { l: 'Flags',         i: '🚩', c: 'var(--cfl)' },
+  questions:  { l: 'Questions',     i: '❓', c: 'var(--cq)' },
+  canon:      { l: 'Canon',         i: '✦',  c: 'var(--ccn)' },
+  spellings:  { l: 'Spellings',     i: '✎',  c: 'var(--csp)' },
+  // ── Tools & Meta ──
+  tools:      { l: 'Tools',         i: '🔧', c: 'var(--ctl)' },
+  map:        { l: 'Maps',          i: '🌍', c: 'var(--cl)' },
+  notes:      { l: 'Notes',         i: '📝', c: 'var(--cw)' },
+  journal:    { l: 'Journal',       i: '📓', c: 'var(--cc)' },
+  sessionlog: { l: 'Session Log',   i: '📋', c: 'var(--cd)' },
 }
 
 // ── Character field definitions ────────────────────────────────

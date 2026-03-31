@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ERA_TIMELINE, ERA_SPANS, RATIO, LDAYS, MDAYS, LDPM, MONTHS } from '../constants'
 
 // ── Editable era data (local state, not in main DB — these are reference data) ──
@@ -82,25 +82,47 @@ function EditModal({ item, type, onSave, onClose }) {
           <button className="btn btn-primary btn-sm" style={{ background: 'var(--cca)', color: '#000' }} onClick={() => { onSave(form); onClose() }}>Save</button>
         </div>
         <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 10 }}>
-          Note: These edits apply to this session only. Persistent era editing requires a future build.
+          Edits are saved to your account and will persist across sessions.
         </div>
       </div>
     </div>
   )
 }
 
-export default function Eras() {
-  const [timeline, setTimeline] = useState(DEFAULT_TIMELINE)
-  const [spans, setSpans] = useState(DEFAULT_SPANS)
+export default function Eras({ db }) {
+  const [timeline, setTimeline] = useState(() => {
+    try {
+      const saved = db?.getSetting?.('eras_timeline')
+      return saved ? JSON.parse(saved) : DEFAULT_TIMELINE
+    } catch { return DEFAULT_TIMELINE }
+  })
+  const [spans, setSpans] = useState(() => {
+    try {
+      const saved = db?.getSetting?.('eras_spans')
+      return saved ? JSON.parse(saved) : DEFAULT_SPANS
+    } catch { return DEFAULT_SPANS }
+  })
   const [editItem, setEditItem] = useState(null)
   const [editType, setEditType] = useState(null)
   const [editIdx, setEditIdx] = useState(null)
 
+  // Re-hydrate from settings once db is loaded (handles cold start)
+  useEffect(() => {
+    const savedTl = db?.getSetting?.('eras_timeline')
+    const savedSp = db?.getSetting?.('eras_spans')
+    if (savedTl) { try { setTimeline(JSON.parse(savedTl)) } catch {} }
+    if (savedSp) { try { setSpans(JSON.parse(savedSp)) } catch {} }
+  }, [db?.settings])
+
   function handleSaveTimeline(form) {
-    setTimeline(prev => prev.map((e, i) => i === editIdx ? { ...e, ...form } : e))
+    const next = timeline.map((e, i) => i === editIdx ? { ...e, ...form } : e)
+    setTimeline(next)
+    db?.saveSetting?.('eras_timeline', JSON.stringify(next))
   }
   function handleSaveSpan(form) {
-    setSpans(prev => prev.map((s, i) => i === editIdx ? { ...s, ...form } : s))
+    const next = spans.map((s, i) => i === editIdx ? { ...s, ...form } : s)
+    setSpans(next)
+    db?.saveSetting?.('eras_spans', JSON.stringify(next))
   }
 
   return (

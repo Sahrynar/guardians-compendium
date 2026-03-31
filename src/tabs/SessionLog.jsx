@@ -317,7 +317,7 @@ function SessionForm({ initial, onSave, onCancel }) {
 }
 
 // ── Main SessionLog tab ────────────────────────────────────────
-export default function SessionLog() {
+export default function SessionLog({ db }) {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)

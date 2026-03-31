@@ -25,7 +25,16 @@ export default function Notes({ db }) {
   const usedCats = [...new Set(notes.map(n => n.category).filter(Boolean))]
 
   function handleSave(form) {
-    db.upsertEntry('notes', { ...form, id: form.id || uid(), updated: new Date().toISOString() })
+    if (!form.id) {
+      const newTitle = (form.title || '').toLowerCase().trim()
+      if (newTitle) {
+        const dupe = notes.find(n => (n.title || '').toLowerCase().trim() === newTitle)
+        if (dupe && !window.confirm(`A note titled "${dupe.title}" already exists. Save anyway?`)) return
+      }
+    }
+    const stamped = { ...form, id: form.id || uid(), updated_at: new Date().toISOString() }
+    if (!form.id) stamped.created = stamped.created || stamped.updated_at
+    db.upsertEntry('notes', stamped)
     setModalOpen(false); setEditing(null)
   }
 

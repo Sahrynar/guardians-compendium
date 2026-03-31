@@ -225,16 +225,22 @@ const LANG_SYSTEMS = [
   },
 ]
 
-function IxCitlatlTool() {
+function IxCitlatlTool({ db }) {
   const [name, setName] = useState('')
   const [gender, setGender] = useState('female')
   const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('ixcitlatl_history') || '[]') } catch { return [] }
+    try {
+      return JSON.parse(
+        db?.getSetting?.('ixcitlatl_history') ||
+        localStorage.getItem('ixcitlatl_history') ||
+        '[]'
+      )
+    } catch { return [] }
   })
 
   function saveHistory(h) {
     setHistory(h)
-    try { localStorage.setItem('ixcitlatl_history', JSON.stringify(h)) } catch {}
+    db?.saveSetting?.('ixcitlatl_history', JSON.stringify(h))
   }
 
   function convert() {
@@ -1080,7 +1086,7 @@ export default function Tools({ db }) {
           </div>
 
           <Accordion id="ixcitlatl" title="Ix'Citlatl Name Converter" emoji="✦" color="var(--cl)" defaultOpen>
-            <IxCitlatlTool />
+            <IxCitlatlTool db={db} />
           </Accordion>
 
           <Accordion id="pronun" title="Pronunciation Helper" emoji="🔊" color="var(--cwr)">

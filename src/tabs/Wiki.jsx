@@ -307,8 +307,15 @@ export default function Wiki({ db }) {
   })
 
   function handleSave(article) {
-    if (!db.db.wiki) db.db.wiki = []
-    db.upsertEntry('wiki', article)
+    const isNew = !articles.find(a => a.id === article.id)
+    if (isNew) {
+      const newTitle = (article.title || '').toLowerCase().trim()
+      const dupe = articles.find(a => (a.title || '').toLowerCase().trim() === newTitle)
+      if (dupe && !window.confirm(`An article titled "${dupe.title}" already exists. Save anyway?`)) return
+    }
+    const stamped = { ...article, updated_at: new Date().toISOString() }
+    if (isNew) stamped.created = stamped.created || stamped.updated_at
+    db.upsertEntry('wiki', stamped)
     setEditing(null)
   }
 

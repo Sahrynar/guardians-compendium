@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { CATS, SL } from '../constants'
 
-export default function Dashboard({ db, goTo }) {
+export default function Dashboard({ db, goTo, goToWithSearch }) {
   const { db: data } = db
   const [search, setSearch] = useState('')
 
@@ -38,7 +38,8 @@ export default function Dashboard({ db, goTo }) {
     Object.entries(CATS).forEach(([cat, cfg]) => {
       if (cat === 'dashboard' || cat === 'flags') return
       ;(data[cat] || []).forEach(e => {
-        if (e.created || e.updated) all.push({ cat, cfg, e, ts: e.updated || e.created || '' })
+        const ts = e.updated_at || e.updated || e.created || ''
+        if (ts) all.push({ cat, cfg, e, ts })
       })
     })
     return all.sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 8)
@@ -113,7 +114,7 @@ export default function Dashboard({ db, goTo }) {
                   {searchResults.map(({ cat, cfg, e }, i) => (
                     <div key={`${cat}-${e.id}-${i}`} className="dash-card"
                       style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', padding: '5px 10px', borderLeft: `3px solid ${cfg.c}`, marginBottom: 3, cursor: 'pointer' }}
-                      onClick={() => goTo(cat)}>
+                      onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '') : goTo(cat)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 11, fontWeight: 600 }}>{e.display_name || e.name || '—'}</span>
                         <span style={{ fontSize: 9, color: cfg.c, textTransform: 'uppercase' }}>{cfg.i} {cfg.l}</span>
@@ -140,7 +141,7 @@ export default function Dashboard({ db, goTo }) {
               {recentEntries.map(({ cat, cfg, e }, i) => (
                 <div key={`r-${cat}-${e.id}-${i}`}
                   style={{ padding: '4px 8px', borderLeft: `2px solid ${cfg.c}`, marginBottom: 3, cursor: 'pointer', borderRadius: '0 4px 4px 0', background: 'var(--card)' }}
-                  onClick={() => goTo(cat)}>
+                  onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '') : goTo(cat)}>
                   <div style={{ fontSize: 10, fontWeight: 600, lineHeight: 1.3 }}>{(e.display_name || e.name || '—').slice(0, 40)}</div>
                   <div style={{ fontSize: 9, color: cfg.c }}>{cfg.i} {cfg.l}</div>
                 </div>

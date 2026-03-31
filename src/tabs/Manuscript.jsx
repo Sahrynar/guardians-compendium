@@ -112,7 +112,6 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
       navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': plain })])
         .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
         .catch(() => {
-          // Fallback: copy plain text
           navigator.clipboard.writeText(stripFormatting(text))
           setCopied(true); setTimeout(() => setCopied(false), 2000)
         })
@@ -120,6 +119,21 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
       navigator.clipboard?.writeText(stripFormatting(text))
       setCopied(true); setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  function exportMd() {
+    const header = [
+      `# ${title || 'Untitled'}`,
+      notes ? `\n> **Notes:** ${notes}` : '',
+      `\n---\n`,
+    ].filter(Boolean).join('\n')
+    const body = header + (text || '')
+    const blob = new Blob([body], { type: 'text/markdown' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${(title || 'chapter').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}.md`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   function save() {
@@ -164,6 +178,12 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
           style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, background: '#ff6719',
             color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           {copied ? '✓ Copied!' : '📋 Copy for Substack'}
+        </button>
+        {/* Export .md */}
+        <button onClick={exportMd}
+          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, background: 'none',
+            color: 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          ⬇ .md
         </button>
         <button onClick={() => setShowAnnotations(a => !a)}
           style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6,

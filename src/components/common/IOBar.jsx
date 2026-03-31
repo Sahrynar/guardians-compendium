@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { supabase, hasSupabase } from '../supabase'
+import { supabase, hasSupabase } from '../../supabase'
 
 // ── Session log upsert (direct to session_log table) ─────────────
 async function upsertSessionLog(sessions) {

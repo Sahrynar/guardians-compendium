@@ -9,7 +9,7 @@ const Q_FIELDS = [
   { k: 'detail',         l: 'Detail',         t: 'ta' },
 ]
 
-export default function Questions({ db }) {
+export default function Questions({ db, crossLink, clearCrossLink }) {
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('qu_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('qu_cols_div') !== 'off')
   function saveColCount(n) { setColCount(n); db.saveSetting?.('qu_cols', String(n)) }
@@ -39,6 +39,7 @@ export default function Questions({ db }) {
         catKey="questions" color="var(--cq)" icon="?"
         label="Open Questions" fields={Q_FIELDS} db={db}
         columns={colCount} columnRule={dividers ? '1px solid var(--brd)' : 'none'}
+        crossLink={crossLink} clearCrossLink={clearCrossLink}
       />
     </div>
   )

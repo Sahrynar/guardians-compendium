@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from './Modal'
 import EntryForm from './EntryForm'
 import { SL, highlight } from '../../constants'
@@ -6,7 +6,9 @@ import { uid } from '../../constants'
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
-  renderDetail, extraActions, columns = 1, tileSize = 'normal', columnRule = '1px solid var(--brd)'
+  renderDetail, extraActions,
+  columns, columnRule,
+  crossLink, clearCrossLink
 }) {
   const entries = db.db[catKey] || []
   const [search, setSearch] = useState('')
@@ -16,8 +18,21 @@ export default function GenericListTab({
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
-
   const [sortMode, setSortMode] = useState('alpha')
+
+  // Consume crossLink: pre-populate search and expand matching entry
+  useEffect(() => {
+    if (crossLink?.search) {
+      setSearch(crossLink.search)
+      if (crossLink.expandName) {
+        const match = entries.find(e =>
+          (e.name || e.display_name || '').toLowerCase() === crossLink.expandName.toLowerCase()
+        )
+        if (match) setExpanded(match.id)
+      }
+      clearCrossLink?.()
+    }
+  }, [crossLink])
 
   const filtered = entries
     .filter(e => {
@@ -38,7 +53,21 @@ export default function GenericListTab({
   function closeModal() { setModalOpen(false); setEditing(null) }
 
   function handleSave(entry) {
-    db.upsertEntry(catKey, entry)
+    // Duplicate detection — new entries only
+    if (!editing?.id) {
+      const newName = (entry.name || entry.display_name || '').toLowerCase().trim()
+      if (newName) {
+        const dupe = entries.find(e =>
+          e.id !== entry.id &&
+          (e.name || e.display_name || '').toLowerCase().trim() === newName
+        )
+        if (dupe && !window.confirm(`"${dupe.name || dupe.display_name}" already exists in ${label}. Save anyway?`)) return
+      }
+    }
+    // Stamp updated_at
+    const stamped = { ...entry, updated_at: new Date().toISOString() }
+    if (!editing?.id) stamped.created = stamped.created || stamped.updated_at
+    db.upsertEntry(catKey, stamped)
     closeModal()
     setExpanded(entry.id)
   }
@@ -63,9 +92,19 @@ export default function GenericListTab({
     return parts
   }
 
-  const tileSz = tileSize === 'compact' ? { fontSize: 10 } : tileSize === 'large' ? { fontSize: 14 } : {}
+  function fmtDate(iso) {
+    if (!iso) return null
+    try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
+    catch { return null }
+  }
+
+  // Masonry column layout if columns prop provided
+  const listStyle = columns && columns > 1
+    ? { columns, columnGap: 10, columnRule: columnRule || 'none' }
+    : {}
+
   return (
-    <div style={tileSz}>
+    <div>
       {/* Toolbar */}
       <div className="tbar">
         <input
@@ -77,7 +116,7 @@ export default function GenericListTab({
         <select
           value={sortMode}
           onChange={e => setSortMode(e.target.value)}
-          style={{ fontSize: 10, padding: '4px 8px', borderRadius: 'var(--r)', border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }}
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 8px', borderRadius: 'var(--r)', border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }}
           title="Sort order"
         >
           <option value="alpha">A → Z</option>
@@ -108,7 +147,7 @@ export default function GenericListTab({
       </div>
 
       {/* List */}
-      <div style={{ columns: columns, columnGap: 12, columnRule: columnRule }}>
+      <div className="cg" style={listStyle}>
         {!filtered.length && (
           <div className="empty">
             <div className="empty-icon">{icon}</div>
@@ -120,11 +159,16 @@ export default function GenericListTab({
         )}
         {filtered.map((e, i) => {
           const isOpen = expanded === e.id
+          const ts = e.updated_at || e.created
           return (
             <div
               key={e.id}
               className="entry-card"
-              style={{ '--card-color': color, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, breakInside: 'avoid', marginBottom: 6 }}
+              style={{
+                '--card-color': color,
+                background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined,
+                breakInside: 'avoid', marginBottom: 6,
+              }}
               onClick={() => setExpanded(isOpen ? null : e.id)}
             >
               <div
@@ -139,13 +183,18 @@ export default function GenericListTab({
                     {renderDetail ? renderDetail(e) : (
                       fields.filter(f => f.k !== 'name' && e[f.k]).map(f => (
                         <div key={f.k} style={{ marginBottom: 3 }}>
-                          <strong style={{ color, fontSize: 9, textTransform: 'uppercase' }}>{f.l}: </strong>
+                          <strong style={{ color, fontSize: 'var(--fs-xs)', textTransform: 'uppercase' }}>{f.l}: </strong>
                           {String(e[f.k])}
                         </div>
                       ))
                     )}
                   </div>
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
+                  {ts && (
+                    <div className="entry-timestamp">
+                      {e.updated_at && e.updated_at !== e.created ? `Edited ${fmtDate(e.updated_at)}` : e.created ? `Added ${fmtDate(e.created)}` : ''}
+                    </div>
+                  )}
                   <div className="entry-actions">
                     <button
                       className="btn btn-sm btn-outline"
@@ -189,7 +238,7 @@ export default function GenericListTab({
         <div className="confirm-overlay open">
           <div className="confirm-box">
             <p>Delete <strong>{entries.find(e=>e.id===confirmId)?.name || 'this entry'}</strong>?<br/>
-              <span style={{ fontSize: 10, color: 'var(--mut)' }}>Cannot be undone.</span>
+              <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>Cannot be undone.</span>
             </p>
             <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
             <button className="btn btn-danger btn-sm" onClick={() => handleDelete(confirmId)}>Delete</button>

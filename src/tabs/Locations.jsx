@@ -245,6 +245,12 @@ export default function Locations({ db }) {
   }
 
   function handleSave(entry) {
+    if (!editing?.id) {
+      const newName = (entry.name || '').toLowerCase().trim()
+      const locs = db.db.locations || []
+      const dupe = locs.find(l => l.id !== entry.id && (l.name || '').toLowerCase().trim() === newName)
+      if (dupe && !window.confirm(`A location named "${dupe.name}" already exists. Save anyway?`)) return
+    }
     db.upsertEntry('locations', entry)
     setModalOpen(false); setEditing(null)
   }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, BKS, uid } from '../constants'
@@ -33,7 +33,7 @@ const BOOK_COLORS = {
   'Book 5':         'var(--cfl)',
 }
 
-export default function Scenes({ db }) {
+export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }) {
   const scenes = db.db.scenes || []
   const [bookFilter, setBookFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -48,6 +48,13 @@ export default function Scenes({ db }) {
   const [lightbox, setLightbox] = useState(null)
   let dragIdx = null
 
+  // Consume crossLink on mount (e.g. arriving from a character card scene click)
+  useEffect(() => {
+    if (crossLink?.search) {
+      setSearch(crossLink.search)
+      clearCrossLink?.()
+    }
+  }, [crossLink])
   const allBooks = [...new Set(scenes.map(s => s.book).filter(Boolean))]
 
   const filtered = scenes
@@ -146,11 +153,19 @@ export default function Scenes({ db }) {
         {chars.length > 0 && (
           <div style={{ display:'flex', flexWrap:'wrap', gap:3, marginBottom:4 }}>
             {chars.map(c => (
-              <span key={c} style={{ fontSize:9, padding:'1px 6px',
-                background:'rgba(201,102,255,.12)', color:'var(--cc)',
-                border:'1px solid rgba(201,102,255,.25)', borderRadius:10 }}>
-                {c}
-              </span>
+              <button
+                key={c}
+                onClick={e => { e.stopPropagation(); goToWithSearch?.('characters', c) }}
+                title={`Go to ${c} in Characters`}
+                style={{
+                  fontSize:9, padding:'1px 6px',
+                  background:'rgba(201,102,255,.12)', color:'var(--cc)',
+                  border:'1px solid rgba(201,102,255,.25)', borderRadius:10,
+                  cursor:'pointer', transition:'.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background='rgba(201,102,255,.25)'}
+                onMouseLeave={e => e.currentTarget.style.background='rgba(201,102,255,.12)'}
+              >{c}</button>
             ))}
           </div>
         )}
@@ -233,9 +248,19 @@ export default function Scenes({ db }) {
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
                 {chars.map(c => (
-                  <span key={c} style={{ fontSize:11, padding:'3px 10px',
-                    background:'rgba(201,102,255,.12)', color:'var(--cc)',
-                    border:'1px solid rgba(201,102,255,.25)', borderRadius:12 }}>{c}</span>
+                  <button
+                    key={c}
+                    onClick={() => { onClose(); goToWithSearch?.('characters', c) }}
+                    title={`Go to ${c} in Characters`}
+                    style={{
+                      fontSize:11, padding:'3px 10px',
+                      background:'rgba(201,102,255,.12)', color:'var(--cc)',
+                      border:'1px solid rgba(201,102,255,.25)', borderRadius:12,
+                      cursor:'pointer', transition:'.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background='rgba(201,102,255,.28)'}
+                    onMouseLeave={e => e.currentTarget.style.background='rgba(201,102,255,.12)'}
+                  >{c}</button>
                 ))}
               </div>
             </div>

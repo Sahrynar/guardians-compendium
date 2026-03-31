@@ -60,10 +60,24 @@ function isDeadByBook(e, filterBook) {
   return diIdx <= fbIdx
 }
 
-export default function Characters({ db }) {
+export default function Characters({ db, goToWithSearch, crossLink, clearCrossLink }) {
   const chars = db.db.characters || []
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('char_cols') || '3'))
+
+  // Consume crossLink on mount (e.g. arriving from a scene click)
+  useEffect(() => {
+    if (crossLink?.search) {
+      setSearch(crossLink.search)
+      if (crossLink.expandName) {
+        const match = chars.find(c =>
+          (c.name || c.display_name || '').toLowerCase() === crossLink.expandName.toLowerCase()
+        )
+        if (match) setExpanded(match.id)
+      }
+      clearCrossLink?.()
+    }
+  }, [crossLink])
 
   const [dividers, setDividers] = useState(() => db.getSetting?.('char_cols_div') !== 'off')
   function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('char_cols_div', next ? 'on' : 'off') }
@@ -88,6 +102,15 @@ export default function Characters({ db }) {
   })
 
   function handleSave(entry) {
+    // Duplicate detection — warn on new entries only
+    if (!editing?.id) {
+      const newName = (entry.name || '').toLowerCase().trim()
+      const dupe = chars.find(c =>
+        c.id !== entry.id &&
+        (c.name || '').toLowerCase().trim() === newName
+      )
+      if (dupe && !window.confirm(`A character named "${dupe.name}" already exists. Save anyway?`)) return
+    }
     if (!editing?.id && entry.birthday_lajen) {
       const existing = (db.db.timeline||[]).find(t => t.name === 'Birthday: ' + entry.name)
       if (!existing) {
@@ -360,7 +383,16 @@ export default function Characters({ db }) {
                       return (
                         <details style={{ marginTop: 4 }} onClick={ev => ev.stopPropagation()}>
                           <summary style={{ fontSize: 10, color: 'var(--csc)', cursor: 'pointer' }}>Scenes ({mySc.length})</summary>
-                          {mySc.map(s => <div key={s.id} style={{ fontSize: 10, color: 'var(--dim)', padding: '2px 0' }}>{s.book && <span style={{ color: 'var(--csc)' }}>{s.book} </span>}{s.name}</div>)}
+                          {mySc.map(s => (
+                            <div key={s.id} style={{ fontSize: 10, color: 'var(--dim)', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              {s.book && <span style={{ color: 'var(--csc)' }}>{s.book} </span>}
+                              <button
+                                onClick={ev => { ev.stopPropagation(); goToWithSearch?.('scenes', s.name) }}
+                                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--dim)', cursor: 'pointer', fontSize: 10, textAlign: 'left', textDecoration: 'underline', textDecorationColor: 'rgba(102,187,255,.4)' }}
+                                title="Jump to this scene"
+                              >{s.name}</button>
+                            </div>
+                          ))}
                         </details>
                       )
                     })()}
@@ -422,11 +454,11 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   const [gradAngle, setGradAngle] = useState(90)
   const [gradType, setGradType] = useState('linear')
   const [selectedStop, setSelectedStop] = useState(0)
-  const [savedGrads, setSavedGrads] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_gradients')||'[]') } catch { return [] } })
-  const [recentColors, setRecentColors] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_recent_colors')||'[]') } catch { return [] } })
+  const [savedGrads, setSavedGrads] = useState(() => { try { return JSON.parse(db.getSetting?.('char_gradients') || localStorage.getItem('gcomp_gradients') || '[]') } catch { return [] } })
+  const [recentColors, setRecentColors] = useState(() => { try { return JSON.parse(db.getSetting?.('char_recent_colors') || localStorage.getItem('gcomp_recent_colors') || '[]') } catch { return [] } })
   const [zoom, setZoom] = useState(1)
   const [tab, setTab] = useState('base')
-  const [presetSrcs, setPresetSrcs] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_preset_imgs')||'{}') } catch { return {} } })
+  const [presetSrcs, setPresetSrcs] = useState(() => { try { return JSON.parse(db.getSetting?.('char_preset_imgs') || localStorage.getItem('gcomp_preset_imgs') || '{}') } catch { return {} } })
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return
@@ -461,7 +493,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   function addRecentColor(c) {
     setRecentColors(prev => {
       const next = [c, ...prev.filter(x => x !== c)].slice(0, 20)
-      localStorage.setItem('gcomp_recent_colors', JSON.stringify(next))
+      db.saveSetting?.('char_recent_colors', JSON.stringify(next))
       return next
     })
   }
@@ -567,7 +599,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
     r.onload = ev => {
       const updated = { ...presetSrcs, [key]: ev.target.result }
       setPresetSrcs(updated)
-      localStorage.setItem('gcomp_preset_imgs', JSON.stringify(updated))
+      db.saveSetting?.('char_preset_imgs', JSON.stringify(updated))
     }
     r.readAsDataURL(f)
   }
@@ -575,7 +607,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   function saveGradient() {
     const name = prompt('Gradient name:'); if (!name) return
     const updated = [...savedGrads, { name, stops: gradStops, angle: gradAngle, type: gradType }]
-    setSavedGrads(updated); localStorage.setItem('gcomp_gradients', JSON.stringify(updated))
+    setSavedGrads(updated); db.saveSetting?.('char_gradients', JSON.stringify(updated))
   }
 
   if (!ch) return null
@@ -706,7 +738,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
                   <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                     <div style={{ flex:1, height:20, borderRadius:4, background:preview, border:'1px solid var(--brd)', cursor:'pointer' }} onClick={() => { setGradStops(g.stops); setGradAngle(g.angle); setGradType(g.type) }} />
                     <span style={{ fontSize:10, color:'var(--dim)', minWidth:60 }}>{g.name}</span>
-                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:11 }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); localStorage.setItem('gcomp_gradients',JSON.stringify(u)) }}>✕</button>
+                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:11 }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); db.saveSetting?.('char_gradients',JSON.stringify(u)) }}>✕</button>
                   </div>
                 )
               })}

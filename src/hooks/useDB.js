@@ -5,7 +5,8 @@ const LS_KEY = 'gcomp3'
 const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps','wiki','notes','family_tree','session_logs'
+  'calendar_entries','flags','maps','wiki','notes','family_tree',
+  'inventory','manuscript','journal_captures','journal_tags'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -14,7 +15,6 @@ function lsLoad() {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return makeEmpty()
     const parsed = JSON.parse(raw)
-    // Ensure all categories exist
     const db = makeEmpty()
     CATEGORIES.forEach(k => { if (parsed[k]) db[k] = parsed[k] })
     return db
@@ -38,7 +38,7 @@ async function sbLoad() {
   if (error) { console.error('Supabase load error:', error); return null }
   const db = makeEmpty()
   data.forEach(row => {
-    if (db[row.category]) db[row.category].push({ id: row.id, ...row.data })
+    if (db[row.category] !== undefined) db[row.category].push({ id: row.id, ...row.data })
   })
   return db
 }
@@ -75,26 +75,20 @@ async function sbSaveSetting(key, value) {
 // ── Main hook ──────────────────────────────────────────────────
 export function useDB() {
   const [db, setDbState] = useState(makeEmpty)
-  const [settings, setSettingsState] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('gcomp_settings') || '{}') } catch { return {} }
-  })
+  const [settings, setSettingsState] = useState({})
   const [loading, setLoading] = useState(true)
-  const [syncStatus, setSyncStatus] = useState('local') // 'local' | 'synced' | 'syncing' | 'error'
-  const pendingRef = useRef(new Map()) // id → timeout for debounced saves
+  const [syncStatus, setSyncStatus] = useState('local')
+  const pendingRef = useRef(new Map())
 
-  // Load on mount
   useEffect(() => {
     async function init() {
       setLoading(true)
-      // Always load localStorage first (instant)
       const local = lsLoad()
       setDbState(local)
-      // Then try Supabase
       if (hasSupabase) {
         setSyncStatus('syncing')
         const remote = await sbLoad()
         if (remote) {
-          // Merge: remote wins for any id that exists in both
           const merged = mergeDB(local, remote)
           setDbState(merged)
           lsSave(merged)
@@ -102,7 +96,6 @@ export function useDB() {
         } else {
           setSyncStatus('error')
         }
-        // Load settings
         const remoteSettings = await sbLoadSettings()
         if (remoteSettings) setSettingsState(remoteSettings)
       }
@@ -126,7 +119,6 @@ export function useDB() {
       lsSave(next)
       return next
     })
-    // Debounced Supabase sync
     if (hasSupabase) {
       const key = entry.id
       if (pendingRef.current.has(key)) clearTimeout(pendingRef.current.get(key))
@@ -150,14 +142,22 @@ export function useDB() {
   const saveSetting = useCallback((key, value) => {
     setSettingsState(prev => ({ ...prev, [key]: value }))
     if (hasSupabase) sbSaveSetting(key, value)
+    // Also mirror to localStorage as instant-read cache
     try {
       const existing = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
       localStorage.setItem('gcomp_settings', JSON.stringify({ ...existing, [key]: value }))
     } catch {}
   }, [])
 
-  const getSetting = useCallback((key) => {
-    return settings[key] ?? null
+  // ── getSetting: reads from Supabase-loaded settings state ──
+  // Falls back to localStorage cache so first render isn't blank
+  const getSetting = useCallback((key, fallback = null) => {
+    if (settings[key] !== undefined) return settings[key]
+    try {
+      const cached = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
+      if (cached[key] !== undefined) return cached[key]
+    } catch {}
+    return fallback
   }, [settings])
 
   // ── Import/Export ──────────────────────────────────────────
@@ -175,7 +175,6 @@ export function useDB() {
       r.onload = ev => {
         try {
           const parsed = JSON.parse(ev.target.result)
-          // MERGE — never overwrite. Add new entries by ID only.
           setDbState(prev => {
             const next = { ...prev }
             CATEGORIES.forEach(k => {
@@ -183,7 +182,6 @@ export function useDB() {
               const existingIds = new Set((prev[k] || []).map(e => e.id).filter(Boolean))
               const newEntries = parsed[k].filter(e => e.id && !existingIds.has(e.id))
               next[k] = [...(prev[k] || []), ...newEntries]
-              // Sync new entries to Supabase
               if (hasSupabase) newEntries.forEach(entry => sbUpsert(k, entry))
             })
             lsSave(next)
@@ -204,79 +202,25 @@ export function useDB() {
         try {
           const p = JSON.parse(ev.target.result)
           let count = 0
-          const genUid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7)
-
-          // Detect if this is a full Compendium JSON (not Aster-format)
-          const isFullFormat = CATEGORIES.some(k => Array.isArray(p[k]) && p[k].length > 0)
-          if (isFullFormat) {
-            // Treat as regular import — merge all categories
-            setDbState(prev => {
-              const next = { ...prev }
-              CATEGORIES.forEach(k => {
-                if (!p[k] || !Array.isArray(p[k])) return
-                if (k === 'family_tree') {
-                  const exRoot = (prev[k] || [])[0] || { id: '_root', nodes: [], edges: [] }
-                  const incRoot = p[k][0]
-                  if (!incRoot) return
-                  const exNodeIds = new Set((exRoot.nodes || []).map(n => n.id))
-                  const exEdgeIds = new Set((exRoot.edges || []).map(e => e.id))
-                  next[k] = [{ ...exRoot, ...incRoot,
-                    nodes: [...(exRoot.nodes||[]), ...(incRoot.nodes||[]).filter(n => !exNodeIds.has(n.id))],
-                    edges: [...(exRoot.edges||[]), ...(incRoot.edges||[]).filter(e => !exEdgeIds.has(e.id))],
-                  }]
-                  return
-                }
-                const existingIds = new Set((prev[k] || []).map(e => e.id).filter(Boolean))
-                const newEntries = p[k].filter(e => e.id && !existingIds.has(e.id))
-                next[k] = [...(prev[k] || []), ...newEntries]
-                count += newEntries.length
-              })
-              lsSave(next)
-              return next
-            })
-            resolve(count)
-            return
-          }
-
-          // Aster-format: map Aster field names to Compendium fields
+          const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7)
           setDbState(prev => {
             const next = { ...prev }
             if (p.characters) p.characters.forEach(ch => {
-              const id = ch.id || genUid()
-              const existingIds = new Set((next.characters || []).map(e => e.id))
-              if (existingIds.has(id)) return
-              next.characters = [...(next.characters||[]), {
-                id, name: ch.name||'', aliases: (ch.aliases||[]).join(', '),
+              const entry = { id: uid(), name: ch.name || '', aliases: (ch.aliases||[]).join(', '),
                 birthday: ch.birthYear||'', age_b1: ch.ageNotes||'', notes: ch.notes||'',
-                status: ch.status==='locked'?'locked':'provisional', books: [], relationships: []
-              }]; count++
+                status: ch.status==='locked'?'locked':'provisional', books: [], relationships: [] }
+              next.characters = [...next.characters, entry]; count++
             })
             if (p.events) p.events.forEach(ev => {
-              const id = ev.id || genUid()
-              const existingIds = new Set((next.timeline || []).map(e => e.id))
-              if (existingIds.has(id)) return
-              next.timeline = [...(next.timeline||[]), {
-                id, name: ev.title||'', date_hc: ev.displayYear||'',
+              const entry = { id: uid(), name: ev.title||'', date_hc: ev.displayYear||'',
                 sort_order: String(ev.sortKey||''), era: ev.category||'', detail: ev.notes||'',
-                status: ev.status==='locked'?'locked':'provisional', books: [], relationships: []
-              }]; count++
+                status: ev.status==='locked'?'locked':'provisional', books: [], relationships: [] }
+              next.timeline = [...next.timeline, entry]; count++
             })
             if (p.places) p.places.forEach(pl => {
-              const id = pl.id || genUid()
-              const existingIds = new Set((next.locations || []).map(e => e.id))
-              if (existingIds.has(id)) return
-              next.locations = [...(next.locations||[]), {
-                id, name: pl.name||'', loc_type: pl.type||'',
-                parent_id: '', description: pl.notes||'', status: 'provisional', books: [], relationships: []
-              }]; count++
-            })
-            // Handle any other categories present in Aster export if they match Compendium keys
-            CATEGORIES.filter(k => !['characters','timeline','locations','family_tree'].includes(k)).forEach(k => {
-              if (!p[k] || !Array.isArray(p[k])) return
-              const existingIds = new Set((next[k] || []).map(e => e.id).filter(Boolean))
-              const newEntries = p[k].filter(e => e.id && !existingIds.has(e.id))
-              next[k] = [...(next[k] || []), ...newEntries]
-              count += newEntries.length
+              const entry = { id: uid(), name: pl.name||'', loc_type: pl.type||'',
+                parent_id: '', description: pl.notes||'', status: 'provisional', books: [], relationships: [] }
+              next.locations = [...next.locations, entry]; count++
             })
             lsSave(next)
             return next
@@ -325,7 +269,6 @@ function mergeDB(local, remote) {
   CATEGORIES.forEach(cat => {
     const localMap = new Map((local[cat]||[]).map(e => [e.id, e]))
     const remoteMap = new Map((remote[cat]||[]).map(e => [e.id, e]))
-    // Remote wins on conflicts
     const all = new Map([...localMap, ...remoteMap])
     merged[cat] = Array.from(all.values())
   })

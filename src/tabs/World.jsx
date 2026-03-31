@@ -7,7 +7,7 @@ const WORLD_FIELDS = [
   { k: 'detail',   l: 'Detail',   t: 'ta' },
 ]
 
-export default function World({ db }) {
+export default function World({ db, crossLink, clearCrossLink }) {
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('wr_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('wr_cols_div') !== 'off')
   function saveColCount(n) { setColCount(n); db.saveSetting?.('wr_cols', String(n)) }
@@ -37,6 +37,7 @@ export default function World({ db }) {
         catKey="world" color="var(--cw)" icon="🌐"
         label="World Entries" fields={WORLD_FIELDS} db={db}
         columns={colCount} columnRule={dividers ? '1px solid var(--brd)' : 'none'}
+        crossLink={crossLink} clearCrossLink={clearCrossLink}
       />
     </div>
   )

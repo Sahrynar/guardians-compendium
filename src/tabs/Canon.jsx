@@ -7,7 +7,7 @@ const CANON_FIELDS = [
   { k: 'detail',  l: 'Detail',   t: 'ta' },
 ]
 
-export default function Canon({ db }) {
+export default function Canon({ db, crossLink, clearCrossLink }) {
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('cn_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('cn_cols_div') !== 'off')
   function saveColCount(n) { setColCount(n); db.saveSetting?.('cn_cols', String(n)) }
@@ -37,6 +37,7 @@ export default function Canon({ db }) {
         catKey="canon" color="var(--ccn)" icon="✦"
         label="Canon Decisions" fields={CANON_FIELDS} db={db}
         columns={colCount} columnRule={dividers ? '1px solid var(--brd)' : 'none'}
+        crossLink={crossLink} clearCrossLink={clearCrossLink}
       />
     </div>
   )
