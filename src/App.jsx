@@ -25,16 +25,12 @@ import FamilyTree from './tabs/FamilyTree'
 import Notes from './tabs/Notes'
 import Journal from './tabs/Journal'
 import SessionLog from './tabs/SessionLog'
-import Manuscript from './tabs/Manuscript'
-import OutfitSnapshot from './tabs/OutfitSnapshot'
-import Inventory from './tabs/Inventory'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
-  'dashboard','characters','inventory','locations',
+  'dashboard','characters','wardrobe','items','locations',
   'timeline','scenes','calendar','tools','canon','world',
-  'questions','eras','spellings','map','wiki','notes','journal',
-  'sessionlog','manuscript','outfitsnapshot','familytree','flags'
+  'questions','eras','spellings','map','wiki','notes','journal','familytree','flags','sessionlog'
 ]
 
 const VALID_TABS = new Set(TAB_ORDER)
@@ -146,29 +142,28 @@ export default function App() {
       </div>
     )
     switch (tab) {
-      case 'dashboard':  return <Dashboard {...tabProps} />
-      case 'characters': return <Characters {...tabProps} />
-      case 'inventory':      return <Inventory {...tabProps} />
-      case 'locations':  return <Locations {...tabProps} />
-      case 'timeline':   return <Timeline {...tabProps} />
-      case 'scenes':     return <Scenes {...tabProps} />
-      case 'calendar':   return <CalendarTab {...tabProps} />
-      case 'tools':      return <Tools {...tabProps} />
-      case 'canon':      return <Canon {...tabProps} />
-      case 'world':      return <World {...tabProps} />
-      case 'questions':  return <Questions {...tabProps} />
-      case 'eras':       return <Eras {...tabProps} />
-      case 'spellings':  return <Spellings {...tabProps} />
-      case 'map':        return <MapTab {...tabProps} />
-      case 'wiki':       return <Wiki {...tabProps} />
-      case 'notes':      return <Notes {...tabProps} />
-      case 'journal':    return <Journal {...tabProps} />
-      case 'sessionlog':     return <SessionLog />
-      case 'manuscript':     return <Manuscript {...tabProps} />
-      case 'outfitsnapshot': return <OutfitSnapshot db={db} chars={db.db.characters||[]} allEntries={db.db} />
-      case 'familytree': return <FamilyTree {...tabProps} />
-      case 'flags':      return <Flags {...tabProps} />
-      default:           return <Dashboard {...tabProps} />
+      case 'dashboard':   return <Dashboard {...tabProps} />
+      case 'characters':  return <Characters {...tabProps} />
+      case 'wardrobe':    return <Wardrobe {...tabProps} />
+      case 'items':       return <Items {...tabProps} />
+      case 'locations':   return <Locations {...tabProps} />
+      case 'timeline':    return <Timeline {...tabProps} />
+      case 'scenes':      return <Scenes {...tabProps} />
+      case 'calendar':    return <CalendarTab {...tabProps} />
+      case 'tools':       return <Tools {...tabProps} />
+      case 'canon':       return <Canon {...tabProps} />
+      case 'world':       return <World {...tabProps} />
+      case 'questions':   return <Questions {...tabProps} />
+      case 'eras':        return <Eras {...tabProps} />
+      case 'spellings':   return <Spellings {...tabProps} />
+      case 'map':         return <MapTab {...tabProps} />
+      case 'wiki':        return <Wiki {...tabProps} />
+      case 'notes':       return <Notes {...tabProps} />
+      case 'journal':     return <Journal {...tabProps} />
+      case 'familytree':  return <FamilyTree {...tabProps} />
+      case 'flags':       return <Flags {...tabProps} />
+      case 'sessionlog':  return <SessionLog {...tabProps} />
+      default:            return <Dashboard {...tabProps} />
     }
   }
 

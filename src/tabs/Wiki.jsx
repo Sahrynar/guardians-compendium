@@ -295,6 +295,10 @@ export default function Wiki({ db }) {
   const [catFilter, setCatFilter] = useState('all')
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('wk_cols') || '2'))
+  const [dividers, setDividers] = useState(() => db.getSetting?.('wk_cols_div') !== 'off')
+  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('wk_cols_div', next ? 'on' : 'off') }
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('wk_cols', String(n)) }
 
   const filtered = articles.filter(a => {
     const ms = !search || JSON.stringify(a).toLowerCase().includes(search.toLowerCase())
@@ -316,6 +320,23 @@ export default function Wiki({ db }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cc)' }}>📖 Wiki</div>
+        <div style={{ display:'flex', gap:3, alignItems:'center' }}>
+          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--cc)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+          <button onClick={toggleDividers}
+            style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+              background: dividers ? 'rgba(255,255,255,.08)' : 'none',
+              color: dividers ? 'var(--tx)' : 'var(--mut)',
+              border:'1px solid var(--brd)', cursor:'pointer' }}>
+            {dividers ? '┃ on' : '┃ off'}
+          </button>
+        </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 

@@ -75,7 +75,9 @@ async function sbSaveSetting(key, value) {
 // ── Main hook ──────────────────────────────────────────────────
 export function useDB() {
   const [db, setDbState] = useState(makeEmpty)
-  const [settings, setSettingsState] = useState({})
+  const [settings, setSettingsState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gcomp_settings') || '{}') } catch { return {} }
+  })
   const [loading, setLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState('local') // 'local' | 'synced' | 'syncing' | 'error'
   const pendingRef = useRef(new Map()) // id → timeout for debounced saves
@@ -153,6 +155,10 @@ export function useDB() {
       localStorage.setItem('gcomp_settings', JSON.stringify({ ...existing, [key]: value }))
     } catch {}
   }, [])
+
+  const getSetting = useCallback((key) => {
+    return settings[key] ?? null
+  }, [settings])
 
   // ── Import/Export ──────────────────────────────────────────
   const exportJSON = useCallback(() => {
@@ -307,7 +313,7 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting,
+    upsertEntry, deleteEntry, save, saveSetting, getSetting,
     exportJSON, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }

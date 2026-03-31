@@ -1,4 +1,33 @@
 import { useRef, useState } from 'react'
+import { supabase, hasSupabase } from '../supabase'
+
+// ── Session log upsert (direct to session_log table) ─────────────
+async function upsertSessionLog(sessions) {
+  if (!hasSupabase || !sessions?.length) return 0
+  let count = 0
+  for (const s of sessions) {
+    try {
+      const { error } = await supabase
+        .from('session_log')
+        .upsert({ ...s, session_number: Number(s.session_number) }, { onConflict: 'id' })
+      if (!error) count++
+      else console.warn('Session log upsert skipped:', error.message)
+    } catch (e) {
+      console.warn('Session log upsert failed:', e)
+    }
+  }
+  // Also persist to localStorage fallback
+  try {
+    const existing = JSON.parse(localStorage.getItem('gcomp_session_log') || '[]')
+    const existingIds = new Set(existing.map(s => s.id))
+    const merged = [
+      ...existing.map(s => { const inc = sessions.find(i => i.id === s.id); return inc ? { ...s, ...inc } : s }),
+      ...sessions.filter(s => !existingIds.has(s.id))
+    ].sort((a, b) => Number(a.session_number) - Number(b.session_number))
+    localStorage.setItem('gcomp_session_log', JSON.stringify(merged))
+  } catch {}
+  return count
+}
 
 // ── Merge helper ─────────────────────────────────────────────────
 // Merges imported JSON into existing db without overwriting anything.
@@ -87,7 +116,16 @@ export default function IOBar({ db, backup }) {
     reader.onload = async ev => {
       try {
         const incoming = JSON.parse(ev.target.result)
-        const merged = mergeImport(db.db, incoming)
+
+        // Route session_log separately to its own Supabase table
+        let sessionCount = 0
+        if (Array.isArray(incoming.session_log) && incoming.session_log.length) {
+          sessionCount = await upsertSessionLog(incoming.session_log)
+        }
+
+        // Merge all other categories into entries table
+        const { session_log: _sl, ...entriesData } = incoming
+        const merged = mergeImport(db.db, entriesData)
 
         // Count new entries
         let added = 0
@@ -112,18 +150,10 @@ export default function IOBar({ db, backup }) {
         })
         await Promise.all(upsertPromises)
 
-        // Build per-category summary
-        const catSummary = []
-        Object.keys(merged).forEach(k => {
-          const exLen = (db.db[k] || []).length
-          const newLen = (merged[k] || []).length
-          const diff = Math.max(0, newLen - exLen)
-          if (diff > 0) catSummary.push(`${diff} ${k}`)
-        })
-        const summaryStr = catSummary.length > 0
-          ? `✓ Merged ${added} new entries: ${catSummary.join(', ')}`
-          : '✓ Import complete — no new entries (all already present)'
-        flash(summaryStr, 5000)
+        const parts = []
+        if (added > 0) parts.push(`${added} compendium entries`)
+        if (sessionCount > 0) parts.push(`${sessionCount} session log entries`)
+        flash(parts.length ? `✓ Merged: ${parts.join(' + ')}` : '✓ Nothing new to import')
       } catch (err) {
         flash(`✗ Import failed: ${err.message}`)
       }

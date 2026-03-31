@@ -19,36 +19,82 @@ const SECTION_LABELS = [
   { k: 'completed',  l: 'Completed' },
   { k: 'flags',      l: 'Flags Raised' },
   { k: 'questions',  l: 'Open Questions' },
-  { k: 'todo',       l: 'To-Do' },
+  { k: 'todos',      l: 'To-Do' },
   { k: 'notes',      l: 'Notes' },
 ]
 
 // ── Supabase helpers ───────────────────────────────────────────
 async function sbLoadSessions() {
   if (!hasSupabase) return null
-  const { data, error } = await supabase
-    .from('session_log')
-    .select('*')
-    .order('session_number', { ascending: true })
-  if (error) { console.error('Session log load error:', error); return null }
-  return data || []
+  try {
+    const { data, error } = await supabase
+      .from('session_log')
+      .select('*')
+      .order('date', { ascending: true })
+    if (error) {
+      // Table or column doesn't exist — fall back to localStorage
+      console.warn('Session log table not available:', error.message)
+      return null
+    }
+    // Decode title back into session_number, element, topics
+    return (data || []).map(row => {
+      const { session_number, element, topics } = decodeTitle(row.title)
+      return {
+        ...row,
+        session_number: row.session_number ?? session_number,
+        element: row.element ?? element,
+        topics: row.topics ?? topics,
+        todos: row.todos || row.todo || '',
+        todo: row.todos || row.todo || '',
+      }
+    })
+  } catch (e) {
+    console.warn('Session log load failed:', e)
+    return null
+  }
 }
 
 async function sbUpsertSession(entry) {
   if (!hasSupabase) return
-  const { error } = await supabase
-    .from('session_log')
-    .upsert(entry, { onConflict: 'id' })
-  if (error) console.error('Session log upsert error:', error)
+  try {
+    // Map UI fields to live table columns
+    const row = {
+      id: entry.id,
+      date: entry.date,
+      title: encodeTitle(entry.session_number, entry.element, entry.topics),
+      decisions: entry.decisions || '',
+      built: entry.built || '',
+      completed: entry.completed || '',
+      flags: entry.flags || '',
+      questions: entry.questions || '',
+      todos: entry.todos || entry.todo || '',
+      notes: [
+        entry.notes || '',
+        (entry.opened_at || entry.closed_at)
+          ? `Opened: ${entry.opened_at || '—'} | Closed: ${entry.closed_at || '—'}`
+          : ''
+      ].filter(Boolean).join('\n'),
+    }
+    const { error } = await supabase
+      .from('session_log')
+      .upsert(row, { onConflict: 'id' })
+    if (error) console.warn('Session log upsert skipped:', error.message)
+  } catch (e) {
+    console.warn('Session log upsert failed:', e)
+  }
 }
 
 async function sbDeleteSession(id) {
   if (!hasSupabase) return
-  const { error } = await supabase
-    .from('session_log')
-    .delete()
-    .eq('id', id)
-  if (error) console.error('Session log delete error:', error)
+  try {
+    const { error } = await supabase
+      .from('session_log')
+      .delete()
+      .eq('id', id)
+    if (error) console.warn('Session log delete skipped:', error.message)
+  } catch (e) {
+    console.warn('Session log delete failed:', e)
+  }
 }
 
 // ── Local storage fallback ─────────────────────────────────────
@@ -70,8 +116,9 @@ function sessionToMd(s) {
     lines.push(`\nOpened: ${s.opened_at || '—'} | Closed: ${s.closed_at || '—'}`)
   }
   SECTION_LABELS.forEach(({ k, l }) => {
-    if (s[k] && s[k].trim()) {
-      lines.push(`\n## ${l}\n\n${s[k]}`)
+    const val = (k === 'todos' ? (s.todos || s.todo) : s[k]) || ''
+    if (val && val.trim()) {
+      lines.push(`\n## ${l}\n\n${val}`)
     }
   })
   lines.push('\n---')
@@ -79,6 +126,31 @@ function sessionToMd(s) {
 }
 
 // ── Empty session template ─────────────────────────────────────
+function encodeTitle(session_number, element, topics) {
+  return [
+    session_number !== '' ? String(session_number) : '',
+    element && element !== 'Mixed' ? element : '',
+    topics || ''
+  ].filter(Boolean).join(' | ')
+}
+
+function decodeTitle(title) {
+  if (!title) return { session_number: '', element: 'Mixed', topics: '' }
+  const parts = title.split(' | ')
+  // First part is a number -> session_number
+  const maybeNum = parts[0]
+  const isNum = maybeNum !== '' && !isNaN(Number(maybeNum))
+  let idx = 0
+  const session_number = isNum ? parts[idx++] : ''
+  // Next part might be element
+  const elements = ['Water', 'Fire', 'Earth', 'Air', 'Mixed']
+  const maybeEl = parts[idx]
+  const isEl = elements.includes(maybeEl)
+  const element = isEl ? parts[idx++] : 'Mixed'
+  const topics = parts.slice(idx).join(' | ')
+  return { session_number, element, topics }
+}
+
 function emptySession(num) {
   return {
     id: uid(),
@@ -93,7 +165,7 @@ function emptySession(num) {
     completed: '',
     flags: '',
     questions: '',
-    todo: '',
+    todos: '',
     notes: '',
   }
 }
@@ -279,7 +351,7 @@ export default function SessionLog() {
   }, [])
 
   async function saveSession(form) {
-    const entry = { ...form, session_number: Number(form.session_number) }
+    const entry = { ...form, session_number: Number(form.session_number), todos: form.todos || form.todo || '' }
     const updated = sessions.find(s => s.id === entry.id)
       ? sessions.map(s => s.id === entry.id ? entry : s)
       : [...sessions, entry].sort((a, b) => a.session_number - b.session_number)
