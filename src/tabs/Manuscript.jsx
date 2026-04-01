@@ -411,7 +411,6 @@ export default function Manuscript({ db }) {
                     })}
                   </div>
                 )}
-                </div>
                 {/* Cover image upload button */}
                 <label
                   onClick={e => e.stopPropagation()}
