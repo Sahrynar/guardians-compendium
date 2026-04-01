@@ -6,7 +6,7 @@ const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
   'calendar_entries','flags','maps','wiki','notes','family_tree',
-  'inventory','manuscript','journal_captures','journal_tags'
+  'manuscript','inventory'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -15,6 +15,7 @@ function lsLoad() {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return makeEmpty()
     const parsed = JSON.parse(raw)
+    // Ensure all categories exist
     const db = makeEmpty()
     CATEGORIES.forEach(k => { if (parsed[k]) db[k] = parsed[k] })
     return db
@@ -38,7 +39,7 @@ async function sbLoad() {
   if (error) { console.error('Supabase load error:', error); return null }
   const db = makeEmpty()
   data.forEach(row => {
-    if (db[row.category] !== undefined) db[row.category].push({ id: row.id, ...row.data })
+    if (db[row.category]) db[row.category].push({ id: row.id, ...row.data })
   })
   return db
 }
@@ -77,18 +78,22 @@ export function useDB() {
   const [db, setDbState] = useState(makeEmpty)
   const [settings, setSettingsState] = useState({})
   const [loading, setLoading] = useState(true)
-  const [syncStatus, setSyncStatus] = useState('local')
-  const pendingRef = useRef(new Map())
+  const [syncStatus, setSyncStatus] = useState('local') // 'local' | 'synced' | 'syncing' | 'error'
+  const pendingRef = useRef(new Map()) // id → timeout for debounced saves
 
+  // Load on mount
   useEffect(() => {
     async function init() {
       setLoading(true)
+      // Always load localStorage first (instant)
       const local = lsLoad()
       setDbState(local)
+      // Then try Supabase
       if (hasSupabase) {
         setSyncStatus('syncing')
         const remote = await sbLoad()
         if (remote) {
+          // Merge: remote wins for any id that exists in both
           const merged = mergeDB(local, remote)
           setDbState(merged)
           lsSave(merged)
@@ -96,6 +101,7 @@ export function useDB() {
         } else {
           setSyncStatus('error')
         }
+        // Load settings
         const remoteSettings = await sbLoadSettings()
         if (remoteSettings) setSettingsState(remoteSettings)
       }
@@ -119,6 +125,7 @@ export function useDB() {
       lsSave(next)
       return next
     })
+    // Debounced Supabase sync
     if (hasSupabase) {
       const key = entry.id
       if (pendingRef.current.has(key)) clearTimeout(pendingRef.current.get(key))
@@ -142,23 +149,11 @@ export function useDB() {
   const saveSetting = useCallback((key, value) => {
     setSettingsState(prev => ({ ...prev, [key]: value }))
     if (hasSupabase) sbSaveSetting(key, value)
-    // Also mirror to localStorage as instant-read cache
     try {
       const existing = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
       localStorage.setItem('gcomp_settings', JSON.stringify({ ...existing, [key]: value }))
     } catch {}
   }, [])
-
-  // ── getSetting: reads from Supabase-loaded settings state ──
-  // Falls back to localStorage cache so first render isn't blank
-  const getSetting = useCallback((key, fallback = null) => {
-    if (settings[key] !== undefined) return settings[key]
-    try {
-      const cached = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
-      if (cached[key] !== undefined) return cached[key]
-    } catch {}
-    return fallback
-  }, [settings])
 
   // ── Import/Export ──────────────────────────────────────────
   const exportJSON = useCallback(() => {
@@ -175,6 +170,7 @@ export function useDB() {
       r.onload = ev => {
         try {
           const parsed = JSON.parse(ev.target.result)
+          // MERGE — never overwrite. Add new entries by ID only.
           setDbState(prev => {
             const next = { ...prev }
             CATEGORIES.forEach(k => {
@@ -182,6 +178,7 @@ export function useDB() {
               const existingIds = new Set((prev[k] || []).map(e => e.id).filter(Boolean))
               const newEntries = parsed[k].filter(e => e.id && !existingIds.has(e.id))
               next[k] = [...(prev[k] || []), ...newEntries]
+              // Sync new entries to Supabase
               if (hasSupabase) newEntries.forEach(entry => sbUpsert(k, entry))
             })
             lsSave(next)
@@ -257,7 +254,7 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting, getSetting,
+    upsertEntry, deleteEntry, save, saveSetting,
     exportJSON, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }
@@ -269,6 +266,7 @@ function mergeDB(local, remote) {
   CATEGORIES.forEach(cat => {
     const localMap = new Map((local[cat]||[]).map(e => [e.id, e]))
     const remoteMap = new Map((remote[cat]||[]).map(e => [e.id, e]))
+    // Remote wins on conflicts
     const all = new Map([...localMap, ...remoteMap])
     merged[cat] = Array.from(all.values())
   })
