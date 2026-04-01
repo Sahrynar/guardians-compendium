@@ -283,6 +283,8 @@ export default function Manuscript({ db }) {
   const chars = db.db.characters || []
   const scenes = db.db.scenes || []
 
+  const [view, setView] = useState('shelf') // 'shelf' | 'toc'
+  const [shelfBook, setShelfBook] = useState(null) // which book is open on shelf
   const [search, setSearch] = useState('')
   const [filterBook, setFilterBook] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -331,8 +333,96 @@ export default function Manuscript({ db }) {
     setEditingChapter(ch)
   }
 
+  // Shelf view - books as large clickable cards
+  function ShelfView() {
+    const booksWithContent = BOOKS.filter(b => chapters.some(ch => ch.book === b))
+    const BOOK_COVERS = {
+      'Book 1': { color: '#1a1a2e', accent: 'hsl(346,85%,62%)', title: 'The Book of Sevorech', subtitle: 'Book One' },
+      'Book 2': { color: '#1a2e1a', accent: 'hsl(127,85%,62%)', title: 'The Book of Akatriel', subtitle: 'Book Two' },
+      'Book 3': { color: '#2e2a1a', accent: 'hsl(49,85%,62%)',  title: 'The Gathering',        subtitle: 'Book Three' },
+    }
+    return (
+      <div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 18, color: 'var(--csc)', marginBottom: 20, textAlign: 'center', letterSpacing: '.1em' }}>
+          The Guardians of Lajen
+        </div>
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
+          {BOOKS.filter(b => ['Book 1','Book 2','Book 3'].includes(b)).map(book => {
+            const cover = BOOK_COVERS[book] || { color: '#1a1a2e', accent: 'hsl(206,85%,62%)', title: book, subtitle: '' }
+            const bookChapters = chapters.filter(ch => ch.book === book)
+            const wordCount = bookChapters.reduce((s, ch) => s + (ch.word_count || 0), 0)
+            const hasContent = bookChapters.length > 0
+            return (
+              <div key={book}
+                onClick={() => { if (hasContent) { setShelfBook(book); setView('toc'); setFilterBook(book) } else setAddingChapter(true) }}
+                style={{
+                  width: 160, height: 240, borderRadius: '4px 12px 12px 4px',
+                  background: `linear-gradient(135deg, ${cover.color} 0%, rgba(255,255,255,.05) 100%)`,
+                  border: `2px solid ${cover.accent}44`,
+                  boxShadow: `4px 4px 20px rgba(0,0,0,.6), inset -3px 0 8px rgba(0,0,0,.3), 0 0 0 1px ${cover.accent}22`,
+                  cursor: hasContent ? 'pointer' : 'default',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: 16, textAlign: 'center', transition: '.2s', position: 'relative',
+                  transform: 'perspective(400px) rotateY(-5deg)',
+                }}
+                onMouseEnter={e => { if (hasContent) { e.currentTarget.style.transform = 'perspective(400px) rotateY(-2deg) scale(1.04)'; e.currentTarget.style.boxShadow = `6px 6px 28px rgba(0,0,0,.7), inset -3px 0 8px rgba(0,0,0,.3), 0 0 0 1px ${cover.accent}66` }}}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'perspective(400px) rotateY(-5deg)'; e.currentTarget.style.boxShadow = `4px 4px 20px rgba(0,0,0,.6), inset -3px 0 8px rgba(0,0,0,.3), 0 0 0 1px ${cover.accent}22` }}
+              >
+                {/* Book spine line */}
+                <div style={{ position: 'absolute', left: 12, top: 0, bottom: 0, width: 2, background: `${cover.accent}44` }} />
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 10, color: cover.accent, letterSpacing: '.1em', marginBottom: 8, textTransform: 'uppercase' }}>{cover.subtitle}</div>
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: 'var(--tx)', lineHeight: 1.4, marginBottom: 12 }}>{cover.title}</div>
+                <div style={{ fontSize: 10, color: 'var(--dim)' }}>
+                  {hasContent
+                    ? `${bookChapters.length} ch · ${wordCount.toLocaleString()} w`
+                    : <span style={{ color: cover.accent }}>+ Add chapters</span>
+                  }
+                </div>
+                {hasContent && (
+                  <div style={{ marginTop: 8, display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {STATUSES.map(s => {
+                      const n = bookChapters.filter(c => c.status === s).length
+                      if (!n) return null
+                      return <span key={s} style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{s[0]} {n}</span>
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        {/* Quick stats */}
+        <div style={{ textAlign: 'center', fontSize: 'var(--fs-xs)', color: 'var(--mut)', marginBottom: 16 }}>
+          {chapters.length} chapters · {chapters.reduce((s,ch) => s + (ch.word_count || 0), 0).toLocaleString()} total words
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <button className="btn btn-primary btn-sm" style={{ background: 'var(--csc)' }} onClick={() => setView('toc')}>
+            📋 Full Table of Contents
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
+      {/* View toggle */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, alignItems: 'center' }}>
+        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>View:</span>
+        {[['shelf','📚 Shelf'],['toc','📋 Contents']].map(([v,l]) => (
+          <button key={v} onClick={() => { setView(v); if (v === 'toc') setFilterBook('all') }}
+            style={{ fontSize: 'var(--fs-xs)', padding: '3px 10px', borderRadius: 12,
+              background: view === v ? 'var(--csc)' : 'none',
+              color: view === v ? '#000' : 'var(--dim)',
+              border: `1px solid ${view === v ? 'var(--csc)' : 'var(--brd)'}`,
+              cursor: 'pointer' }}>{l}</button>
+        ))}
+      </div>
+
+      {view === 'shelf' && <ShelfView />}
+
+      {view === 'toc' && (
+      <div>
       {/* Stats bar */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
         {byBook.map(({ book, chapters: chs, words }) => (
@@ -476,6 +566,9 @@ export default function Manuscript({ db }) {
           </div>
         )
       })}
+
+      </div>
+      )}
 
       {/* Chapter editor */}
       {editingChapter && (

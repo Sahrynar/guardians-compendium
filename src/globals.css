@@ -4,11 +4,11 @@
   --sf: #0b0b0e;
   --card: #111114;
   --chi: #181818;
-  --brd: #2a2a44;
-  --brh: #3a3a5a;
+  --brd: #3a3a60;
+  --brh: #5a5a88;
   --tx: #f0ece4;
-  --dim: #9999bb;
-  --mut: #555570;
+  --dim: #aaaacc;
+  --mut: #7777a0;
 
   --cc: #c966ff;
   --ci: #ff7040;
@@ -83,17 +83,17 @@ button { cursor: pointer; }
 }
 .nav-title {
   font-family: 'Cinzel', serif; font-size: var(--fs-sm);
-  color: var(--dim); letter-spacing: .08em;
+  color: var(--tx); letter-spacing: .08em;
   text-align: center; flex: 1;
 }
 .nav-title b { color: var(--cc); }
 .nav-btns { display: flex; gap: 4px; align-items: center; }
 .nav-btn {
   background: var(--sf); border: 1px solid var(--brd);
-  border-radius: 6px; color: var(--dim);
+  border-radius: 6px; color: var(--tx);
   padding: 3px 8px; font-size: var(--fs-xs); transition: .2s;
 }
-.nav-btn:hover { color: var(--tx); border-color: var(--brh); }
+.nav-btn:hover { color: #fff; border-color: var(--brh); background: rgba(255,255,255,.08); }
 
 /* ── Tabs ────────────────────────────────────────────────────── */
 .tabs-bar {
@@ -104,14 +104,15 @@ button { cursor: pointer; }
 .tab-btn {
   flex-shrink: 0; padding: 4px 10px;
   border: 1px solid transparent; border-radius: 16px;
-  background: none; font-size: var(--fs-xs); font-weight: 600;
-  color: var(--mut); transition: .2s; white-space: nowrap;
+  background: none; font-size: var(--fs-xs); font-weight: 700;
+  color: var(--dim); transition: .2s; white-space: nowrap;
 }
-.tab-btn:hover { color: var(--dim); background: rgba(255,255,255,.03); }
+.tab-btn:hover { color: var(--tx); background: rgba(255,255,255,.06); }
 .tab-btn.active {
   border-color: var(--tab-color, var(--cc));
   color: var(--tab-color, var(--cc));
-  background: rgba(255,255,255,.04);
+  background: rgba(255,255,255,.08);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--tab-color, var(--cc)) 50%, transparent);
 }
 
 /* ── Toolbar ─────────────────────────────────────────────────── */

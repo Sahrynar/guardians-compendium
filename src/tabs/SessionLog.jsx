@@ -3,12 +3,23 @@ import { uid } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
 // ── Element color palette ──────────────────────────────────────
+// Session colors based on session number cycling through spectrum
+function sessionColor(sessionNum) {
+  const num = parseInt(sessionNum) || 0
+  const hue = (330 + (num * 47)) % 360 // 47deg steps cycle nicely through spectrum
+  return {
+    bg: `hsla(${hue}, 40%, 12%, 0.8)`,
+    border: `hsl(${hue}, 70%, 55%)`,
+    text: `hsl(${hue}, 70%, 72%)`,
+  }
+}
+// Keep for backwards compat but use sessionColor for cards
 const ELEMENT_COLORS = {
-  Water: { bg: '#EAF3FF', border: '#1A3F7A', text: '#1A3F7A' },
-  Fire:  { bg: '#FFF2EA', border: '#7A1A1A', text: '#7A1A1A' },
-  Earth: { bg: '#F2FAF0', border: '#3B6D11', text: '#3B6D11' },
-  Air:   { bg: '#FDFBEA', border: '#5A4A00', text: '#5A4A00' },
-  Mixed: { bg: 'var(--card)', border: 'var(--brd)', text: 'var(--cc)' },
+  Water: { bg: 'hsla(220,40%,12%,.8)', border: 'hsl(220,70%,55%)', text: 'hsl(220,70%,72%)' },
+  Fire:  { bg: 'hsla(10,40%,12%,.8)',  border: 'hsl(10,70%,55%)',  text: 'hsl(10,70%,72%)' },
+  Earth: { bg: 'hsla(120,40%,12%,.8)', border: 'hsl(120,70%,45%)', text: 'hsl(120,70%,65%)' },
+  Air:   { bg: 'hsla(50,40%,12%,.8)',  border: 'hsl(50,70%,50%)',  text: 'hsl(50,70%,65%)' },
+  Mixed: { bg: 'var(--card)',           border: 'var(--brd)',        text: 'var(--dim)' },
 }
 
 const ELEMENT_OPTS = ['Mixed', 'Water', 'Fire', 'Earth', 'Air']
@@ -173,7 +184,7 @@ function emptySession(num) {
 // ── Session card (view mode) ───────────────────────────────────
 function SessionCard({ session, onEdit, onDelete, selected, onSelect }) {
   const [expanded, setExpanded] = useState(false)
-  const col = ELEMENT_COLORS[session.element] || ELEMENT_COLORS.Mixed
+  const col = sessionColor(session.session_number)
   const hasContent = SECTION_LABELS.some(({ k }) => session[k] && session[k].trim())
 
   return (

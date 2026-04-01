@@ -9,6 +9,8 @@ export default function Dashboard({ db, goTo, goToWithSearch }) {
   const fl = (data.flags || []).filter(f => !f.resolved).length
   Object.keys(CATS).forEach(c => {
     if (c === 'flags' || c === 'dashboard' || !data[c]) return
+    // manuscript and sessionlog counted differently
+    if (c === 'manuscript' || c === 'sessionlog') { tot += data[c].length; return }
     tot += data[c].length
     data[c].forEach(e => {
       if (e.status === 'locked') lk++
@@ -24,13 +26,18 @@ export default function Dashboard({ db, goTo, goToWithSearch }) {
     Object.entries(CATS).forEach(([cat, cfg]) => {
       if (cat === 'dashboard') return
       ;(data[cat] || []).forEach(e => {
-        const text = [e.name, e.display_name, e.detail, e.notes,
-          e.aliases, e.description, e.summary, e.content, e.working]
-          .filter(Boolean).join(' ').toLowerCase()
-        if (text.includes(q)) results.push({ cat, cfg, e })
+        // Search name fields first (exact/prefix), then detail fields
+        const nameFields = [e.name, e.display_name, e.title, e.aliases].filter(Boolean).join(' ').toLowerCase()
+        const detailFields = [e.detail, e.notes, e.description, e.summary, e.content].filter(Boolean).join(' ').toLowerCase()
+        const nameMatch = nameFields.includes(q)
+        const detailMatch = detailFields.includes(q)
+        if (nameMatch || detailMatch) {
+          results.push({ cat, cfg, e, nameMatch })
+        }
       })
     })
-    return results.slice(0, 50)
+    // Sort: name matches first
+    return results.sort((a, b) => (b.nameMatch ? 1 : 0) - (a.nameMatch ? 1 : 0)).slice(0, 50)
   }, [search, data])
 
   const recentEntries = useMemo(() => {
@@ -114,7 +121,7 @@ export default function Dashboard({ db, goTo, goToWithSearch }) {
                   {searchResults.map(({ cat, cfg, e }, i) => (
                     <div key={`${cat}-${e.id}-${i}`} className="dash-card"
                       style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', padding: '5px 10px', borderLeft: `3px solid ${cfg.c}`, marginBottom: 3, cursor: 'pointer' }}
-                      onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '') : goTo(cat)}>
+                      onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '', e.id) : goTo(cat)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 11, fontWeight: 600 }}>{e.display_name || e.name || '—'}</span>
                         <span style={{ fontSize: 9, color: cfg.c, textTransform: 'uppercase' }}>{cfg.i} {cfg.l}</span>
@@ -141,7 +148,7 @@ export default function Dashboard({ db, goTo, goToWithSearch }) {
               {recentEntries.map(({ cat, cfg, e }, i) => (
                 <div key={`r-${cat}-${e.id}-${i}`}
                   style={{ padding: '4px 8px', borderLeft: `2px solid ${cfg.c}`, marginBottom: 3, cursor: 'pointer', borderRadius: '0 4px 4px 0', background: 'var(--card)' }}
-                  onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '') : goTo(cat)}>
+                  onClick={() => goToWithSearch ? goToWithSearch(cat, e.display_name || e.name || '', e.id) : goTo(cat)}>
                   <div style={{ fontSize: 10, fontWeight: 600, lineHeight: 1.3 }}>{(e.display_name || e.name || '—').slice(0, 40)}</div>
                   <div style={{ fontSize: 9, color: cfg.c }}>{cfg.i} {cfg.l}</div>
                 </div>

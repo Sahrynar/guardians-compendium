@@ -7,6 +7,14 @@ import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
 import { highlight, uid, SL } from '../constants'
 
+// ── Stable color index from char id ───────────────────────────
+function stableIdx(id, total) {
+  let h = 0
+  for (let i = 0; i < (id || '').length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return h % total
+}
+
+
 // ── Category config ───────────────────────────────────────────────
 const CATEGORIES = [
   { id: 'Clothing',       icon: '👗', color: '#8B5CF6' },
@@ -129,7 +137,7 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
   const isUnassigned = char === '__unassigned__'
   const charObj = isUnassigned ? null : char
   const name = isUnassigned ? 'Unassigned' : (charObj?.name || 'Unknown')
-  const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length]
+  const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[stableIdx(charObj?.id || 'unassigned', DEFAULT_COLORS.length)]
   const [showPicker, setShowPicker] = useState(false)
 
   // Group entries by category inside the bubble
@@ -334,7 +342,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 // ══════════════════════════════════════════════════════════════════
 // MAIN INVENTORY COMPONENT
 // ══════════════════════════════════════════════════════════════════
-export default function Inventory({ db }) {
+export default function Inventory({ db, goToWithSearch }) {
   // Merge legacy items + wardrobe + inventory into one list
   const rawInventory = db.db.inventory || []
   const rawItems = (db.db.items || []).map(e => ({ ...e, _source: 'items',
@@ -627,7 +635,7 @@ export default function Inventory({ db }) {
           {sortedList.map(e => {
             const cat = CAT_MAP[e.category || 'Other']
             const holderChar = chars.find(c => c.id === (e.character || e.holder))
-            const bubbleColor = holderChar?.bubble_color || 'var(--ci)'
+            const bubbleColor = holderChar?.bubble_color || DEFAULT_COLORS[stableIdx(holderChar?.id || 'x', DEFAULT_COLORS.length)]
             const tileColor = e.entry_color || bubbleColor
             return (
               <div key={e.id} className="entry-card"

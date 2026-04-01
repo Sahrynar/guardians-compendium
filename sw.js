@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gol-compendium-v2';
+const CACHE_NAME = 'gol-compendium-v3';
 
 // Core app shell files to cache on install
 const PRECACHE_URLS = [

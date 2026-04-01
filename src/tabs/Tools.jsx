@@ -923,11 +923,29 @@ export default function Tools({ db }) {
       {/* ── Accordion grid ── */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${minW}px, 1fr))`, gap: 0, alignItems: 'start' }}>
 
-        {/* Date & Time group */}
-        <div>
-          <div style={{ fontSize: '0.7em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 5, padding: '0 2px' }}>
+        {toolOrder.map(sectionId => {
+          const groupStyle = {
+            cursor: 'default',
+            padding: '0 0 4px 0',
+          }
+          const handleStyle = {
+            fontSize: '0.7em', color: 'var(--dim)', textTransform: 'uppercase',
+            letterSpacing: '.06em', marginBottom: 5, padding: '0 2px',
+            display: 'flex', alignItems: 'center', gap: 6, cursor: 'grab',
+            userSelect: 'none',
+          }
+          if (sectionId === 'datetime') { return (
+          <div key="datetime" style={groupStyle}
+            draggable
+            onDragStart={() => startToolDrag('datetime')}
+            onDragOver={e => { e.preventDefault(); overToolDrag('datetime') }}
+            onDrop={dropTool}
+          >
+          <div style={handleStyle}>
+            <span style={{ fontSize: 'var(--fs-sm)', opacity: .5 }}>⠿</span>
             📅 Date &amp; Time
           </div>
+        {/* Date & Time group */}
 
           <Accordion id="l2m" title="Lajen → Mnaerah" emoji="🌍" color="var(--cca)" defaultOpen>
             <div className="field-row">
@@ -1078,10 +1096,16 @@ export default function Tools({ db }) {
             <BackfillTool db={db} />
           </Accordion>
         </div>
-
-        {/* Names & Languages group */}
-        <div>
-          <div style={{ fontSize: '0.7em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 5, padding: '0 2px' }}>
+          ); } // end datetime
+          if (sectionId === 'nameslang') { return (
+          <div key="nameslang" style={groupStyle}
+            draggable
+            onDragStart={() => startToolDrag('nameslang')}
+            onDragOver={e => { e.preventDefault(); overToolDrag('nameslang') }}
+            onDrop={dropTool}
+          >
+          <div style={handleStyle}>
+            <span style={{ fontSize: 'var(--fs-sm)', opacity: .5 }}>⠿</span>
             ✦ Names &amp; Languages
           </div>
 
@@ -1089,7 +1113,7 @@ export default function Tools({ db }) {
             <IxCitlatlTool db={db} />
           </Accordion>
 
-          <Accordion id="pronun" title="Pronunciation Helper" emoji="🔊" color="var(--cwr)">
+          <Accordion id="pronun" title="Pronunciation & Translation" emoji="🔊" color="var(--cwr)">
             <PronunciationTool />
           </Accordion>
 
@@ -1097,6 +1121,9 @@ export default function Tools({ db }) {
             <ScotsConverter />
           </Accordion>
         </div>
+          ); } // end nameslang
+          return null
+        })}
 
       </div>
     </div>

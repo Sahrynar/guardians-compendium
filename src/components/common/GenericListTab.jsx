@@ -24,7 +24,9 @@ export default function GenericListTab({
   useEffect(() => {
     if (crossLink?.search) {
       setSearch(crossLink.search)
-      if (crossLink.expandName) {
+      if (crossLink.expandId) {
+        setExpanded(crossLink.expandId)
+      } else if (crossLink.expandName) {
         const match = entries.find(e =>
           (e.name || e.display_name || '').toLowerCase() === crossLink.expandName.toLowerCase()
         )

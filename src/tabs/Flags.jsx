@@ -13,13 +13,20 @@ export default function Flags({ db }) {
   const [form, setForm] = useState({ name: '', priority: 'high', detail: '' })
   const [confirmId, setConfirmId] = useState(null)
 
+  const [sortMode, setSortMode] = useState('newest')
+
   const filtered = flags.filter(f => {
     if (filter === 'active') return !f.resolved
     if (filter === 'resolved') return !!f.resolved
     return true
   }).sort((a, b) => {
-    const order = { urgent: 0, high: 1, medium: 2, low: 3 }
-    return (order[a.priority||'']||4) - (order[b.priority||'']||4)
+    if (sortMode === 'alpha') return (a.name || '').localeCompare(b.name || '')
+    if (sortMode === 'oldest') return new Date(a.created || 0) - new Date(b.created || 0)
+    if (sortMode === 'priority') {
+      const order = { urgent: 0, high: 1, medium: 2, low: 3 }
+      return (order[a.priority||'']||4) - (order[b.priority||'']||4)
+    }
+    return new Date(b.created || 0) - new Date(a.created || 0) // newest first
   })
 
   const priCol = { urgent: '#ff3355', high: '#ff7040', medium: '#ffcc00', low: '#7acc7a' }

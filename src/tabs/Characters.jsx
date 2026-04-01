@@ -65,11 +65,14 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('char_cols') || '3'))
 
-  // Consume crossLink on mount (e.g. arriving from a scene click)
+  // Consume crossLink on mount (e.g. arriving from a scene click or dashboard)
   useEffect(() => {
     if (crossLink?.search) {
       setSearch(crossLink.search)
-      if (crossLink.expandName) {
+      // Prefer exact ID match, fall back to name match
+      if (crossLink.expandId) {
+        setExpanded(crossLink.expandId)
+      } else if (crossLink.expandName) {
         const match = chars.find(c =>
           (c.name || c.display_name || '').toLowerCase() === crossLink.expandName.toLowerCase()
         )
@@ -400,6 +403,13 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
 
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
 
+                  {(e.updated_at || e.updated || e.created) && (
+                    <div className="entry-timestamp">
+                      {e.updated_at || e.updated
+                        ? `Edited ${new Date(e.updated_at || e.updated).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+                        : `Added ${new Date(e.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                    </div>
+                  )}
                   <div className="entry-actions">
                     <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
                     <button className="btn btn-sm btn-outline" style={{ color: 'var(--cq)', borderColor: 'var(--cq)' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Portrait</button>

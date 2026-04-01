@@ -98,15 +98,20 @@ function QuickCapture({ db, onClose }) {
   }
 
   function doSave() {
-    if (!text.trim()) return
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const lines = trimmed.split('\n').filter(Boolean)
+    const name = lines[0].slice(0, 120)
+    const detail = trimmed.length > name.length ? trimmed : ''
+    const now = new Date().toISOString()
     const entry = {
       id: uid(),
-      name: text.trim().slice(0, 80),
-      detail: text.trim().length > 80 ? text.trim() : '',
+      name,
+      detail,
       notes: '',
       status: 'open',
-      created: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created: now,
+      updated_at: now,
     }
     db.upsertEntry(type, entry)
     setSaved(true)
@@ -121,7 +126,7 @@ function QuickCapture({ db, onClose }) {
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         paddingBottom: 70,
       }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => e.stopPropagation()}
     >
       <div style={{
         width: '100%', maxWidth: 540,
@@ -129,6 +134,11 @@ function QuickCapture({ db, onClose }) {
         borderRadius: 14, padding: 16, margin: '0 12px',
         boxShadow: `0 4px 32px rgba(0,0,0,.5), 0 0 0 1px ${chosen.color}22`,
       }}>
+        {/* Header with X button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Quick Capture</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--dim)', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}>✕</button>
+        </div>
         {/* Type selector */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {QC_TYPES.map(t => (
@@ -401,9 +411,9 @@ export default function App() {
     if (bar) bar.scrollBy({ left: dir * 150, behavior: 'smooth' })
   }
 
-  // Navigate to a tab and pre-populate its search box (and optionally expand a named entry)
-  const goToWithSearch = useCallback((targetTab, searchStr) => {
-    setCrossLink({ search: searchStr, expandName: searchStr })
+  // Navigate to a tab, pre-populate search, and optionally expand a specific entry
+  const goToWithSearch = useCallback((targetTab, searchStr, entryId = null) => {
+    setCrossLink({ search: searchStr, expandName: searchStr, expandId: entryId })
     goTo(targetTab)
   }, [goTo])
 

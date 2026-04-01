@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-export default function Modal({ open, onClose, title, color = 'var(--cc)', children, maxWidth = 580 }) {
+export default function Modal({ open, onClose, title, color = 'var(--cc)', children, maxWidth = 580, noBackdrop = false }) {
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     if (open) document.addEventListener('keydown', onKey)
@@ -12,7 +12,7 @@ export default function Modal({ open, onClose, title, color = 'var(--cc)', child
   return (
     <div
       className="modal-overlay open"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={noBackdrop ? undefined : (e => { if (e.target === e.currentTarget) onClose() })}
     >
       <div className="modal-box" style={{ maxWidth }}>
         <button className="modal-close" onClick={onClose}>✕</button>

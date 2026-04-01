@@ -99,7 +99,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
   // Parse character string into tags
   function charTags(str) {
     if (!str) return []
-    return str.split(',').map(s => s.trim()).filter(Boolean)
+    return str.split(',').map(s => s.trim().replace(/^ch_/, '')).filter(Boolean)
   }
 
   // Scene card
