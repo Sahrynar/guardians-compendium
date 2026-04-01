@@ -58,7 +58,7 @@ function FormatBar({ textareaRef, onUpdate }) {
 
   const btn = (label, title, action) => (
     <button key={label} onClick={action} title={title}
-      style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: 'var(--card)',
+      style={{ fontSize: 'var(--fs-sm)', padding: '2px 8px', borderRadius: 5, background: 'var(--card)',
         border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer', fontStyle: label === 'I' ? 'italic' : 'normal',
         fontWeight: label === 'B' || label === 'BI' ? 700 : 400 }}>
       {label}
@@ -147,15 +147,15 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px',
         borderBottom: '1px solid var(--brd)', background: 'var(--sf)', flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: 'var(--csc)', flex: 1 }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-md)', color: 'var(--csc)', flex: 1 }}>
           {chapter.book} · Ch. {chapter.chapter_num}
         </div>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Chapter title…"
-          style={{ flex: 2, minWidth: 200, fontSize: 13, padding: '4px 8px', background: 'var(--card)',
+          style={{ flex: 2, minWidth: 200, fontSize: 'var(--fs-md)', padding: '4px 8px', background: 'var(--card)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', fontFamily: "'Cinzel',serif" }} />
         {/* Status */}
         <select value={status} onChange={e => setStatus(e.target.value)}
-          style={{ fontSize: 11, padding: '4px 8px', background: `${statusCol}22`, border: `1px solid ${statusCol}`,
+          style={{ fontSize: 'var(--fs-sm)', padding: '4px 8px', background: `${statusCol}22`, border: `1px solid ${statusCol}`,
             borderRadius: 6, color: statusCol, cursor: 'pointer' }}>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -163,49 +163,49 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
         <div style={{ display: 'flex', gap: 3 }}>
           {[['edit','✎'],['preview','👁'],['split','⧉']].map(([v,l]) => (
             <button key={v} onClick={() => setView(v)}
-              style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6,
+              style={{ fontSize: 'var(--fs-sm)', padding: '3px 8px', borderRadius: 6,
                 background: view === v ? 'var(--csc)' : 'none',
                 color: view === v ? '#000' : 'var(--dim)',
                 border: `1px solid ${view === v ? 'var(--csc)' : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
         {/* Word count */}
-        <span style={{ fontSize: 10, color: 'var(--mut)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
           {wc.toLocaleString()} words · ~{Math.round(wc / 250)} min read
         </span>
         {/* Copy for Substack */}
         <button onClick={copyForSubstack}
-          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, background: '#ff6719',
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 10px', borderRadius: 6, background: '#ff6719',
             color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           {copied ? '✓ Copied!' : '📋 Copy for Substack'}
         </button>
         {/* Export .md */}
         <button onClick={exportMd}
-          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, background: 'none',
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 10px', borderRadius: 6, background: 'none',
             color: 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           ⬇ .md
         </button>
         <button onClick={() => setShowAnnotations(a => !a)}
-          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6,
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 10px', borderRadius: 6,
             background: showAnnotations ? 'var(--cca)' : 'none',
             color: showAnnotations ? '#000' : 'var(--dim)',
             border: '1px solid var(--brd)', cursor: 'pointer' }}>
           📝 Notes ({annotations.length})
         </button>
         <button onClick={save}
-          style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6, background: 'var(--csc)',
+          style={{ fontSize: 'var(--fs-sm)', padding: '5px 14px', borderRadius: 6, background: 'var(--csc)',
             color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
         <button onClick={onClose}
-          style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+          style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 'calc(var(--fs) * 1.2)' }}>✕</button>
       </div>
 
       {/* Detected characters */}
       {detectedChars.length > 0 && (
         <div style={{ display: 'flex', gap: 6, padding: '4px 14px', background: 'var(--card)',
           borderBottom: '1px solid var(--brd)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 9, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Characters:</span>
+          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Characters:</span>
           {detectedChars.map(c => (
-            <span key={c.id} style={{ fontSize: 10, padding: '1px 8px', borderRadius: 10,
+            <span key={c.id} style={{ fontSize: 'var(--fs-xs)', padding: '1px 8px', borderRadius: 10,
               background: 'rgba(51,136,255,.15)', color: 'var(--cc)', border: '1px solid rgba(51,136,255,.3)' }}>
               {c.display_name || c.name}
             </span>
@@ -221,7 +221,7 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
             borderRight: view === 'split' ? '1px solid var(--brd)' : 'none' }}>
             <FormatBar textareaRef={textareaRef} onUpdate={setText} />
             <textarea ref={textareaRef} value={text} onChange={e => setText(e.target.value)}
-              style={{ flex: 1, resize: 'none', fontSize: 13, lineHeight: 1.8, padding: '8px 0',
+              style={{ flex: 1, resize: 'none', fontSize: 'var(--fs-md)', lineHeight: 1.8, padding: '8px 0',
                 background: 'transparent', border: 'none', color: 'var(--tx)', outline: 'none',
                 fontFamily: 'Georgia, serif', overflowY: 'auto' }}
               placeholder="Paste or type your chapter here. Use *italic*, **bold**, — for em dash, *** for scene break." />
@@ -231,31 +231,31 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
         {/* Preview */}
         {(view === 'preview' || view === 'split') && (
           <div style={{ flex: 1, padding: '10px 40px', overflowY: 'auto',
-            fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.9, color: 'var(--tx)' }}
+            fontFamily: 'Georgia, serif', fontSize: 'var(--fs-md)', lineHeight: 1.9, color: 'var(--tx)' }}
             dangerouslySetInnerHTML={{ __html: toHTML(text) || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
         )}
 
         {/* Annotations panel */}
         {showAnnotations && (
           <div style={{ width: 280, borderLeft: '1px solid var(--brd)', padding: '10px 14px', overflowY: 'auto', flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 12, color: 'var(--cca)', marginBottom: 10 }}>📝 Chapter Notes</div>
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-sm)', color: 'var(--cca)', marginBottom: 10 }}>📝 Chapter Notes</div>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={6}
               placeholder="Chapter-level notes, to-do, revision thoughts…"
-              style={{ width: '100%', fontSize: 11, padding: '6px 8px', background: 'var(--card)',
+              style={{ width: '100%', fontSize: 'var(--fs-sm)', padding: '6px 8px', background: 'var(--card)',
                 border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', resize: 'vertical', boxSizing: 'border-box', marginBottom: 12 }} />
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>
+            <div style={{ fontSize: 'var(--fs-xs)', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>
               Passage Flags
             </div>
             {annotations.length === 0 && (
-              <div style={{ fontSize: 10, color: 'var(--mut)' }}>No passage flags yet. Select text and add a flag.</div>
+              <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>No passage flags yet. Select text and add a flag.</div>
             )}
             {annotations.map((ann, i) => (
               <div key={ann.id} style={{ marginBottom: 8, padding: '6px 8px', background: 'var(--card)',
-                borderLeft: '3px solid var(--cfl)', borderRadius: '0 6px 6px 0', fontSize: 10 }}>
+                borderLeft: '3px solid var(--cfl)', borderRadius: '0 6px 6px 0', fontSize: 'var(--fs-xs)' }}>
                 <div style={{ color: 'var(--cfl)', fontStyle: 'italic', marginBottom: 3 }}>"{ann.passage}"</div>
                 <div style={{ color: 'var(--tx)' }}>{ann.note}</div>
                 <button onClick={() => setAnnotations(a => a.filter(x => x.id !== ann.id))}
-                  style={{ fontSize: 9, color: '#ff3355', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>Remove</button>
+                  style={{ fontSize: 'var(--fs-xs)', color: '#ff3355', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>Remove</button>
               </div>
             ))}
           </div>
@@ -264,7 +264,7 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
 
       {/* Formatting guide */}
       <div style={{ padding: '4px 14px', background: 'var(--card)', borderTop: '1px solid var(--brd)',
-        fontSize: 9, color: 'var(--mut)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        fontSize: 'var(--fs-xs)', color: 'var(--mut)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         {[['*text*','italic'],['**text**','bold'],['***text***','bold italic'],['—','em dash'],['…','ellipsis'],['***','scene break']].map(([code, label]) => (
           <span key={code}><code style={{ color: 'var(--cca)' }}>{code}</code> = {label}</span>
         ))}
@@ -336,6 +336,23 @@ export default function Manuscript({ db }) {
   // Shelf view - books as large clickable cards
   function ShelfView() {
     const booksWithContent = BOOKS.filter(b => chapters.some(ch => ch.book === b))
+    const [coverImages, setCoverImages] = useState(() => {
+      try { return JSON.parse(db.getSetting?.('manuscript_covers') || '{}') } catch { return {} }
+    })
+    const [uploadingCover, setUploadingCover] = useState(null) // book name being uploaded
+
+    function handleCoverUpload(book, e) {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const next = { ...coverImages, [book]: ev.target.result }
+        setCoverImages(next)
+        db.saveSetting?.('manuscript_covers', JSON.stringify(next))
+      }
+      reader.readAsDataURL(file)
+    }
+
     const BOOK_COVERS = {
       'Book 1': { color: '#1a1a2e', accent: 'hsl(346,85%,62%)', title: 'The Book of Sevorech', subtitle: 'Book One' },
       'Book 2': { color: '#1a2e1a', accent: 'hsl(127,85%,62%)', title: 'The Book of Akatriel', subtitle: 'Book Two' },
@@ -343,7 +360,7 @@ export default function Manuscript({ db }) {
     }
     return (
       <div>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 18, color: 'var(--csc)', marginBottom: 20, textAlign: 'center', letterSpacing: '.1em' }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'calc(var(--fs) * 1.2)', color: 'var(--csc)', marginBottom: 20, textAlign: 'center', letterSpacing: '.1em' }}>
           The Guardians of Lajen
         </div>
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
@@ -370,9 +387,16 @@ export default function Manuscript({ db }) {
               >
                 {/* Book spine line */}
                 <div style={{ position: 'absolute', left: 12, top: 0, bottom: 0, width: 2, background: `${cover.accent}44` }} />
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 10, color: cover.accent, letterSpacing: '.1em', marginBottom: 8, textTransform: 'uppercase' }}>{cover.subtitle}</div>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: 'var(--tx)', lineHeight: 1.4, marginBottom: 12 }}>{cover.title}</div>
-                <div style={{ fontSize: 10, color: 'var(--dim)' }}>
+                {/* Cover image */}
+                {coverImages[book] && (
+                  <img src={coverImages[book]} alt={cover.title}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+                      objectFit: 'cover', opacity: 0.55, borderRadius: '4px 12px 12px 4px',
+                      pointerEvents: 'none' }} />
+                )}
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-xs)', color: cover.accent, letterSpacing: '.1em', marginBottom: 8, textTransform: 'uppercase' }}>{cover.subtitle}</div>
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-md)', color: 'var(--tx)', lineHeight: 1.4, marginBottom: 12 }}>{cover.title}</div>
+                <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--dim)' }}>
                   {hasContent
                     ? `${bookChapters.length} ch · ${wordCount.toLocaleString()} w`
                     : <span style={{ color: cover.accent }}>+ Add chapters</span>
@@ -383,10 +407,24 @@ export default function Manuscript({ db }) {
                     {STATUSES.map(s => {
                       const n = bookChapters.filter(c => c.status === s).length
                       if (!n) return null
-                      return <span key={s} style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{s[0]} {n}</span>
+                      return <span key={s} style={{ fontSize: 'var(--fs-xs)', padding: '1px 5px', borderRadius: 4, background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{s[0]} {n}</span>
                     })}
                   </div>
                 )}
+                </div>
+                {/* Cover image upload button */}
+                <label
+                  onClick={e => e.stopPropagation()}
+                  style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 2,
+                    fontSize: 'var(--fs-xs)', padding: '2px 7px', borderRadius: 6,
+                    background: 'rgba(0,0,0,.6)', color: cover.accent,
+                    border: `1px solid ${cover.accent}44`, cursor: 'pointer' }}
+                  title="Upload cover image"
+                >
+                  📷
+                  <input type="file" accept="image/*" style={{ display: 'none' }}
+                    onChange={e => handleCoverUpload(book, e)} />
+                </label>
               </div>
             )
           })}
@@ -428,23 +466,23 @@ export default function Manuscript({ db }) {
         {byBook.map(({ book, chapters: chs, words }) => (
           <div key={book} style={{ padding: '6px 12px', background: 'var(--card)',
             border: '1px solid var(--brd)', borderRadius: 8, minWidth: 120 }}>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 11, color: 'var(--csc)', marginBottom: 2 }}>{book}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx)' }}>{chs.length} ch</div>
-            <div style={{ fontSize: 10, color: 'var(--mut)' }}>{words.toLocaleString()} words</div>
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-sm)', color: 'var(--csc)', marginBottom: 2 }}>{book}</div>
+            <div style={{ fontSize: 'var(--fs-md)', fontWeight: 700, color: 'var(--tx)' }}>{chs.length} ch</div>
+            <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>{words.toLocaleString()} words</div>
             <div style={{ display: 'flex', gap: 3, marginTop: 4, flexWrap: 'wrap' }}>
               {STATUSES.map(s => {
                 const n = chs.filter(c => c.status === s).length
                 if (!n) return null
-                return <span key={s} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4,
+                return <span key={s} style={{ fontSize: 'var(--fs-xs)', padding: '1px 5px', borderRadius: 4,
                   background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{s} {n}</span>
               })}
             </div>
           </div>
         ))}
         <div style={{ padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 11, color: 'var(--csc)', marginBottom: 2 }}>Total</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx)' }}>{totalWords.toLocaleString()}</div>
-          <div style={{ fontSize: 10, color: 'var(--mut)' }}>words across {chapters.length} chapters</div>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-sm)', color: 'var(--csc)', marginBottom: 2 }}>Total</div>
+          <div style={{ fontSize: 'var(--fs-md)', fontWeight: 700, color: 'var(--tx)' }}>{totalWords.toLocaleString()}</div>
+          <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>words across {chapters.length} chapters</div>
         </div>
       </div>
 
@@ -453,12 +491,12 @@ export default function Manuscript({ db }) {
         <input className="sx" placeholder="Search chapters and text…" value={search}
           onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
         <select value={filterBook} onChange={e => setFilterBook(e.target.value)}
-          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All books</option>
           {BOOKS.map(b => <option key={b} value={b}>{b}</option>)}
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+          style={{ fontSize: 'var(--fs-xs)', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All statuses</option>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -509,7 +547,7 @@ export default function Manuscript({ db }) {
         if (!bookChapters.length) return null
         return (
           <div key={book} style={{ marginBottom: 20 }}>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: 'var(--csc)',
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 'var(--fs-md)', color: 'var(--csc)',
               marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)' }}>{book}</div>
             {bookChapters.map(ch => {
               const sc = STATUS_COLORS[ch.status] || '#6b7280'
@@ -527,39 +565,39 @@ export default function Manuscript({ db }) {
                   onMouseEnter={e => e.currentTarget.style.borderColor = sc}
                   onMouseLeave={e => e.currentTarget.style.borderLeft = `3px solid ${sc}`}
                   onClick={() => setEditingChapter(ch)}>
-                  <div style={{ fontSize: 11, color: 'var(--mut)', minWidth: 28 }}>Ch.{ch.chapter_num}</div>
+                  <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--mut)', minWidth: 28 }}>Ch.{ch.chapter_num}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>
+                    <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--tx)' }}>
                       {ch.title || <span style={{ color: 'var(--mut)', fontStyle: 'italic' }}>Untitled</span>}
                     </div>
                     {detectedCharsInCh.length > 0 && (
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
                         {detectedCharsInCh.slice(0, 8).map(c => (
-                          <span key={c.id} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 8,
+                          <span key={c.id} style={{ fontSize: 'var(--fs-xs)', padding: '1px 5px', borderRadius: 8,
                             background: 'rgba(51,136,255,.12)', color: 'var(--cc)' }}>
                             {c.display_name || c.name}
                           </span>
                         ))}
                         {detectedCharsInCh.length > 8 && (
-                          <span style={{ fontSize: 9, color: 'var(--mut)' }}>+{detectedCharsInCh.length - 8}</span>
+                          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>+{detectedCharsInCh.length - 8}</span>
                         )}
                       </div>
                     )}
                   </div>
-                  <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10,
+                  <span style={{ fontSize: 'var(--fs-xs)', padding: '2px 8px', borderRadius: 10,
                     background: `${sc}22`, color: sc, border: `1px solid ${sc}44`, whiteSpace: 'nowrap' }}>
                     {ch.status || 'Draft'}
                   </span>
-                  <span style={{ fontSize: 10, color: 'var(--mut)', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
                     {wc > 0 ? wc.toLocaleString() + ' w' : 'empty'}
                   </span>
-                  {ch.notes && <span style={{ fontSize: 11 }} title="Has notes">📝</span>}
+                  {ch.notes && <span style={{ fontSize: 'var(--fs-sm)' }} title="Has notes">📝</span>}
                   {(ch.annotations || []).length > 0 && (
-                    <span style={{ fontSize: 9, color: 'var(--cfl)' }}>🚩{ch.annotations.length}</span>
+                    <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--cfl)' }}>🚩{ch.annotations.length}</span>
                   )}
                   <button onClick={e => { e.stopPropagation(); setConfirmDelete(ch.id) }}
                     style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer',
-                      fontSize: 14, padding: '0 4px', flexShrink: 0 }}>✕</button>
+                      fontSize: 'var(--fs-md)', padding: '0 4px', flexShrink: 0 }}>✕</button>
                 </div>
               )
             })}
