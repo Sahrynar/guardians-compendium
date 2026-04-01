@@ -89,6 +89,20 @@ export default function IOBar({ db, backup }) {
         const incoming = JSON.parse(ev.target.result)
         const merged = mergeImport(db.db, incoming)
 
+        // Collect all entries to upsert
+        const toUpsert = []
+        Object.keys(merged).forEach(k => {
+          const arr = merged[k]
+          if (!Array.isArray(arr)) return
+          if (k === 'family_tree') {
+            if (arr[0]) toUpsert.push({ cat: k, entry: arr[0] })
+            return
+          }
+          arr.forEach(entry => {
+            if (entry?.id) toUpsert.push({ cat: k, entry })
+          })
+        })
+
         // Count new entries
         let added = 0
         Object.keys(merged).forEach(k => {
@@ -97,22 +111,17 @@ export default function IOBar({ db, backup }) {
           added += Math.max(0, newLen - exLen)
         })
 
-        // Write merged data back via upsert for each category
-        const upsertPromises = []
-        Object.keys(merged).forEach(k => {
-          const arr = merged[k]
-          if (!Array.isArray(arr)) return
-          if (k === 'family_tree') {
-            if (arr[0]) upsertPromises.push(db.upsertEntry('family_tree', arr[0]))
-            return
-          }
-          arr.forEach(entry => {
-            if (entry?.id) upsertPromises.push(db.upsertEntry(k, entry))
-          })
-        })
-        await Promise.all(upsertPromises)
+        // Write in small batches to avoid mobile timeouts
+        const BATCH = 5
+        const delay = ms => new Promise(r => setTimeout(r, ms))
+        for (let i = 0; i < toUpsert.length; i += BATCH) {
+          const batch = toUpsert.slice(i, i + BATCH)
+          await Promise.all(batch.map(({ cat, entry }) => db.upsertEntry(cat, entry)))
+          flash(`Importing… ${Math.min(i + BATCH, toUpsert.length)}/${toUpsert.length}`)
+          if (i + BATCH < toUpsert.length) await delay(300)
+        }
 
-        flash(`✓ Merged: ${added} new entries added`)
+        flash(`✓ Done: ${added} new entries added`)
       } catch (err) {
         flash(`✗ Import failed: ${err.message}`)
       }
@@ -184,19 +193,19 @@ export default function IOBar({ db, backup }) {
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:12,
             padding:20, maxWidth:340, width:'100%', textAlign:'center' }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, marginBottom:8, color:'var(--cca)' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize: 'var(--fs-md)', marginBottom:8, color:'var(--cca)' }}>
               ⬆ Aster Import
             </div>
-            <p style={{ fontSize:11, color:'var(--dim)', marginBottom:16, lineHeight:1.5 }}>
+            <p style={{ fontSize: 'var(--fs-sm)', color:'var(--dim)', marginBottom:16, lineHeight:1.5 }}>
               <strong style={{ color:'var(--tx)' }}>{asterModal.name}</strong><br/>
               How do you want to import this?
             </p>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
-              <button className="btn btn-primary btn-sm" style={{ background:'var(--cl)', color:'#000', padding:'8px 14px', fontSize:11 }}
+              <button className="btn btn-primary btn-sm" style={{ background:'var(--cl)', color:'#000', padding:'8px 14px', fontSize: 'var(--fs-sm)' }}
                 onClick={() => doAsterImport('merge')}>
                 Merge — add new entries, keep existing
               </button>
-              <button className="btn btn-outline btn-sm" style={{ color:'var(--ccn)', borderColor:'var(--ccn)44', padding:'8px 14px', fontSize:11 }}
+              <button className="btn btn-outline btn-sm" style={{ color:'var(--ccn)', borderColor:'var(--ccn)44', padding:'8px 14px', fontSize: 'var(--fs-sm)' }}
                 onClick={() => doAsterImport('overwrite')}>
                 Replace — overwrite with Aster data
               </button>
@@ -208,7 +217,7 @@ export default function IOBar({ db, backup }) {
 
       <div className="iobar">
         {msg && (
-          <span style={{ fontSize: 10, color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
+          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
         )}
 
         <button className="btn btn-sm btn-outline" onClick={db.exportJSON} title="Export all data as JSON (for re-import)">⬇ Export JSON</button>
@@ -248,7 +257,7 @@ export default function IOBar({ db, backup }) {
           🗑 Clear
         </button>
 
-        <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 4 }}>
+        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--mut)', marginLeft: 4 }}>
           <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
           {db.hasSupabase ? 'Cloud sync on' : 'Local only'}
         </span>
