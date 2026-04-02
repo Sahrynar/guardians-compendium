@@ -72,7 +72,7 @@ button { cursor: pointer; }
   justify-content: space-between; margin-bottom: 5px;
 }
 .nav-title {
-  font-family: 'Cinzel', serif; font-size: 12px;
+  font-family: 'Cinzel', serif; font-size: 16px;
   color: var(--dim); letter-spacing: .08em;
   text-align: center; flex: 1;
 }
@@ -93,15 +93,19 @@ button { cursor: pointer; }
 .tabs-bar::-webkit-scrollbar { height: 0; }
 .tab-btn {
   flex-shrink: 0; padding: 4px 10px;
-  border: 1px solid transparent; border-radius: 16px;
+  border: 1px solid var(--tab-color, var(--mut)); border-radius: 16px;
   background: none; font-size: 11px; font-weight: 600;
-  color: var(--mut); transition: .2s; white-space: nowrap;
+  color: var(--tab-color, var(--mut));
+  opacity: 0.55;
+  transition: .2s; white-space: nowrap;
 }
-.tab-btn:hover { color: var(--dim); background: rgba(255,255,255,.03); }
+.tab-btn:hover { opacity: 0.85; background: rgba(255,255,255,.04); }
 .tab-btn.active {
   border-color: var(--tab-color, var(--cc));
-  color: var(--tab-color, var(--cc));
-  background: rgba(255,255,255,.04);
+  color: #000;
+  background: var(--tab-color, var(--cc));
+  opacity: 1;
+  text-shadow: none;
 }
 
 /* ── Toolbar ─────────────────────────────────────────────────── */
@@ -456,3 +460,34 @@ button { cursor: pointer; }
 @media (max-width: 400px) {
   .cal-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Prose reader (Manuscript preview) ──────────────────────────── */
+.prose-reader p {
+  margin: 0 0 0 0;
+  text-indent: 1.8em;
+}
+.prose-reader p:first-child,
+.prose-reader p + p.scene-break,
+.prose-reader .scene-break + p {
+  text-indent: 0;
+}
+.prose-reader p + p {
+  margin-top: 0;
+}
+.prose-reader p:first-of-type {
+  text-indent: 0;
+}
+.prose-reader .scene-break {
+  text-align: center;
+  text-indent: 0;
+  margin: 1.8em 0;
+  color: var(--mut);
+  letter-spacing: .3em;
+}
+.prose-reader hr {
+  border: none;
+  border-top: 1px solid var(--brd);
+  margin: 1.5em 0;
+}
+.prose-reader strong { font-weight: 700; }
+.prose-reader em { font-style: italic; }
