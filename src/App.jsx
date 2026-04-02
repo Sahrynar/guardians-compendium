@@ -180,22 +180,16 @@ export default function App() {
     <div>
       {/* ── Nav bar (sticky) ── */}
       <nav className="nav">
-        <div className="nav-top">
-          <div className="nav-btns">
-            <button className="nav-btn" onClick={goBack} title="Back">←</button>
-            <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
-            <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
-          </div>
-
-          {/* Title — clickable home link */}
+        {/* ── Title row — above everything ── */}
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>
           <button
-            className="nav-title"
             onClick={() => goTo('dashboard')}
             title="Go to Dashboard"
             style={{
               fontSize: 18, letterSpacing: '.12em',
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '2px 6px', borderRadius: 4, transition: '.2s',
+              fontFamily: "'Cinzel', serif",
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -208,6 +202,15 @@ export default function App() {
               Worldbuilding Compendium
             </span>
           </button>
+        </div>
+
+        {/* ── Controls row ── */}
+        <div className="nav-top">
+          <div className="nav-btns">
+            <button className="nav-btn" onClick={goBack} title="Back">←</button>
+            <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
+            <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
+          </div>
 
           <div className="nav-btns">
             <span
@@ -224,17 +227,14 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>◀</button>
           <div className="tabs-bar" id="tabBar" ref={tabBarRef}>
-            {TAB_ORDER.map((k, i) => {
+            {TAB_ORDER.map((k) => {
               const c = CATS[k]
               if (!c) return null
-              // Rainbow gradient matching the header: pink→red→orange→yellow→green→teal→blue→indigo→purple
-              const rainbow = ['#ff69b4','#ff3366','#ff5500','#ff8800','#ffcc00','#aadd00','#44cc44','#00cc88','#00cccc','#2299dd','#3366ff','#5544ff','#7733ee','#9933cc','#bb33aa','#dd44aa','#ff69b4','#ff3366','#ff5500','#ff8800','#ffcc00','#aadd00','#44cc44','#00cc88']
-              const tabColor = rainbow[i % rainbow.length]
               return (
                 <button
                   key={k}
                   className={`tab-btn ${tab === k ? 'active' : ''}`}
-                  style={{ '--tab-color': tabColor }}
+                  style={{ '--tab-color': c.c }}
                   onClick={() => goTo(k)}
                 >
                   {c.i} {c.l}

@@ -358,7 +358,10 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
 
 // ── Main Manuscript tab ───────────────────────────────────────────
 export default function Manuscript({ db }) {
-  const chapters = (db.db.manuscript || []).sort((a, b) => {
+  const chapters = (db.db.manuscript || []).map(ch => ({
+    ...ch,
+    word_count: (ch.word_count && ch.word_count > 0) ? ch.word_count : wordCount(ch.text || '')
+  })).sort((a, b) => {
     const bi = BOOKS.indexOf(a.book) - BOOKS.indexOf(b.book)
     if (bi !== 0) return bi
     return (parseInt(a.chapter_num) || 0) - (parseInt(b.chapter_num) || 0)
@@ -401,12 +404,12 @@ export default function Manuscript({ db }) {
   }
 
   function getBookMeta(bookKey) {
-    try { return JSON.parse(db.db.settings?.manuscript_books || '{}')[bookKey] || {} } catch { return {} }
+    try { return JSON.parse(db.settings?.manuscript_books || '{}')[bookKey] || {} } catch { return {} }
   }
 
   function saveBookMeta(bookKey, patch) {
     try {
-      const all = JSON.parse(db.db.settings?.manuscript_books || '{}')
+      const all = JSON.parse(db.settings?.manuscript_books || '{}')
       all[bookKey] = { ...all[bookKey], ...patch }
       db.saveSetting('manuscript_books', JSON.stringify(all))
     } catch {}

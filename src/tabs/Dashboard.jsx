@@ -5,7 +5,7 @@ export default function Dashboard({ db, goTo }) {
   const { db: data } = db
   const [search, setSearch] = useState('')
   const [headerImg, setHeaderImg] = useState(() => {
-    try { return db.db.settings?.dashboard_header_image || '' } catch { return '' }
+    try { return db.settings?.dashboard_header_image || '' } catch { return '' }
   })
   const imgRef = useRef(null)
   let tot = 0, lk = 0, pv = 0, op = 0
@@ -36,6 +36,14 @@ export default function Dashboard({ db, goTo }) {
 
   const questions = (data.questions || []).filter(q => q.status === 'open').slice(0, 8)
   const flags = (data.flags || []).slice(0, 8)
+  const canonLocked = (data.canon || []).filter(c => c.status === 'locked').slice(0, 8)
+
+  const TAB_LIST = [
+    'dashboard','wiki','glossary','characters','familytree','world','locations','map',
+    'manuscript','scenes','timeline','eras','calendar',
+    'inventory','wardrobe','items','flags','questions','canon','spellings',
+    'notes','journal','tools','sessionlog'
+  ]
 
   async function handleHeaderImg(e) {
     const file = e.target.files?.[0]
@@ -51,10 +59,10 @@ export default function Dashboard({ db, goTo }) {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ position: 'relative', textAlign: 'center', padding: '20px 0 14px' }}>
+      {/* Header — just the image upload, title is in nav bar */}
+      <div style={{ textAlign: 'center', padding: '10px 0 8px' }}>
         {headerImg
-          ? <div style={{ position: 'relative', marginBottom: 12 }}>
+          ? <div style={{ position: 'relative', marginBottom: 8 }}>
               <img src={headerImg} alt="header"
                 style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
               <button onClick={() => { setHeaderImg(''); db.saveSetting('dashboard_header_image', '') }}
@@ -63,20 +71,8 @@ export default function Dashboard({ db, goTo }) {
                 ✕ Remove
               </button>
             </div>
-          : <>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--mut)',
-                letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 6 }}>
-                The Guardians of Lajen
-              </div>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 700, letterSpacing: '.08em',
-                background: 'linear-gradient(90deg,#ff69b4,#ff2222,#ff8800,#ffdd00,#44cc44,#00ccaa,#3399ff,#6644ff,#aa33ff)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                marginBottom: 8 }}>
-                Worldbuilding Compendium
-              </div>
-            </>
+          : null
         }
-        {/* Upload header image button */}
         <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleHeaderImg} />
         <button onClick={() => imgRef.current?.click()}
           style={{ fontSize: 10, padding: '3px 10px', borderRadius: 6, background: 'none',
@@ -159,8 +155,8 @@ export default function Dashboard({ db, goTo }) {
         })()}
       </div>
 
-      {/* Three-column content area */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+      {/* Four-column content area */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
 
         {/* Recent */}
         <div>
@@ -238,11 +234,37 @@ export default function Dashboard({ db, goTo }) {
             ))
           }
         </div>
+        {/* Canon Locks */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ccn)', textTransform: 'uppercase',
+            letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
+            display: 'flex', justifyContent: 'space-between' }}>
+            <span>✦ Canon</span>
+            <span style={{ color: 'var(--mut)' }}>{(data.canon || []).filter(c => c.status === 'locked').length} locked</span>
+          </div>
+          {canonLocked.length === 0
+            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No locked canon yet</div>
+            : canonLocked.map((c, i) => (
+              <div key={c.id || i} onClick={() => goTo('canon')}
+                style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
+                  background: i % 2 === 0 ? 'var(--card)' : 'transparent',
+                  borderLeft: '2px solid var(--ccn)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
+                <div style={{ fontSize: 11, color: 'var(--tx)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+                {c.detail && <div style={{ fontSize: 9, color: 'var(--mut)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.detail}</div>}
+              </div>
+            ))
+          }
+        </div>
       </div>
 
-      {/* Tab list */}
+      {/* Tab list — ordered by TAB_ORDER */}
       <div style={{ marginTop: 4 }}>
-        {Object.entries(CATS).filter(([k]) => k !== 'dashboard').map(([k, c], i) => {
+        {TAB_LIST.filter(k => CATS[k] && k !== 'dashboard').map((k, i) => {
+          const c = CATS[k]
           const count = k === 'flags' ? fl : (data[k] || []).length
           const rc = rainbow[i % rainbow.length]
           return (

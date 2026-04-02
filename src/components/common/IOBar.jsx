@@ -72,7 +72,27 @@ export default function IOBar({ db, backup }) {
   const importRef = useRef()
   const asterRef = useRef()
   const [msg, setMsg] = useState('')
-  const [asterModal, setAsterModal] = useState(null) // holds the pending File object
+  const [asterModal, setAsterModal] = useState(null)
+  const [mdModal, setMdModal] = useState(false)
+
+  const MD_CATS = [
+    { k: 'canon',      l: 'Canon Decisions' },
+    { k: 'characters', l: 'Characters' },
+    { k: 'world',      l: 'World' },
+    { k: 'questions',  l: 'Questions' },
+    { k: 'flags',      l: 'Flags' },
+    { k: 'spellings',  l: 'Spellings' },
+    { k: 'locations',  l: 'Locations' },
+    { k: 'items',      l: 'Items' },
+    { k: 'wardrobe',   l: 'Wardrobe' },
+    { k: 'inventory',  l: 'Inventory' },
+    { k: 'scenes',     l: 'Scenes' },
+    { k: 'timeline',   l: 'Timeline' },
+    { k: 'wiki',       l: 'Wiki' },
+    { k: 'notes',      l: 'Notes' },
+    { k: 'manuscript', l: 'Manuscript' },
+  ]
+  const [mdSelected, setMdSelected] = useState(() => new Set(['canon','characters','world','questions','flags','spellings']))
 
   function flash(text, ms = 2500) {
     setMsg(text)
@@ -224,12 +244,58 @@ export default function IOBar({ db, backup }) {
         </div>
       )}
 
+      {/* ── Export .md modal ── */}
+      {mdModal && (
+        <div className="modal-overlay open" onClick={() => setMdModal(false)}>
+          <div className="modal-box" style={{ maxWidth: 360 }} onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setMdModal(false)}>✕</button>
+            <h2 className="modal-title" style={{ color: 'var(--csc)' }}>↓ Export .md</h2>
+            <p style={{ fontSize: 11, color: 'var(--dim)', marginBottom: 14, lineHeight: 1.5 }}>
+              Choose which categories to include in your markdown export.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+              {MD_CATS.map(({ k, l }) => (
+                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8,
+                  fontSize: 12, color: 'var(--tx)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={mdSelected.has(k)}
+                    onChange={e => setMdSelected(prev => {
+                      const next = new Set(prev)
+                      e.target.checked ? next.add(k) : next.delete(k)
+                      return next
+                    })} />
+                  {l}
+                </label>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-sm btn-outline"
+                onClick={() => setMdSelected(new Set(MD_CATS.map(c => c.k)))}>
+                All
+              </button>
+              <button className="btn btn-sm btn-outline"
+                onClick={() => setMdSelected(new Set())}>
+                None
+              </button>
+              <button className="btn btn-primary btn-sm" style={{ background: 'var(--csc)', color: '#000' }}
+                onClick={() => {
+                  if (mdSelected.size === 0) return
+                  db.exportMarkdown([...mdSelected])
+                  setMdModal(false)
+                }}>
+                Export {mdSelected.size > 0 ? `(${mdSelected.size})` : ''}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="iobar">
         {msg && (
           <span style={{ fontSize: 10, color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
         )}
 
-        <button className="btn btn-sm btn-outline" onClick={db.exportJSON}>⬇ Export</button>
+        <button className="btn btn-sm btn-outline" onClick={db.exportJSON}>⬇ Export JSON</button>
+        <button className="btn btn-sm btn-outline" onClick={() => setMdModal(true)}>⬇ Export .md</button>
 
         <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}
           title="Merges with existing data — new entries added, existing entries preserved">

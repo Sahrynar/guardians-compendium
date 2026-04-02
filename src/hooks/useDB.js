@@ -164,6 +164,47 @@ export function useDB() {
     a.click()
   }, [db])
 
+  const exportMarkdown = useCallback((categories) => {
+    // categories = array of category keys to include
+    const lines = []
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    lines.push(`# The Guardians of Lajen — Compendium Export`)
+    lines.push(`*Exported ${date}*\n`)
+
+    const LABELS = {
+      canon: 'Canon Decisions', characters: 'Characters', world: 'World',
+      questions: 'Questions', flags: 'Flags', spellings: 'Spellings',
+      locations: 'Locations', items: 'Items', wardrobe: 'Wardrobe',
+      scenes: 'Scenes', timeline: 'Timeline', wiki: 'Wiki',
+      notes: 'Notes', inventory: 'Inventory', manuscript: 'Manuscript'
+    }
+
+    categories.forEach(cat => {
+      const entries = db[cat]
+      if (!Array.isArray(entries) || !entries.length) return
+      lines.push(`---\n`)
+      lines.push(`## ${LABELS[cat] || cat}\n`)
+
+      entries.forEach(e => {
+        const name = e.name || e.title || e.display_name || e.word || '(unnamed)'
+        lines.push(`### ${name}`)
+        if (e.status) lines.push(`*Status: ${e.status}*`)
+        if (e.detail) lines.push(`\n${e.detail}`)
+        if (e.description) lines.push(`\n${e.description}`)
+        if (e.summary) lines.push(`\n${e.summary}`)
+        if (e.notes) lines.push(`\n*Notes: ${e.notes}*`)
+        if (e.books?.length) lines.push(`\n*Books: ${e.books.join(', ')}*`)
+        lines.push('')
+      })
+    })
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `guardians_export_${new Date().toISOString().slice(0,10)}.md`
+    a.click()
+  }, [db])
+
   const importJSON = useCallback((file) => {
     return new Promise((resolve, reject) => {
       const r = new FileReader()
@@ -255,7 +296,7 @@ export function useDB() {
   return {
     db, settings, loading, syncStatus,
     upsertEntry, deleteEntry, save, saveSetting,
-    exportJSON, importJSON, importAster, exportAster,
+    exportJSON, exportMarkdown, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }
 }
