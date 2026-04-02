@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CATS, SL } from '../constants'
 
 export default function Dashboard({ db, goTo }) {
   const { db: data } = db
   const [search, setSearch] = useState('')
+  const [headerImg, setHeaderImg] = useState(() => {
+    try { return db.db.settings?.dashboard_header_image || '' } catch { return '' }
+  })
+  const imgRef = useRef(null)
   let tot = 0, lk = 0, pv = 0, op = 0
   const fl = (data.flags || []).length
 
@@ -19,23 +23,74 @@ export default function Dashboard({ db, goTo }) {
 
   const rainbow = ['#ff69b4','#ff3366','#ff4444','#ff6633','#ff8800','#ffaa00','#ffcc00','#aadd00','#44cc44','#00cc88','#00cccc','#2299dd','#3366ff','#5544ff','#7733ee','#9933cc','#bb33aa','#dd44aa']
 
+  // Recent entries across all categories
+  const recent = []
+  Object.entries(data).forEach(([cat, entries]) => {
+    if (!Array.isArray(entries) || !CATS[cat]) return
+    entries.forEach(e => {
+      const ts = e.updated_at || e.updated || e.created
+      if (ts) recent.push({ cat, name: e.name || e.title || e.display_name || e.word || '(unnamed)', ts, id: e.id, status: e.status })
+    })
+  })
+  recent.sort((a, b) => new Date(b.ts) - new Date(a.ts))
+
+  const questions = (data.questions || []).filter(q => q.status === 'open').slice(0, 8)
+  const flags = (data.flags || []).slice(0, 8)
+
+  async function handleHeaderImg(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const url = ev.target.result
+      setHeaderImg(url)
+      db.saveSetting('dashboard_header_image', url)
+    }
+    reader.readAsDataURL(file)
+  }
+
   return (
     <div>
-      <div style={{ textAlign: 'center', padding: '20px 0 14px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--mut)', letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 6 }}>The Guardians of Lajen</div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 700, letterSpacing: '.08em',
-          background: 'linear-gradient(90deg,#ff69b4,#ff2222,#ff8800,#ffdd00,#44cc44,#00ccaa,#3399ff,#6644ff,#aa33ff)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          marginBottom: 2 }}>
-          Worldbuilding Compendium
-        </div>
+      {/* Header */}
+      <div style={{ position: 'relative', textAlign: 'center', padding: '20px 0 14px' }}>
+        {headerImg
+          ? <div style={{ position: 'relative', marginBottom: 12 }}>
+              <img src={headerImg} alt="header"
+                style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+              <button onClick={() => { setHeaderImg(''); db.saveSetting('dashboard_header_image', '') }}
+                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,.6)',
+                  border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontSize: 11, padding: '2px 8px' }}>
+                ✕ Remove
+              </button>
+            </div>
+          : <>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--mut)',
+                letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 6 }}>
+                The Guardians of Lajen
+              </div>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 700, letterSpacing: '.08em',
+                background: 'linear-gradient(90deg,#ff69b4,#ff2222,#ff8800,#ffdd00,#44cc44,#00ccaa,#3399ff,#6644ff,#aa33ff)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                marginBottom: 8 }}>
+                Worldbuilding Compendium
+              </div>
+            </>
+        }
+        {/* Upload header image button */}
+        <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleHeaderImg} />
+        <button onClick={() => imgRef.current?.click()}
+          style={{ fontSize: 10, padding: '3px 10px', borderRadius: 6, background: 'none',
+            border: '1px solid var(--brd)', color: 'var(--mut)', cursor: 'pointer' }}>
+          📷 {headerImg ? 'Change header image' : 'Upload header image'}
+        </button>
         {!db.hasSupabase && (
-          <div style={{ fontSize: 10, color: 'var(--sp)', marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: 'var(--sp)', marginTop: 6 }}>
             ⚠ Running in local-only mode — add Supabase credentials for cloud sync
           </div>
         )}
       </div>
 
+      {/* Stats row */}
       <div className="dash-grid">
         <div className="dash-card">
           <div className="dash-num" style={{ color: 'var(--cc)' }}>{tot}</div>
@@ -59,24 +114,19 @@ export default function Dashboard({ db, goTo }) {
         </div>
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <input
-          className="sx"
-          style={{ width: '100%' }}
-          placeholder="Search everything…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      {/* Search */}
+      <div style={{ marginBottom: 14 }}>
+        <input className="sx" style={{ width: '100%' }} placeholder="Search everything…"
+          value={search} onChange={e => setSearch(e.target.value)} />
         {search.trim().length > 1 && (() => {
           const q = search.trim().toLowerCase()
           const hits = []
           Object.entries(data).forEach(([cat, entries]) => {
             if (!Array.isArray(entries) || !CATS[cat]) return
             entries.forEach(entry => {
-              const text = JSON.stringify(entry).toLowerCase()
-              if (text.includes(q)) {
-                const name = entry.name || entry.title || entry.display_name || entry.word || '(unnamed)'
-                hits.push({ cat, name, id: entry.id })
+              const name = entry.name || entry.title || entry.display_name || entry.word || ''
+              if (name.toLowerCase().includes(q) || JSON.stringify(entry).toLowerCase().includes(q)) {
+                hits.push({ cat, name: name || '(unnamed)', id: entry.id })
               }
             })
           })
@@ -89,8 +139,7 @@ export default function Dashboard({ db, goTo }) {
                 {hits.length} result{hits.length !== 1 ? 's' : ''} — click to go to tab
               </div>
               {hits.slice(0, 30).map((h, i) => (
-                <div key={h.id || i}
-                  onClick={() => { goTo(h.cat); setSearch('') }}
+                <div key={h.id || i} onClick={() => { goTo(h.cat); setSearch('') }}
                   style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 10px',
                     borderBottom: '1px solid var(--brd)', cursor: 'pointer',
                     background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}
@@ -110,17 +159,97 @@ export default function Dashboard({ db, goTo }) {
         })()}
       </div>
 
-      <div style={{ marginTop: 12 }}>
+      {/* Three-column content area */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+
+        {/* Recent */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tx)', textTransform: 'uppercase',
+            letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
+            display: 'flex', justifyContent: 'space-between' }}>
+            <span>⏱ Recent</span>
+          </div>
+          {recent.length === 0
+            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
+            : recent.slice(0, 12).map((r, i) => (
+              <div key={r.id || i} onClick={() => goTo(r.cat)}
+                style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
+                  background: i % 2 === 0 ? 'var(--card)' : 'transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
+                <div style={{ fontSize: 12, color: 'var(--tx)', fontWeight: 500,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                <div style={{ fontSize: 9, color: CATS[r.cat]?.c || 'var(--mut)' }}>
+                  {CATS[r.cat]?.i} {CATS[r.cat]?.l}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Open Questions */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--cq)', textTransform: 'uppercase',
+            letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
+            display: 'flex', justifyContent: 'space-between' }}>
+            <span>? Questions</span>
+            <span style={{ color: 'var(--mut)' }}>+{(data.questions || []).filter(q => q.status === 'open').length}</span>
+          </div>
+          {questions.length === 0
+            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
+            : questions.map((q, i) => (
+              <div key={q.id || i} onClick={() => goTo('questions')}
+                style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
+                  background: i % 2 === 0 ? 'var(--card)' : 'transparent',
+                  borderLeft: '2px solid var(--cq)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
+                <div style={{ fontSize: 11, color: 'var(--tx)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.name}</div>
+                {q.detail && <div style={{ fontSize: 9, color: 'var(--mut)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.detail}</div>}
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Flags */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--cfl)', textTransform: 'uppercase',
+            letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
+            display: 'flex', justifyContent: 'space-between' }}>
+            <span>🚩 Flags</span>
+            <span style={{ color: 'var(--mut)' }}>+{fl}</span>
+          </div>
+          {flags.length === 0
+            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
+            : flags.map((f, i) => (
+              <div key={f.id || i} onClick={() => goTo('flags')}
+                style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
+                  background: i % 2 === 0 ? 'var(--card)' : 'transparent',
+                  borderLeft: '2px solid var(--cfl)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
+                <div style={{ fontSize: 11, color: 'var(--tx)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</div>
+                {f.detail && <div style={{ fontSize: 9, color: 'var(--mut)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.detail}</div>}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* Tab list */}
+      <div style={{ marginTop: 4 }}>
         {Object.entries(CATS).filter(([k]) => k !== 'dashboard').map(([k, c], i) => {
           const count = k === 'flags' ? fl : (data[k] || []).length
           const rc = rainbow[i % rainbow.length]
           return (
-            <div
-              key={k}
-              className="dash-card"
-              style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', padding: '6px 10px', borderLeft: `3px solid ${rc}`, marginBottom: 4 }}
-              onClick={() => goTo(k)}
-            >
+            <div key={k} className="dash-card"
+              style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between',
+                padding: '6px 10px', borderLeft: `3px solid ${rc}`, marginBottom: 4, cursor: 'pointer' }}
+              onClick={() => goTo(k)}>
               <span style={{ fontSize: 11 }}>{c.i} {c.l}</span>
               <span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: rc }}>{count}</span>
             </div>

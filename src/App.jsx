@@ -224,14 +224,17 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>◀</button>
           <div className="tabs-bar" id="tabBar" ref={tabBarRef}>
-            {TAB_ORDER.map(k => {
+            {TAB_ORDER.map((k, i) => {
               const c = CATS[k]
               if (!c) return null
+              // Rainbow gradient matching the header: pink→red→orange→yellow→green→teal→blue→indigo→purple
+              const rainbow = ['#ff69b4','#ff3366','#ff5500','#ff8800','#ffcc00','#aadd00','#44cc44','#00cc88','#00cccc','#2299dd','#3366ff','#5544ff','#7733ee','#9933cc','#bb33aa','#dd44aa','#ff69b4','#ff3366','#ff5500','#ff8800','#ffcc00','#aadd00','#44cc44','#00cc88']
+              const tabColor = rainbow[i % rainbow.length]
               return (
                 <button
                   key={k}
                   className={`tab-btn ${tab === k ? 'active' : ''}`}
-                  style={{ '--tab-color': c.c }}
+                  style={{ '--tab-color': tabColor }}
                   onClick={() => goTo(k)}
                 >
                   {c.i} {c.l}
