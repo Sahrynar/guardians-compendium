@@ -57,25 +57,25 @@ function WardrobeTile({ item, onOpen, search }) {
 }
 
 // ── Wardrobe item popup ───────────────────────────────────────────
-function WardrobePopup({ item, onClose, onEdit, onDelete }) {
-  const tc = TYPE_COLORS[item.item_type] || 'var(--dim)'
+function WardrobePopup({ item, color, onClose, onEdit, onDelete }) {
+  const tc = color || TYPE_COLORS[item.item_type] || 'var(--cwr)'
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.85)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={onClose}>
-      <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)',
+      <div style={{ background: 'var(--sf)', border: `1px solid ${tc}44`,
         borderRadius: 12, padding: 20, maxWidth: 420, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: 'var(--cwr)', flex: 1 }}>{item.name}</div>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tc, flex: 1 }}>{item.name}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
         {item.item_type && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Type</div><div style={{ fontSize: 12, color: 'var(--tx)' }}>{item.item_type}</div></div>}
-        {item.color_material && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--cwr)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Color / Material</div><div style={{ fontSize: 12, color: 'var(--tx)' }}>{item.color_material}</div></div>}
-        {item.description && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--cwr)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.description}</div></div>}
-        {item.notes && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--cwr)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 12, color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div></div>}
+        {item.color_material && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Color / Material</div><div style={{ fontSize: 12, color: 'var(--tx)' }}>{item.color_material}</div></div>}
+        {item.description && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.description}</div></div>}
+        {item.notes && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 12, color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div></div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-          <button className="btn btn-outline btn-sm" style={{ color: 'var(--cwr)', borderColor: 'var(--cwr)44' }}
+          <button className="btn btn-outline btn-sm" style={{ color: tc, borderColor: `${tc}44` }}
             onClick={() => { onClose(); onEdit(item) }}>✎ Edit</button>
           <button className="btn btn-outline btn-sm" style={{ color: '#ff3355', borderColor: '#ff335544' }}
             onClick={() => { onClose(); onDelete(item.id) }}>✕ Delete</button>
@@ -254,7 +254,7 @@ export default function Wardrobe({ db }) {
               onDragStart={() => setDragIdx(idx)}
               onDragOver={() => setDragOverIdx(idx)}
               onDrop={() => handleDrop(dragIdx, dragOverIdx)}
-              onOpenItem={item => setViewPopup(item)}
+              onOpenItem={item => setViewPopup({ item, color: char?.bubble_color || DEFAULT_BUBBLE_COLORS[stableIdx % DEFAULT_BUBBLE_COLORS.length] })}
             />
           )
         })}
@@ -262,7 +262,8 @@ export default function Wardrobe({ db }) {
 
       {viewPopup && (
         <WardrobePopup
-          item={viewPopup}
+          item={viewPopup.item}
+          color={viewPopup.color}
           onClose={() => setViewPopup(null)}
           onEdit={item => { setEditing(item); setModalOpen(true) }}
           onDelete={id => { setConfirmId(id); setViewPopup(null) }}

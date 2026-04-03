@@ -87,7 +87,7 @@ function EntryTile({ entry, bubbleColor, onOpen, search }) {
   const cat = CAT_MAP[entry.category]
   const tileColor = entry.entry_color || bubbleColor || 'var(--ci)'
   return (
-    <div onClick={() => onOpen(entry)}
+    <div onClick={() => onOpen(entry, tileColor)}
       style={{ background: 'var(--card)', border: `1px solid ${tileColor}44`,
         borderTop: `3px solid ${tileColor}`,
         borderRadius: 8, padding: '8px 10px', cursor: 'pointer', transition: '.12s',
@@ -197,7 +197,7 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
                 gap: 5 }}>
                 {catEntries.map(e => (
                   <EntryTile key={e.id} entry={e} bubbleColor={bubbleColor}
-                    onOpen={onOpenEntry} search={search} />
+                    onOpen={(entry, color) => onOpenEntry(entry, color || bubbleColor)} search={search} />
                 ))}
               </div>
             </div>

@@ -1,7 +1,7 @@
 // Guardians of Lajen Compendium — Service Worker
 // Enables PWA installation and basic offline caching
 
-const CACHE_NAME = 'gol-compendium-v4';
+const CACHE_NAME = 'gol-compendium-v5';
 
 // Core app shell files to cache on install
 const PRECACHE_URLS = [

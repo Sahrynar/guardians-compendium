@@ -11,6 +11,8 @@ export default function MapTab({ db }) {
 
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('mp_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('mp_cols_div') !== 'off')
+  const [mapHeight, setMapHeight] = useState(500)
+  const MAP_HEIGHTS = { XS: 200, S: 320, M: 500, L: 700, XL: 900 }
   function saveColCount(n) { setColCount(n); db.saveSetting?.('mp_cols', String(n)) }
   function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('mp_cols_div', next ? 'on' : 'off') }
 
@@ -116,6 +118,15 @@ export default function MapTab({ db }) {
           }}>
           {dividers ? '┃ on' : '┃ off'}
         </button>
+        <span style={{ marginLeft: 8, fontSize: 'var(--fs-xs)', color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Image height:</span>
+        {Object.entries(MAP_HEIGHTS).map(([l, h]) => (
+          <button key={l} onClick={() => setMapHeight(h)}
+            style={{ fontSize: 'var(--fs-xs)', padding: '2px 7px', borderRadius: 8,
+              background: mapHeight === h ? 'var(--cl)' : 'none',
+              color: mapHeight === h ? '#000' : 'var(--dim)',
+              border: `1px solid ${mapHeight === h ? 'var(--cl)' : 'var(--brd)'}`,
+              cursor: 'pointer' }}>{l}</button>
+        ))}
         <span style={{ marginLeft: 'auto', fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>
           ☰ Drag cards to reorder
         </span>
@@ -168,7 +179,7 @@ export default function MapTab({ db }) {
             <div style={{ position: 'relative' }}>
               <img
                 src={m.src} alt={m.name}
-                style={{ width: '100%', display: 'block', cursor: 'zoom-in', maxHeight: 300, objectFit: 'contain', background: 'var(--sf)' }}
+                style={{ width: '100%', display: 'block', cursor: 'zoom-in', maxHeight: mapHeight, objectFit: 'contain', background: 'var(--sf)' }}
                 onClick={() => setLightboxSrc(m.src)}
               />
             </div>

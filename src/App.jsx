@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
-import { CATS } from './constants'
+import { CATS, uid } from './constants'
 
 // Tab components
 import Dashboard from './tabs/Dashboard'
@@ -34,7 +34,7 @@ import IOBar from './components/common/IOBar'
 const TAB_ORDER = [
   'dashboard','wiki','glossary','characters','familytree','world','locations','map',
   'manuscript','scenes','timeline','eras','calendar',
-  'inventory','wardrobe','items','flags','questions','canon','spellings',
+  'inventory','wardrobe','items','outfitsnapshot','flags','questions','canon','spellings',
   'notes','journal','tools','sessionlog'
 ]
 
@@ -58,6 +58,9 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [histIdx, setHistIdx] = useState(-1)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
+  const [qcOpen, setQcOpen] = useState(false)
+  const [qcText, setQcText] = useState('')
+  const [qcCat, setQcCat] = useState('notes')
   const tabBarRef = useRef(null)
 
   // ── Apply font size on mount AND on change ──────────────────────
@@ -253,6 +256,64 @@ export default function App() {
 
       {/* ── IO Bar ── */}
       <IOBar db={db} backup={backup} />
+
+      {/* ── Quick Capture floating button ── */}
+      <button
+        onClick={() => setQcOpen(true)}
+        title="Quick Capture (Ctrl+Q)"
+        style={{
+          position: 'fixed', bottom: 56, right: 16, zIndex: 200,
+          width: 44, height: 44, borderRadius: '50%',
+          background: 'linear-gradient(135deg,#9933cc,#3366ff)',
+          border: 'none', color: '#fff', fontSize: 22,
+          cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: '.2s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.12)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      >✦</button>
+
+      {/* ── Quick Capture modal ── */}
+      {qcOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setQcOpen(false)}>
+          <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 12,
+            padding: 20, width: '100%', maxWidth: 420 }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, color: '#9933cc' }}>✦ Quick Capture</div>
+              <button onClick={() => setQcOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+            </div>
+            <select value={qcCat} onChange={e => setQcCat(e.target.value)}
+              style={{ width: '100%', marginBottom: 10, padding: '6px 8px', background: 'var(--card)',
+                border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', fontSize: 12 }}>
+              {['notes','flags','questions','canon','spellings','world'].map(k => (
+                <option key={k} value={k}>{CATS[k]?.i} {CATS[k]?.l}</option>
+              ))}
+            </select>
+            <textarea value={qcText} onChange={e => setQcText(e.target.value)}
+              autoFocus rows={4}
+              placeholder="Capture a thought, flag, question, or note…"
+              style={{ width: '100%', padding: '8px', background: 'var(--card)',
+                border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)',
+                fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }} />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setQcOpen(false)}
+                style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6, background: 'none',
+                  border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => {
+                if (!qcText.trim()) return
+                db.upsertEntry(qcCat, { id: uid(), name: qcText.trim().slice(0, 80), detail: qcText.trim(), status: 'open' })
+                setQcText(''); setQcOpen(false)
+              }} style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6,
+                background: 'linear-gradient(135deg,#9933cc,#3366ff)',
+                color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

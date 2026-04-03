@@ -21,9 +21,13 @@ function moonSVG(day) {
 
 export default function CalendarTab({ db }) {
   const [expandedMonth, setExpandedMonth] = useState(null)
-  const [dayModal, setDayModal] = useState(null) // { mi, day }
+  const [expandAll, setExpandAll] = useState(false)
+  const [gridSize, setGridSize] = useState('M') // XS S M L XL
+  const [dayModal, setDayModal] = useState(null)
   const [dayText, setDayText] = useState('')
   const [editingEntry, setEditingEntry] = useState(null)
+
+  const GRID_COLS = { XS: 6, S: 5, M: 4, L: 3, XL: 2 }
 
   const calEntries = db.db.calendar_entries || []
   const timelineEvents = db.db.timeline || []
@@ -68,22 +72,43 @@ export default function CalendarTab({ db }) {
 
   return (
     <div>
-      <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
+      <div style={{ textAlign: 'center', padding: '12px 0 6px' }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cca)' }}>🌙 The Lajen Calendar</div>
         <div style={{ fontSize: 10, color: 'var(--mut)' }}>12 months × 30 days · 5-day week · 4 seasons × 90 days</div>
       </div>
 
-      <div className="cal-grid">
+      {/* Toolbar */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
+        <button onClick={() => { setExpandAll(v => !v); setExpandedMonth(null) }}
+          style={{ fontSize: 11, padding: '4px 14px', borderRadius: 8, cursor: 'pointer',
+            background: expandAll ? 'var(--cca)' : 'var(--card)',
+            color: expandAll ? '#000' : 'var(--dim)',
+            border: `1px solid ${expandAll ? 'var(--cca)' : 'var(--brd)'}` }}>
+          {expandAll ? '⊟ Collapse All' : '⊞ Expand All'}
+        </button>
+        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          <span style={{ fontSize: 9, color: 'var(--mut)', marginRight: 4 }}>SIZE</span>
+          {['XS','S','M','L','XL'].map(s => (
+            <button key={s} onClick={() => setGridSize(s)}
+              style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
+                background: gridSize === s ? 'var(--cca)' : 'none',
+                color: gridSize === s ? '#000' : 'var(--dim)',
+                border: `1px solid ${gridSize === s ? 'var(--cca)' : 'var(--brd)'}` }}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="cal-grid" style={{ gridTemplateColumns: `repeat(${GRID_COLS[gridSize]}, 1fr)` }}>
         {MONTHS.map((m, mi) => {
           const mc = MC[mi]
           const stc = SEASON_TAG_COLORS[m.ssn] || '#888'
-          const isExp = expandedMonth === mi
+          const isExp = expandAll || expandedMonth === mi
           const birthdays = getCharBirthdays(m.n)
           const events = getTimelineForMonth(m.n)
           const dayEntries = calEntries.filter(e => e.month_idx === mi)
 
           return (
-            <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}` }} onClick={() => setExpandedMonth(isExp ? null : mi)}>
+            <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}` }} onClick={() => !expandAll && setExpandedMonth(isExp ? null : mi)}>
               <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
               <div style={{ fontSize: 9, color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
               <div style={{ fontSize: 9, padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
@@ -101,7 +126,7 @@ export default function CalendarTab({ db }) {
               )}
 
               {!birthdays.length && !events.length && !dayEntries.length && !isExp && (
-                <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>
+                {!expandAll && <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>}
               )}
 
               {/* Expanded day grid */}

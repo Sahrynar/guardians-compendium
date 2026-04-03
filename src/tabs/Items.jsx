@@ -151,7 +151,8 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
 }
 
 // ── Full item popup ───────────────────────────────────────────────
-function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLightbox, setPickerForItem, uploadingImg, handleImageUpload }) {
+function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLightbox, setPickerForItem, uploadingImg, handleImageUpload, color }) {
+  const tc = color || tc
   function holderName(id) {
     if (!id) return 'Unassigned'
     const ch = chars.find(c => c.id === id)
@@ -161,12 +162,12 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.85)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={onClose}>
-      <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)',
+      <div style={{ background: 'var(--sf)', border: `1px solid ${tc}44`,
         borderRadius: 12, padding: 20, maxWidth: 520, width: '100%',
         maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: 'var(--ci)', flex: 1 }}>{item.name}</div>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tc, flex: 1 }}>{item.name}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
         {/* Image */}
@@ -201,12 +202,12 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
           ['Books', (item.books || []).join(', ')],
         ].filter(([, v]) => v).map(([label, val]) => (
           <div key={label} style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--ci)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, color: 'var(--tx)' }}>{val}</div>
           </div>
         ))}
-        {item.significance && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--ci)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.significance}</div></div>}
-        {item.detail && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--ci)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Detail</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.detail}</div></div>}
+        {item.significance && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.significance}</div></div>}
+        {item.detail && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Detail</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.detail}</div></div>}
         {(item.transfers || []).length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)' }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--sp)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>↔ Transfer History</div>
@@ -219,9 +220,9 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
         )}
         {item.notes && <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)', fontSize: 11, color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-          <button className="btn btn-outline btn-sm" style={{ color: 'var(--ci)', borderColor: 'var(--ci)44' }}
+          <button className="btn btn-outline btn-sm" style={{ color: tc, borderColor: 'var(--ci)44' }}
             onClick={() => { onClose(); onEdit(item) }}>✎ Edit</button>
-          <button className="btn btn-outline btn-sm" style={{ color: 'var(--ci)', borderColor: 'var(--ci)44' }}
+          <button className="btn btn-outline btn-sm" style={{ color: tc, borderColor: 'var(--ci)44' }}
             onClick={() => { onClose(); onTransfer(item.id) }}>↔ Transfer</button>
           <button className="btn btn-outline btn-sm" onClick={onClose}>Close</button>
         </div>
@@ -361,7 +362,7 @@ export default function Items({ db }) {
                 onDragStart={() => setDragIdx(idx)}
                 onDragOver={() => setDragOverIdx(idx)}
                 onDrop={() => handleDrop(dragIdx, dragOverIdx)}
-                onOpenItem={item => setViewPopup(item)}
+                onOpenItem={item => setViewPopup({ item, color: bubbleColor })}
               />
             )
           })}
@@ -410,7 +411,7 @@ export default function Items({ db }) {
       )}
 
       {viewPopup && (
-        <ItemPopup item={viewPopup} items={items} chars={chars} db={db}
+        <ItemPopup item={viewPopup.item || viewPopup} color={viewPopup.color} items={items} chars={chars} db={db}
           onClose={() => setViewPopup(null)}
           onEdit={item => { setEditing(item); setModalOpen(true) }}
           onTransfer={id => setTransferId(id)}
