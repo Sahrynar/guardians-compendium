@@ -41,7 +41,7 @@ export default function Notes({ db }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cw)' }}>📝 Notes & Lore</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cw)' }}>📝 Notes & Lore</div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cw)', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
       </div>
 
@@ -49,7 +49,7 @@ export default function Notes({ db }) {
         <div style={{ display:'flex', gap:3 }}>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cw)' : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
                 border: `1px solid ${colCount===n ? 'var(--cw)' : 'var(--brd)'}`,
@@ -57,7 +57,7 @@ export default function Notes({ db }) {
           ))}
         
         <button onClick={toggleDividers}
-          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
             background: dividers ? 'rgba(255,255,255,.08)' : 'none',
             color: dividers ? 'var(--tx)' : 'var(--mut)',
             border:'1px solid var(--brd)', cursor:'pointer' }}>
@@ -78,7 +78,7 @@ export default function Notes({ db }) {
         <div className="empty">
           <div className="empty-icon">📝</div>
           <p>No notes yet.</p>
-          <p style={{ fontSize: 11, color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>For quick notes, brainstorms, canon reminders, research snippets, and anything that doesn't fit elsewhere.</p>
+          <p style={{ fontSize: '0.85em', color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>For quick notes, brainstorms, canon reminders, research snippets, and anything that doesn't fit elsewhere.</p>
           <button className="btn btn-primary" style={{ background: 'var(--cw)', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Note</button>
         </div>
       )}
@@ -87,13 +87,13 @@ export default function Notes({ db }) {
         {filtered.map((n, i) => (
           <div key={n.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              {n.title && <div className="entry-title" style={{ fontSize: 13 }}>{n.title}</div>}
+              {n.title && <div className="entry-title" style={{ fontSize: '1em' }}>{n.title}</div>}
               {n.category && <span className="badge" style={{ color: 'var(--cw)', borderColor: 'rgba(255,204,0,.3)', flexShrink: 0, marginLeft: 8 }}>{n.category}</span>}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--dim)', lineHeight: 1.5, marginTop: 4, whiteSpace: 'pre-wrap' }}>
+            <div style={{ fontSize: '0.92em', color: 'var(--dim)', lineHeight: 1.5, marginTop: 4, whiteSpace: 'pre-wrap' }}>
               {n.content?.length > 300 ? n.content.slice(0, 300) + '…' : n.content}
             </div>
-            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 6 }}>
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 6 }}>
               {n.updated ? new Date(n.updated).toLocaleDateString() : ''}
             </div>
             <div className="entry-actions">

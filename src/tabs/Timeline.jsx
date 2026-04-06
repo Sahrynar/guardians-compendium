@@ -152,14 +152,14 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         <div style={{ display:'flex', gap:3 }}>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--ct)' : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
                 border: `1px solid ${colCount===n ? 'var(--ct)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
           <button onClick={toggleDividers}
-            style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
               background: dividers ? 'rgba(255,255,255,.08)' : 'none',
               color: dividers ? 'var(--tx)' : 'var(--mut)',
               border:'1px solid var(--brd)', cursor:'pointer' }}>
@@ -188,44 +188,44 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         <>
           {/* Visual track independent filter */}
           <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:6 }}>
-            <span style={{ fontSize:10, color:'var(--mut)', alignSelf:'center' }}>Track filter:</span>
+            <span style={{ fontSize: '0.77em', color:'var(--mut)', alignSelf:'center' }}>Track filter:</span>
             <button className={`fp ${visualFilter==='all'?'active':''}`}
-              style={{ fontSize:10 }} onClick={() => setVisualFilter('all')}>All</button>
+              style={{ fontSize: '0.77em' }} onClick={() => setVisualFilter('all')}>All</button>
             {eras.map(era => (
               <button key={era} className={`fp ${visualFilter===era?'active':''}`}
-                style={{ fontSize:10, background: visualFilter===era ? ERA_BANDS[era]||'' : '' }}
+                style={{ fontSize: '0.77em', background: visualFilter===era ? ERA_BANDS[era]||'' : '' }}
                 onClick={() => setVisualFilter(visualFilter===era?'all':era)}>{era}</button>
             ))}
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, paddingLeft:4 }}>
-            <span style={{ fontSize:10, color:'var(--mut)' }}>Zoom:</span>
-            <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
+            <span style={{ fontSize: '0.77em', color:'var(--mut)' }}>Zoom:</span>
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.85em', padding:'2px 8px' }}
               onClick={() => setZoom(z => Math.max(0.05, z * 0.75))}>−</button>
-            <span style={{ fontSize:10, color:'var(--dim)', minWidth:36, textAlign:'center' }}>
+            <span style={{ fontSize: '0.77em', color:'var(--dim)', minWidth:36, textAlign:'center' }}>
               {Math.round(zoom * 100)}%
             </span>
-            <button className="btn btn-sm btn-outline" style={{ fontSize:11, padding:'2px 8px' }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.85em', padding:'2px 8px' }}
               onClick={() => setZoom(z => Math.min(12, z * 1.33))}>+</button>
-            <button className="btn btn-sm btn-outline" style={{ fontSize:10, padding:'2px 8px' }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', padding:'2px 8px' }}
               onClick={() => setZoom(1)}>Reset</button>
-            <span style={{ fontSize:9, color:'var(--mut)', marginLeft:4 }}>
+            <span style={{ fontSize: '0.69em', color:'var(--mut)', marginLeft:4 }}>
               scroll or pinch to zoom · drag to pan
             </span>
-            <span style={{ fontSize:9, color:'var(--dim)', marginLeft:8 }}>Range:</span>
+            <span style={{ fontSize: '0.69em', color:'var(--dim)', marginLeft:8 }}>Range:</span>
             <input type="number" value={rangeMin} onChange={e => setRangeMin(e.target.value)}
               placeholder="Min sort#" title="Min sort order (leave blank for all)"
-              style={{ width:70, fontSize:9, padding:'2px 5px', background:'var(--sf)',
+              style={{ width:70, fontSize: '0.69em', padding:'2px 5px', background:'var(--sf)',
                 border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }} />
-            <span style={{ fontSize:9, color:'var(--dim)' }}>–</span>
+            <span style={{ fontSize: '0.69em', color:'var(--dim)' }}>–</span>
             <input type="number" value={rangeMax} onChange={e => setRangeMax(e.target.value)}
               placeholder="Max sort#"
-              style={{ width:70, fontSize:9, padding:'2px 5px', background:'var(--sf)',
+              style={{ width:70, fontSize: '0.69em', padding:'2px 5px', background:'var(--sf)',
                 border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }} />
             {(rangeMin || rangeMax) && (
-              <button className="btn btn-sm btn-outline" style={{ fontSize:9, padding:'1px 6px' }}
+              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.69em', padding:'1px 6px' }}
                 onClick={() => { setRangeMin(''); setRangeMax('') }}>Clear</button>
             )}
-            <button className="btn btn-sm btn-outline" style={{ fontSize:9, padding:'1px 6px', color:'var(--cca)', borderColor:'var(--cca)' }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.69em', padding:'1px 6px', color:'var(--cca)', borderColor:'var(--cca)' }}
               onClick={() => setEraEditor(true)} title="Manage era markers">⧖ Eras</button>
           </div>
           <div
@@ -248,7 +248,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
                   top:0, height:'100%', background:`${col}12`,
                   borderLeft:`2px solid ${col}88`, borderRight:`2px dashed ${col}66`,
                   pointerEvents:'none', zIndex:0 }}>
-                  <div style={{ position:'absolute', top:4, left:4, fontSize:9,
+                  <div style={{ position:'absolute', top:4, left:4, fontSize: '0.69em',
                     color:col, fontWeight:700, whiteSpace:'nowrap', opacity:0.9 }}>
                     {marker.name}
                   </div>
@@ -265,7 +265,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
               const x2 = Math.max(...xs) + 20
               return (
                 <div key={era} style={{ position: 'absolute', left: x1, width: x2-x1, top: 20, height: 140, background: bg, borderRadius: 6, pointerEvents: 'none' }}>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,.25)', padding: '2px 4px', pointerEvents: 'none' }}>{era}</div>
+                  <div style={{ fontSize: '0.62em', color: 'rgba(255,255,255,.25)', padding: '2px 4px', pointerEvents: 'none' }}>{era}</div>
                 </div>
               )
             })}
@@ -281,8 +281,8 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
                 <div key={e.id}>
                   <div className="timeline-dot" style={{ left: x-6, background: col, outline: isSelected ? `2px solid #fff` : 'none', outlineOffset:2 }} onClick={() => setTrackPopup(tp => tp===e.id ? null : e.id)} title={e.name} />
                   <div className="timeline-label" style={{ left: Math.max(0, Math.min(w-170, x-80)), top: labelRow, borderTop: `2px solid ${col}`, background: isSelected ? `${col}22` : undefined, borderRadius: isSelected ? 4 : undefined }}>
-                    <div style={{ fontWeight: 700, fontSize: 10 }}>{e.name}</div>
-                    <div style={{ color: 'var(--dim)', fontSize: 9 }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.77em' }}>{e.name}</div>
+                    <div style={{ color: 'var(--dim)', fontSize: '0.69em' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
                   </div>
                 </div>
               )
@@ -302,14 +302,14 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
             borderRadius: 8, position: 'relative' }}>
             <button onClick={() => setTrackPopup(null)}
               style={{ position:'absolute', top:8, right:10, background:'none',
-                border:'none', color:'var(--mut)', cursor:'pointer', fontSize:16 }}>✕</button>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, color:'var(--ct)', marginBottom:4 }}>{ev.name}</div>
-            <div style={{ fontSize:10, color:'var(--cca)', marginBottom:6 }}>
+                border:'none', color:'var(--mut)', cursor:'pointer', fontSize: '1.23em' }}>✕</button>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1em', color:'var(--ct)', marginBottom:4 }}>{ev.name}</div>
+            <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:6 }}>
               {[ev.date_hc, ev.date_mnaerah].filter(Boolean).join(' / ')}
               {ev.era && <span style={{ marginLeft:8, color:'var(--dim)' }}>{ev.era}</span>}
             </div>
-            {ev.detail && <div style={{ fontSize:11, color:'var(--dim)', lineHeight:1.6, marginBottom:8 }}>{ev.detail}</div>}
-            {ev.notes && <div style={{ fontSize:11, color:'var(--mut)', fontStyle:'italic' }}>{ev.notes}</div>}
+            {ev.detail && <div style={{ fontSize: '0.85em', color:'var(--dim)', lineHeight:1.6, marginBottom:8 }}>{ev.detail}</div>}
+            {ev.notes && <div style={{ fontSize: '0.85em', color:'var(--mut)', fontStyle:'italic' }}>{ev.notes}</div>}
             <div style={{ display:'flex', gap:8, marginTop:8 }}>
               <button className="btn btn-sm btn-outline" style={{ color:'var(--ct)', borderColor:'var(--ct)' }}
                 onClick={() => { setEditing(ev); setModalOpen(true); setTrackPopup(null) }}>✎ Edit</button>
@@ -323,13 +323,13 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
       {/* List controls */}
       <div style={{ display:'flex', gap:8, alignItems:'center', marginTop:12, marginBottom:4,
         flexWrap:'wrap' }}>
-        <span style={{ fontSize:10, color:'var(--mut)' }}>List sort:</span>
+        <span style={{ fontSize: '0.77em', color:'var(--mut)' }}>List sort:</span>
         <button className={`fp ${listSort==='order'?'active':''}`}
-          style={{ fontSize:10 }} onClick={() => setListSort('order')}>Story Order</button>
+          style={{ fontSize: '0.77em' }} onClick={() => setListSort('order')}>Story Order</button>
         <button className={`fp ${listSort==='alpha'?'active':''}`}
-          style={{ fontSize:10 }} onClick={() => setListSort('alpha')}>A → Z</button>
+          style={{ fontSize: '0.77em' }} onClick={() => setListSort('alpha')}>A → Z</button>
         <button className={`fp ${listSort==='era'?'active':''}`}
-          style={{ fontSize:10 }} onClick={() => setListSort('era')}>By Era</button>
+          style={{ fontSize: '0.77em' }} onClick={() => setListSort('era')}>By Era</button>
       </div>
 
       {/* List */}
@@ -345,7 +345,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
             <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
-                <div style={{ fontSize: 10, color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
+                <div style={{ fontSize: '0.77em', color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
               </div>
               <div className="entry-meta">
                 {e.era && <span className="badge" style={{ color: 'var(--cca)', borderColor: 'rgba(255,170,51,.3)' }}>{e.era}</span>}
@@ -376,27 +376,27 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
           <div style={{ background:'var(--sf)', border:'1px solid var(--cca)',
             borderRadius:12, padding:20, maxWidth:480, width:'100%', maxHeight:'80vh', overflowY:'auto' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:14, color:'var(--cca)', marginBottom:14 }}>⧖ Era Markers</div>
-            <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10 }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.08em', color:'var(--cca)', marginBottom:14 }}>⧖ Era Markers</div>
+            <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:10 }}>
               Markers appear as bands on the visual track. Use sort# values to set start/end positions.
             </div>
             {eraMarkers.map((m, i) => (
               <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6, padding:'6px 8px',
                 background:'var(--card)', borderRadius:6, borderLeft:`3px solid ${m.color||'#4488ff'}` }}>
                 <input value={m.name} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],name:e.target.value}; saveEraMarkers(n) }}
-                  style={{ flex:1, fontSize:11, padding:'3px 6px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  style={{ flex:1, fontSize: '0.85em', padding:'3px 6px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
                   placeholder="Era name" />
                 <input type="number" value={m.start} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],start:e.target.value}; saveEraMarkers(n) }}
-                  style={{ width:60, fontSize:10, padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  style={{ width:60, fontSize: '0.77em', padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
                   placeholder="Start#" />
-                <span style={{ fontSize:10, color:'var(--mut)' }}>–</span>
+                <span style={{ fontSize: '0.77em', color:'var(--mut)' }}>–</span>
                 <input type="number" value={m.end} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],end:e.target.value}; saveEraMarkers(n) }}
-                  style={{ width:60, fontSize:10, padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                  style={{ width:60, fontSize: '0.77em', padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
                   placeholder="End#" />
                 <input type="color" value={m.color||'#4488ff'} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],color:e.target.value}; saveEraMarkers(n) }}
                   style={{ width:28, height:26, border:'none', borderRadius:4, cursor:'pointer', background:'none' }} />
                 <button onClick={() => saveEraMarkers(eraMarkers.filter((_,j) => j!==i))}
-                  style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:14 }}>✕</button>
+                  style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize: '1.08em' }}>✕</button>
               </div>
             ))}
             <button className="btn btn-sm btn-outline" style={{ marginTop:8, color:'var(--cca)', borderColor:'var(--cca)' }}

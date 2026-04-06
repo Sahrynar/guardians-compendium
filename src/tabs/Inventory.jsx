@@ -63,7 +63,7 @@ function ColorPicker({ value, onChange, onClose }) {
       background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 10,
       padding: 10, width: 170, boxShadow: '0 4px 20px rgba(0,0,0,.6)' }}
       onClick={e => e.stopPropagation()}>
-      <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Colour</div>
+      <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Colour</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, marginBottom: 8 }}>
         {PRESET_COLORS.map(c => (
           <button key={c} onClick={() => { onChange(c); onClose() }}
@@ -75,7 +75,7 @@ function ColorPicker({ value, onChange, onClose }) {
       <input type="color" value={value || '#1a4a6b'} onChange={e => onChange(e.target.value)}
         style={{ width: '100%', height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', background: 'none' }} />
       <button onClick={onClose}
-        style={{ marginTop: 6, width: '100%', fontSize: 10, padding: '3px 0',
+        style={{ marginTop: 6, width: '100%', fontSize: '0.77em', padding: '3px 0',
           background: 'none', border: '1px solid var(--brd)', borderRadius: 6,
           color: 'var(--mut)', cursor: 'pointer' }}>Done</button>
     </div>
@@ -100,19 +100,19 @@ function EntryTile({ entry, bubbleColor, onOpen, search }) {
           onError={e => e.target.style.display = 'none'} />
       )}
       {(entry.transfers || []).length > 0 && (
-        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 9,
+        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: '0.69em',
           background: 'rgba(255,170,51,.2)', color: 'var(--sp)',
           border: '1px solid rgba(255,170,51,.3)', borderRadius: 4, padding: '1px 4px' }}>↔</span>
       )}
-      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
+      <div style={{ fontSize: '0.85em', fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
         dangerouslySetInnerHTML={{ __html: highlight(entry.name || '', search) }} />
       {cat && (
-        <div style={{ fontSize: 9, color: tileColor, textTransform: 'uppercase', letterSpacing: '.03em' }}>
+        <div style={{ fontSize: '0.69em', color: tileColor, textTransform: 'uppercase', letterSpacing: '.03em' }}>
           {cat.icon} {entry.category}
         </div>
       )}
       {entry.color_material && (
-        <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>{entry.color_material}</div>
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{entry.color_material}</div>
       )}
       {entry.status && (
         <div style={{ marginTop: 3 }}>
@@ -158,9 +158,9 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
               border: `2px solid ${bubbleColor}` }}
             onError={e => e.target.style.display = 'none'} />
         )}
-        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: 12,
+        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: '0.92em',
           fontWeight: 700, color: bubbleColor }}>{name}</div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
           {entries.length} item{entries.length !== 1 ? 's' : ''}
         </div>
         {/* Color dot */}
@@ -180,14 +180,14 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
 
       {/* Entries grouped by category */}
       {entries.length === 0 ? (
-        <div style={{ fontSize: 10, color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
       ) : (
         catOrder.map(catId => {
           const cat = CAT_MAP[catId]
           const catEntries = byCategory[catId]
           return (
             <div key={catId} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+              <div style={{ fontSize: '0.69em', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '.06em', color: cat?.color || 'var(--dim)',
                 marginBottom: 5 }}>
                 {cat?.icon} {catId}
@@ -231,11 +231,11 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tileColor }}>{entry.name}</div>
-            {cat && <div style={{ fontSize: 10, color: cat.color, marginTop: 2 }}>{cat.icon} {entry.category}</div>}
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tileColor }}>{entry.name}</div>
+            {cat && <div style={{ fontSize: '0.77em', color: cat.color, marginTop: 2 }}>{cat.icon} {entry.category}</div>}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none',
-            cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
+            cursor: 'pointer', fontSize: '1.38em', color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
 
         {/* Image */}
@@ -250,19 +250,19 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
             <div style={{ width: '100%', height: 50, border: '1px dashed var(--brd)',
               borderRadius: 8, background: 'var(--card)', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              color: 'var(--mut)', fontSize: 11 }}>No image</div>
+              color: 'var(--mut)', fontSize: '0.85em' }}>No image</div>
           )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: 10 }}>
+            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: '0.77em' }}>
               {uploadingImg === entry.id ? 'Uploading…' : '⬆ Upload'}
               <input type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => { const f = e.target.files[0]; if (f) handleImageUpload(entry.id, f); e.target.value = '' }} />
             </label>
-            <button className="btn btn-sm btn-outline" style={{ fontSize: 10 }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
               onClick={() => { onClose(); setPickerFor(entry.id) }}>🖼 Browse Library</button>
             {entry.image && (
               <button className="btn btn-sm btn-outline"
-                style={{ fontSize: 10, color: '#ff3355', borderColor: '#ff335544' }}
+                style={{ fontSize: '0.77em', color: '#ff3355', borderColor: '#ff335544' }}
                 onClick={() => {
                   const it = allEntries.find(x => x.id === entry.id)
                   if (it) db.upsertEntry('inventory', { ...it, image: null })
@@ -279,31 +279,31 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
           ['Books', (entry.books || []).join(', ')],
         ].filter(([, v]) => v).map(([label, val]) => (
           <div key={label} style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor,
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor,
               textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
-            <div style={{ fontSize: 12, color: 'var(--tx)' }}>{val}</div>
+            <div style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{val}</div>
           </div>
         ))}
 
         {entry.description && (
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div>
-            <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{entry.description}</div>
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div>
+            <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{entry.description}</div>
           </div>
         )}
         {entry.significance && (
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div>
-            <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{entry.significance}</div>
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div>
+            <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{entry.significance}</div>
           </div>
         )}
 
         {(entry.transfers || []).length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--sp)',
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--sp)',
               textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>↔ Transfer History</div>
             {entry.transfers.map((t, i) => (
-              <div key={i} style={{ fontSize: 11, color: 'var(--dim)', marginBottom: 3 }}>
+              <div key={i} style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 3 }}>
                 {t.from || '?'} → {t.to || '?'}
                 {t.note ? ` · ${t.note}` : ''}
                 {t.when ? <span style={{ color: 'var(--mut)' }}> ({t.when})</span> : ''}
@@ -314,7 +314,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 
         {entry.notes && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)',
-            fontSize: 11, color: 'var(--dim)', lineHeight: 1.6 }}>{entry.notes}</div>
+            fontSize: '0.85em', color: 'var(--dim)', lineHeight: 1.6 }}>{entry.notes}</div>
         )}
 
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
@@ -507,7 +507,7 @@ export default function Inventory({ db }) {
 
         {/* Category filter */}
         <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+          style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All categories</option>
           {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.id}</option>)}
@@ -515,7 +515,7 @@ export default function Inventory({ db }) {
 
         {/* Character filter */}
         <select value={filterChar} onChange={e => { setFilterChar(e.target.value); setFilterChars(new Set()) }}
-          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+          style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All characters</option>
           {usedChars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -524,7 +524,7 @@ export default function Inventory({ db }) {
         {/* Group filter */}
         {allGroups.length > 0 && (
           <select value={filterGroup} onChange={e => setFilterGroup(e.target.value)}
-            style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+            style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
               border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
             <option value="all">All groups</option>
             {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
@@ -535,14 +535,14 @@ export default function Inventory({ db }) {
         <div style={{ display: 'flex', gap: 3 }}>
           {[['bubble','🫧 Bubbles'],['list','☰ List'],['outfit','👗 Outfits']].map(([v,l]) => (
             <button key={v} className={`btn btn-sm btn-outline ${viewMode===v?'active':''}`}
-              style={{ fontSize: 10 }} onClick={() => setViewMode(v)}>{l}</button>
+              style={{ fontSize: '0.77em' }} onClick={() => setViewMode(v)}>{l}</button>
           ))}
         </div>
 
         {/* List sort (only in list mode) */}
         {viewMode === 'list' && (
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+            style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
               border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
             <option value="holder">Sort: By Holder</option>
             <option value="name">Sort: A → Z</option>
@@ -552,7 +552,7 @@ export default function Inventory({ db }) {
 
         {/* Column picker */}
         <div style={{ position: 'relative' }}>
-          <button className="btn btn-sm btn-outline" style={{ fontSize: 10 }}
+          <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
             onClick={() => setShowColPicker(p => !p)}
             title="Column count">⊞ {columns} col</button>
           {showColPicker && (
@@ -561,7 +561,7 @@ export default function Inventory({ db }) {
               padding: 10, display: 'flex', gap: 6 }}>
               {[1,2,3,4,5,8].map(n => (
                 <button key={n} onClick={() => { saveColumns(n); setShowColPicker(false) }}
-                  style={{ width: 30, height: 30, borderRadius: 6, fontSize: 12, fontWeight: 700,
+                  style={{ width: 30, height: 30, borderRadius: 6, fontSize: '0.92em', fontWeight: 700,
                     background: columns === n ? 'var(--ci)' : 'var(--card)',
                     color: columns === n ? '#000' : 'var(--tx)',
                     border: `1px solid ${columns === n ? 'var(--ci)' : 'var(--brd)'}`,
@@ -576,7 +576,7 @@ export default function Inventory({ db }) {
       </div>
 
       {/* ── Stats bar ── */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10, fontSize: 10, color: 'var(--mut)' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10, fontSize: '0.77em', color: 'var(--mut)' }}>
         <span>{filtered.length} of {allEntries.length} entries</span>
         {CATEGORIES.filter(c => filtered.some(e => (e.category || 'Other') === c.id)).map(c => (
           <span key={c.id} style={{ color: c.color }}>
@@ -637,7 +637,7 @@ export default function Inventory({ db }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div className="entry-title"
                     dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
-                  <div style={{ fontSize: 9, color: tileColor, flexShrink: 0, marginLeft: 6 }}>
+                  <div style={{ fontSize: '0.69em', color: tileColor, flexShrink: 0, marginLeft: 6 }}>
                     {cat?.icon} {e.category}
                   </div>
                 </div>
@@ -651,7 +651,7 @@ export default function Inventory({ db }) {
                   {(e.books || []).map(b => <span key={b} className="badge badge-book">{b}</span>)}
                 </div>
                 {e.color_material && (
-                  <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 3 }}>{e.color_material}</div>
+                  <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 3 }}>{e.color_material}</div>
                 )}
               </div>
             )

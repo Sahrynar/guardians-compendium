@@ -316,7 +316,7 @@ function IxCitlatlTool() {
   return (
     <div className="tool-card" id="tool-ixcitlatl">
       <h3 style={{ color: 'var(--cl)' }}>✦ Ix'Citlatl Name Converter</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         Converts any name into its Ix'Citlatl equivalent across all 12 Mesoamerican language systems.
         Female private names begin with <strong style={{ color: 'var(--cl)' }}>Ix</strong> (pronounced "eesh"),
         male with <strong style={{ color: 'var(--cca)' }}>Ah</strong>.
@@ -345,16 +345,16 @@ function IxCitlatlTool() {
         <div>
           {history.map(h => (
             <div key={h.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, color: 'var(--cca)', fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontSize: '0.77em', color: 'var(--cca)', fontWeight: 700, marginBottom: 6 }}>
                 {h.original} <span style={{ color: 'var(--dim)', fontWeight: 400 }}>({h.gender})</span>
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Language System</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Result</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Notes</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Language System</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Result</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Notes</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -363,16 +363,16 @@ function IxCitlatlTool() {
                       <tr key={r.system} style={{ borderTop: '1px solid rgba(255,255,255,.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
                         <td style={{ padding: '5px 8px 5px 0', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{r.label}</td>
                         <td style={{ padding: '5px 8px 5px 0' }}>
-                          <span style={{ fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700,
+                          <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700,
                             color: h.gender === 'female' ? 'var(--cl)' : 'var(--cca)' }}>
                             {r.result}
                           </span>
                         </td>
-                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--mut)', fontSize: 9, fontStyle: 'italic' }}>{r.note}</td>
+                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--mut)', fontSize: '0.69em', fontStyle: 'italic' }}>{r.note}</td>
                         <td style={{ padding: '5px 0', whiteSpace: 'nowrap' }}>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 10, padding: '0 3px' }}
+                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
                             onClick={() => navigator.clipboard?.writeText(r.result)} title="Copy">📋</button>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 10, padding: '0 3px' }}
+                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
                             onClick={() => speak(r.result)} title="Hear pronunciation">🔊</button>
                         </td>
                       </tr>
@@ -382,7 +382,7 @@ function IxCitlatlTool() {
               </div>
             </div>
           ))}
-          <button style={{ fontSize: 9, color: 'var(--mut)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          <button style={{ fontSize: '0.69em', color: 'var(--mut)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             onClick={() => saveHistory([])}>Clear history</button>
         </div>
       )}
@@ -518,7 +518,7 @@ function PronunciationTool() {
   return (
     <div className="tool-card" id="tool-pronun">
       <h3 style={{ color: 'var(--cwr)' }}>🔊 Pronunciation Helper</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         Enter any word or name. Real-world language systems (Murvetian/Italian, Thaeronic/Greek, etc.)
         will attempt a translation first, then apply phonetic rules.
         In-world language systems apply phonetic rendering directly.
@@ -557,7 +557,7 @@ function PronunciationTool() {
       )}
 
       {!sys.confirmed && system !== 'manual' && system !== 'all' && (
-        <div style={{ fontSize: 10, color: 'var(--sp)', padding: '4px 8px', background: 'rgba(255,204,0,.07)',
+        <div style={{ fontSize: '0.77em', color: 'var(--sp)', padding: '4px 8px', background: 'rgba(255,204,0,.07)',
           borderRadius: 4, marginBottom: 8, border: '1px solid rgba(255,204,0,.2)' }}>
           ⚠ {sys.label} phonology not yet confirmed — output is approximate.
           {sys.realBase && <span> Translation via MyMemory API.</span>}
@@ -571,28 +571,28 @@ function PronunciationTool() {
               border: '1px solid var(--brd)', borderRadius: 'var(--r)', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 110 }}>
-                  <div style={{ fontSize: 9, color: 'var(--mut)', textTransform: 'uppercase',
+                  <div style={{ fontSize: '0.69em', color: 'var(--mut)', textTransform: 'uppercase',
                     letterSpacing: '.05em', marginBottom: 2 }}>{r.system}</div>
                   {r.translated && (
-                    <div style={{ fontSize: 9, color: 'var(--dim)', fontStyle: 'italic' }}>
+                    <div style={{ fontSize: '0.69em', color: 'var(--dim)', fontStyle: 'italic' }}>
                       → {r.translated} (translated)
                     </div>
                   )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 17, fontFamily: "'Cinzel',serif",
+                  <span style={{ fontSize: '1.31em', fontFamily: "'Cinzel',serif",
                     color: 'var(--cwr)', fontWeight: 700 }}>{r.phonetic}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15 }}
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15em' }}
                     onClick={() => speak(r.phonetic)} title="Hear it">🔊</button>
                   <button style={{ background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)',
-                    cursor: 'pointer', fontSize: 9, padding: '2px 6px', borderRadius: 3 }}
+                    cursor: 'pointer', fontSize: '0.69em', padding: '2px 6px', borderRadius: 3 }}
                     onClick={() => navigator.clipboard?.writeText(r.phonetic)}>Copy</button>
                 </div>
               </div>
               {!r.confirmed && (
-                <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
+                <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
                   ⚠ Unconfirmed phonology
                 </div>
               )}
@@ -603,10 +603,10 @@ function PronunciationTool() {
 
       {/* Ix'Citlatl reference guide */}
       <details style={{ marginTop: 10 }}>
-        <summary style={{ fontSize: 10, color: 'var(--dim)', cursor: 'pointer', userSelect: 'none' }}>
+        <summary style={{ fontSize: '0.77em', color: 'var(--dim)', cursor: 'pointer', userSelect: 'none' }}>
           📖 Ix'Citlatl Sound Guide
         </summary>
-        <div style={{ marginTop: 6, padding: 8, background: 'var(--card)', borderRadius: 'var(--r)', fontSize: 10, lineHeight: 1.8 }}>
+        <div style={{ marginTop: 6, padding: 8, background: 'var(--card)', borderRadius: 'var(--r)', fontSize: '0.77em', lineHeight: 1.8 }}>
           {[["Ix'","eesh (prefix)"],["x","sh (as in 'shell')"],["tl","tl as one sound (like in 'Nahuatl')"],["tz","ts (as in 'bits')"],["hu","w"],["'","glottal stop (like 'uh-oh')"],["c (before a/o)","k"],["c (before e/i)","s"],["ll","long L"]].map(([sym,val]) => (
             <div key={sym} style={{ display: 'flex', gap: 8 }}>
               <span style={{ color: 'var(--cl)', minWidth: 80, fontFamily: "'Cinzel',serif" }}>{sym}</span>
@@ -718,15 +718,15 @@ export default function Tools({ db }) {
   return (
     <div>
       {/* ── Title ── */}
-      <div style={{ fontFamily:"'Cinzel',serif", fontSize:15, color:'var(--ctl)', marginBottom:10 }}>🔧 Tools</div>
+      <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:'var(--ctl)', marginBottom:10 }}>🔧 Tools</div>
 
       {/* ── Quick-nav bar ── */}
       <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:16, padding:'8px 10px',
         background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--rl)' }}>
-        <span style={{ fontSize:9, color:'var(--dim)', alignSelf:'center', marginRight:4, textTransform:'uppercase', letterSpacing:'.04em' }}>Jump to:</span>
+        <span style={{ fontSize: '0.69em', color:'var(--dim)', alignSelf:'center', marginRight:4, textTransform:'uppercase', letterSpacing:'.04em' }}>Jump to:</span>
         {TOOLS.map(t => (
           <button key={t.id}
-            style={{ fontSize:10, padding:'3px 10px', borderRadius:12, background:'none',
+            style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:12, background:'none',
               border:`1px solid ${t.color}44`, color:t.color, cursor:'pointer', whiteSpace:'nowrap',
               transition:'.2s' }}
             onMouseDown={e => e.currentTarget.style.background = `${t.color}22`}
@@ -783,8 +783,8 @@ export default function Tools({ db }) {
         {/* ── Time Elapsed ── */}
         <div className="tool-card" id="tool-elapsed">
           <h3 style={{ color:'var(--cq)' }}>⏱ Time Elapsed</h3>
-          <div style={{ fontSize:10, color:'var(--dim)', marginBottom:8 }}>Pick events from the dropdown or enter years manually.</div>
-          <div style={{ fontSize:10, color:'var(--cca)', marginBottom:4, fontWeight:600 }}>START</div>
+          <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:8 }}>Pick events from the dropdown or enter years manually.</div>
+          <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:4, fontWeight:600 }}>START</div>
           <div className="field"><label>Pick event (optional)</label>
             <select value={eEv1} onChange={e => setEEv1(e.target.value)}>
               <option value="">— Manual entry —</option>
@@ -804,7 +804,7 @@ export default function Tools({ db }) {
               </div>
             </div>
           )}
-          <div style={{ fontSize:10, color:'var(--cca)', marginBottom:4, fontWeight:600, marginTop:8 }}>END</div>
+          <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:4, fontWeight:600, marginTop:8 }}>END</div>
           <div className="field"><label>Pick event (optional)</label>
             <select value={eEv2} onChange={e => setEEv2(e.target.value)}>
               <option value="">— Manual entry —</option>
@@ -865,7 +865,7 @@ export default function Tools({ db }) {
               <Row label="Equivalent Lajen time" value={`${ageResult.lAge.toFixed(1)} Lajen years`} />
             </div>
           ) : (
-            <div style={{ fontSize:10, color:'var(--mut)', marginTop:6 }}>Pick character + event, or enter years manually.</div>
+            <div style={{ fontSize: '0.77em', color:'var(--mut)', marginTop:6 }}>Pick character + event, or enter years manually.</div>
           )}
         </div>
 
@@ -899,7 +899,7 @@ export default function Tools({ db }) {
         {/* ── Birthday Backfill ── */}
         <div className="tool-card" id="tool-backfill">
           <h3 style={{ color:'var(--cfl)' }}>🗓 Backfill Birthday Timeline Entries</h3>
-          <div style={{ fontSize:10, color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
+          <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
             Auto-creates a timeline entry for every character who has a Lajen birthday set,
             but doesn't yet have a matching "Birthday: [Name]" event in the timeline.
             Safe to run multiple times — won't create duplicates.
@@ -1000,7 +1000,7 @@ function ScotsDialogueTool() {
   return (
     <div className="tool-card" id="tool-scots">
       <h3 style={{ color: 'var(--cca)' }}>🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Dialogue Converter</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         Convert standard English dialogue into Scots-flavoured speech. Useful for Dreslundic or
         any character with a broad regional accent. Results are a starting point — hand-tune as needed.
       </div>
@@ -1009,7 +1009,7 @@ function ScotsDialogueTool() {
           <label>English dialogue</label>
           <textarea value={input} onChange={e => setInput(e.target.value)} rows={4}
             placeholder={"\"I will not go back there. You know that.\""} 
-            style={{ width: '100%', resize: 'vertical', fontSize: 12, padding: '6px 8px',
+            style={{ width: '100%', resize: 'vertical', fontSize: '0.92em', padding: '6px 8px',
               background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6,
               color: 'var(--tx)', boxSizing: 'border-box', fontFamily: 'Georgia, serif', lineHeight: 1.6 }} />
         </div>
@@ -1018,10 +1018,10 @@ function ScotsDialogueTool() {
           onClick={convert}>Convert to Scots</button>
         {output && (
           <div>
-            <div style={{ fontSize: 9, color: 'var(--mut)', textTransform: 'uppercase',
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', textTransform: 'uppercase',
               letterSpacing: '.05em', marginBottom: 4 }}>Result</div>
             <div style={{ padding: '10px 12px', background: 'var(--sf)', border: '1px solid var(--brd)',
-              borderRadius: 6, fontSize: 12, fontFamily: 'Georgia, serif', lineHeight: 1.7,
+              borderRadius: 6, fontSize: '0.92em', fontFamily: 'Georgia, serif', lineHeight: 1.7,
               color: 'var(--tx)', marginBottom: 6, whiteSpace: 'pre-wrap' }}>{output}</div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button className="btn btn-sm btn-outline" onClick={copy}>
@@ -1149,7 +1149,7 @@ function ImageLibraryTool({ db }) {
   return (
     <div className="tool-card" id="tool-imagelib">
       <h3 style={{ color: 'var(--cl)' }}>🖼 Image Library</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         All images from across the Compendium in one place — characters, wardrobe, items, locations,
         maps, manuscript covers and chapter headers. You can also upload images directly here.
       </div>
@@ -1184,7 +1184,7 @@ function ImageLibraryTool({ db }) {
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {IMG_LIB_CATS.map(c => (
             <button key={c} onClick={() => setFilterCat(c)}
-              style={{ fontSize: 10, padding: '3px 10px', borderRadius: 12, cursor: 'pointer',
+              style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 12, cursor: 'pointer',
                 background: filterCat === c ? 'var(--cl)' : 'none',
                 color: filterCat === c ? '#000' : 'var(--dim)',
                 border: `1px solid ${filterCat === c ? 'var(--cl)' : 'var(--brd)'}` }}>
@@ -1194,7 +1194,7 @@ function ImageLibraryTool({ db }) {
         </div>
       </div>
 
-      <div style={{ fontSize: 10, color: 'var(--mut)', marginBottom: 8 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 8 }}>
         {filtered.length} image{filtered.length !== 1 ? 's' : ''}
       </div>
 
@@ -1209,26 +1209,26 @@ function ImageLibraryTool({ db }) {
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
                   objectFit: 'cover' }}
                 onError={e => e.target.style.display = 'none'} />
-              <div style={{ position: 'absolute', top: 4, right: 4, fontSize: 12,
+              <div style={{ position: 'absolute', top: 4, right: 4, fontSize: '0.92em',
                 background: 'rgba(0,0,0,.6)', borderRadius: 4, padding: '1px 4px',
                 color: '#fff' }}>↗</div>
             </div>
             <div style={{ padding: '5px 7px' }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--tx)',
+              <div style={{ fontSize: '0.77em', fontWeight: 600, color: 'var(--tx)',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{img.name}</div>
-              <div style={{ fontSize: 9, color: 'var(--cl)' }}>{img.cat}</div>
+              <div style={{ fontSize: '0.69em', color: 'var(--cl)' }}>{img.cat}</div>
             </div>
             {img.direct && (
               <button onClick={() => deleteDirectImage(img.id)}
                 style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(0,0,0,.7)',
                   border: 'none', borderRadius: 4, color: '#ff3355', cursor: 'pointer',
-                  fontSize: 11, padding: '1px 5px', lineHeight: 1 }}>✕</button>
+                  fontSize: '0.85em', padding: '1px 5px', lineHeight: 1 }}>✕</button>
             )}
           </div>
         ))}
         {filtered.length === 0 && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '30px 0',
-            color: 'var(--mut)', fontSize: 11 }}>
+            color: 'var(--mut)', fontSize: '0.85em' }}>
             No images found. Upload some or add images to Characters, Wardrobe, Items, or Locations.
           </div>
         )}
@@ -1288,7 +1288,7 @@ function BackfillTool({ db }) {
         Run Backfill
       </button>
       {result !== null && (
-        <div style={{ marginTop:8, fontSize:11, color: result > 0 ? 'var(--sl)' : 'var(--dim)' }}>
+        <div style={{ marginTop:8, fontSize: '0.85em', color: result > 0 ? 'var(--sl)' : 'var(--dim)' }}>
           {result > 0
             ? `✓ Created ${result} birthday event${result !== 1 ? 's' : ''}.`
             : '✓ All birthdays already have timeline entries — nothing to add.'}

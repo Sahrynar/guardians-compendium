@@ -71,7 +71,7 @@ export default function Dashboard({ db, goTo }) {
   }
 
   const panelHead = (icon, label, color, count) => (
-    <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase',
+    <div style={{ fontSize: '0.77em', fontWeight: 700, color, textTransform: 'uppercase',
       letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
       display: 'flex', justifyContent: 'space-between' }}>
       <span>{icon} {label}</span>
@@ -86,10 +86,10 @@ export default function Dashboard({ db, goTo }) {
         borderLeft: `2px solid ${color}` }}
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
-      <div style={{ fontSize: 11, color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: '0.85em', color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {item.name || item.title || '(unnamed)'}
       </div>
-      {item.detail && <div style={{ fontSize: 9, color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.detail}</div>}
+      {item.detail && <div style={{ fontSize: '0.69em', color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.detail}</div>}
     </div>
   )
 
@@ -99,7 +99,7 @@ export default function Dashboard({ db, goTo }) {
       {/* ── LEFT SIDEBAR ── */}
       <div style={{ width: 190, flexShrink: 0, borderRight: '1px solid var(--brd)',
         paddingRight: 8, marginRight: 16, paddingTop: 4 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mut)', letterSpacing: '.15em',
+        <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--mut)', letterSpacing: '.15em',
           textTransform: 'uppercase', marginBottom: 10, paddingBottom: 4,
           borderBottom: '1px solid var(--brd)' }}>Sections</div>
         {TAB_LIST.filter(k => CATS[k]).map(k => {
@@ -112,8 +112,8 @@ export default function Dashboard({ db, goTo }) {
                 borderLeft: `3px solid ${c.c}`, transition: '.12s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <span style={{ fontSize: 11, color: 'var(--tx)' }}>{c.i} {c.l}</span>
-              <span style={{ fontSize: 11, fontFamily: "'Cinzel',serif", color: c.c, minWidth: 20, textAlign: 'right' }}>{count}</span>
+              <span style={{ fontSize: '0.85em', color: 'var(--tx)' }}>{c.i} {c.l}</span>
+              <span style={{ fontSize: '0.85em', fontFamily: "'Cinzel',serif", color: c.c, minWidth: 20, textAlign: 'right' }}>{count}</span>
             </div>
           )
         })}
@@ -129,7 +129,7 @@ export default function Dashboard({ db, goTo }) {
               style={{ width: '100%', maxHeight: 140, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
             <button onClick={() => { setHeaderImg(''); db.saveSetting('dashboard_header_image', '') }}
               style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,.6)',
-                border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontSize: 11, padding: '2px 8px' }}>
+                border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontSize: '0.85em', padding: '2px 8px' }}>
               ✕ Remove
             </button>
           </div>
@@ -139,7 +139,7 @@ export default function Dashboard({ db, goTo }) {
         <div style={{ marginBottom: 10, textAlign: 'right' }}>
           <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleHeaderImg} />
           <button onClick={() => imgRef.current?.click()}
-            style={{ fontSize: 9, padding: '2px 8px', borderRadius: 5, background: 'none',
+            style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 5, background: 'none',
               border: '1px solid var(--brd)', color: 'var(--mut)', cursor: 'pointer' }}>
             📷 {headerImg ? 'Change header image' : 'Upload header image'}
           </button>
@@ -176,7 +176,7 @@ export default function Dashboard({ db, goTo }) {
           {searchHits.length > 0 && (
             <div style={{ marginTop: 6, background: 'var(--card)', border: '1px solid var(--brd)',
               borderRadius: 8, overflow: 'hidden', maxHeight: 220, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, color: 'var(--mut)', padding: '4px 10px', borderBottom: '1px solid var(--brd)' }}>
+              <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '4px 10px', borderBottom: '1px solid var(--brd)' }}>
                 {searchHits.length} result{searchHits.length !== 1 ? 's' : ''} — click to go to tab
               </div>
               {searchHits.slice(0, 30).map((h, i) => (
@@ -186,14 +186,14 @@ export default function Dashboard({ db, goTo }) {
                     background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
                   onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)'}>
-                  <span style={{ fontSize: 12, color: 'var(--tx)' }}>{h.name}</span>
-                  <span style={{ fontSize: 10, color: CATS[h.cat]?.c || 'var(--mut)' }}>{CATS[h.cat]?.i} {CATS[h.cat]?.l}</span>
+                  <span style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{h.name}</span>
+                  <span style={{ fontSize: '0.77em', color: CATS[h.cat]?.c || 'var(--mut)' }}>{CATS[h.cat]?.i} {CATS[h.cat]?.l}</span>
                 </div>
               ))}
             </div>
           )}
           {search.trim().length > 1 && searchHits.length === 0 && (
-            <div style={{ fontSize: 11, color: 'var(--mut)', padding: '6px 4px' }}>No results for "{search}"</div>
+            <div style={{ fontSize: '0.85em', color: 'var(--mut)', padding: '6px 4px' }}>No results for "{search}"</div>
           )}
         </div>
 
@@ -204,15 +204,15 @@ export default function Dashboard({ db, goTo }) {
           <div>
             {panelHead('⏱', 'Recent', 'var(--tx)', null)}
             {recent.length === 0
-              ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
               : recent.slice(0, 12).map((r, i) => (
                 <div key={r.id || i} onClick={() => goTo(r.cat)}
                   style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
                     background: i % 2 === 0 ? 'var(--card)' : 'transparent' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
                   onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
-                  <div style={{ fontSize: 11, color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
-                  <div style={{ fontSize: 9, color: CATS[r.cat]?.c || 'var(--mut)' }}>{CATS[r.cat]?.i} {CATS[r.cat]?.l}</div>
+                  <div style={{ fontSize: '0.85em', color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                  <div style={{ fontSize: '0.69em', color: CATS[r.cat]?.c || 'var(--mut)' }}>{CATS[r.cat]?.i} {CATS[r.cat]?.l}</div>
                 </div>
               ))
             }
@@ -222,7 +222,7 @@ export default function Dashboard({ db, goTo }) {
           <div>
             {panelHead('?', 'Questions', 'var(--cq)', (data.questions || []).filter(q => q.status === 'open').length)}
             {questions.length === 0
-              ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
               : questions.map((q, i) => panelRow(q, i, 'var(--cq)', () => goTo('questions')))
             }
           </div>
@@ -231,7 +231,7 @@ export default function Dashboard({ db, goTo }) {
           <div>
             {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
             {flags.length === 0
-              ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
               : flags.map((f, i) => panelRow(f, i, 'var(--cfl)', () => goTo('flags')))
             }
           </div>
@@ -240,7 +240,7 @@ export default function Dashboard({ db, goTo }) {
           <div>
             {panelHead('✦', 'Canon', 'var(--ccn)', (data.canon || []).filter(c => c.status === 'locked').length)}
             {canonLocked.length === 0
-              ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No locked canon yet</div>
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No locked canon yet</div>
               : canonLocked.map((c, i) => panelRow(c, i, 'var(--ccn)', () => goTo('canon')))
             }
           </div>

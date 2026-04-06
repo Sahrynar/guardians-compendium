@@ -37,15 +37,15 @@ function WardrobeTile({ item, onOpen, search }) {
       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--cwr)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--brd)'}
     >
-      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
+      <div style={{ fontSize: '0.85em', fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
         dangerouslySetInnerHTML={{ __html: highlight(item.name || '', search) }} />
       {item.item_type && (
-        <div style={{ fontSize: 9, color: tc, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+        <div style={{ fontSize: '0.69em', color: tc, textTransform: 'uppercase', letterSpacing: '.04em' }}>
           {item.item_type}
         </div>
       )}
       {item.color_material && (
-        <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>{item.color_material}</div>
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{item.color_material}</div>
       )}
       {item.status && (
         <div style={{ marginTop: 3 }}>
@@ -67,13 +67,13 @@ function WardrobePopup({ item, color, onClose, onEdit, onDelete }) {
         borderRadius: 12, padding: 20, maxWidth: 420, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tc, flex: 1 }}>{item.name}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tc, flex: 1 }}>{item.name}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.38em', color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
-        {item.item_type && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Type</div><div style={{ fontSize: 12, color: 'var(--tx)' }}>{item.item_type}</div></div>}
-        {item.color_material && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Color / Material</div><div style={{ fontSize: 12, color: 'var(--tx)' }}>{item.color_material}</div></div>}
-        {item.description && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.description}</div></div>}
-        {item.notes && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 12, color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div></div>}
+        {item.item_type && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Type</div><div style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{item.item_type}</div></div>}
+        {item.color_material && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Color / Material</div><div style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{item.color_material}</div></div>}
+        {item.description && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div><div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{item.description}</div></div>}
+        {item.notes && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: '0.92em', color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div></div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
           <button className="btn btn-outline btn-sm" style={{ color: tc, borderColor: `${tc}44` }}
             onClick={() => { onClose(); onEdit(item) }}>✎ Edit</button>
@@ -121,8 +121,8 @@ function WardrobeBubble({ char, items, color, onColorChange, onDragStart, onDrag
             style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${bubbleColor}` }}
             onError={e => e.target.style.display = 'none'} />
         )}
-        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: 12, fontWeight: 700, color: bubbleColor }}>{name}</div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
+        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: '0.92em', fontWeight: 700, color: bubbleColor }}>{name}</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
         <div style={{ position: 'relative' }}>
           <button onClick={e => { e.stopPropagation(); setShowPicker(p => !p) }}
             title="Change bubble colour"
@@ -133,7 +133,7 @@ function WardrobeBubble({ char, items, color, onColorChange, onDragStart, onDrag
               background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 10,
               padding: 10, width: 160, boxShadow: '0 4px 20px rgba(0,0,0,.5)' }}
               onClick={e => e.stopPropagation()}>
-              <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Bubble Colour</div>
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Bubble Colour</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 8 }}>
                 {PRESET_COLORS.map(c => (
                   <button key={c} onClick={() => { onColorChange(c); setShowPicker(false) }}
@@ -144,7 +144,7 @@ function WardrobeBubble({ char, items, color, onColorChange, onDragStart, onDrag
               <input type="color" value={bubbleColor} onChange={e => onColorChange(e.target.value)}
                 style={{ width: '100%', height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', background: 'none' }} />
               <button onClick={() => setShowPicker(false)}
-                style={{ marginTop: 6, width: '100%', fontSize: 10, padding: '3px 0',
+                style={{ marginTop: 6, width: '100%', fontSize: '0.77em', padding: '3px 0',
                   background: 'none', border: '1px solid var(--brd)', borderRadius: 6,
                   color: 'var(--mut)', cursor: 'pointer' }}>Done</button>
             </div>
@@ -152,7 +152,7 @@ function WardrobeBubble({ char, items, color, onColorChange, onDragStart, onDrag
         </div>
       </div>
       {items.length === 0 ? (
-        <div style={{ fontSize: 10, color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No wardrobe items</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No wardrobe items</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6 }}>
           {items.map(item => (

@@ -16,17 +16,17 @@ export default function Canon({ db, crossLink, clearCrossLink }) {
   return (
     <div>
       <div style={{ display:'flex', gap:4, alignItems:'center', padding:'4px 0 8px', flexWrap:'wrap' }}>
-        <span style={{ fontSize:9, color:'var(--mut)', textTransform:'uppercase', letterSpacing:'.05em' }}>Columns:</span>
+        <span style={{ fontSize: '0.69em', color:'var(--mut)', textTransform:'uppercase', letterSpacing:'.05em' }}>Columns:</span>
         {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
           <button key={l} onClick={() => saveColCount(n)}
-            style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+            style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
               background: colCount===n ? 'var(--ccn)' : 'none',
               color: colCount===n ? '#000' : 'var(--dim)',
               border: `1px solid ${colCount===n ? 'var(--ccn)' : 'var(--brd)'}`,
               cursor:'pointer' }}>{l}</button>
         ))}
         <button onClick={toggleDividers}
-          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
             background: dividers ? 'rgba(255,255,255,.08)' : 'none',
             color: dividers ? 'var(--tx)' : 'var(--mut)',
             border:'1px solid var(--brd)', cursor:'pointer' }}>

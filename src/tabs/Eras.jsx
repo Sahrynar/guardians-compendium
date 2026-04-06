@@ -51,15 +51,15 @@ function EditModal({ item, type, onSave, onClose }) {
   function set(k, v) { setForm(p => ({ ...p, [k]: v })) }
   const inp = (k, label, num) => (
     <div style={{ marginBottom: 10 }}>
-      <label style={{ fontSize: 10, color: 'var(--mut)', display: 'block', marginBottom: 3 }}>{label}</label>
+      <label style={{ fontSize: '0.77em', color: 'var(--mut)', display: 'block', marginBottom: 3 }}>{label}</label>
       <input type={num ? 'number' : 'text'} value={form[k] ?? ''} onChange={e => set(k, num ? parseFloat(e.target.value) : e.target.value)}
-        style={{ width: '100%', fontSize: 11, padding: '5px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', boxSizing: 'border-box' }} />
+        style={{ width: '100%', fontSize: '0.85em', padding: '5px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', boxSizing: 'border-box' }} />
     </div>
   )
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 12, padding: 20, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, color: 'var(--cca)', marginBottom: 14 }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: 'var(--cca)', marginBottom: 14 }}>
           ✎ Edit {type === 'timeline' ? 'Timeline Entry' : 'Era Span'}
         </div>
         {type === 'timeline' ? (
@@ -81,7 +81,7 @@ function EditModal({ item, type, onSave, onClose }) {
           <button className="btn btn-outline btn-sm" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary btn-sm" style={{ background: 'var(--cca)', color: '#000' }} onClick={() => { onSave(form); onClose() }}>Save</button>
         </div>
-        <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 10 }}>
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 10 }}>
           Edits are saved to your account and will persist across sessions.
         </div>
       </div>
@@ -128,8 +128,8 @@ export default function Eras({ db }) {
   return (
     <div>
       <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17, color: 'var(--cca)' }}>⧖ Eras & Dating</div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>HC 320 = 1554 AD · 8.52 Lajen years = 1 Mnaerah year · All dates EXPLORATORY</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.31em', color: 'var(--cca)' }}>⧖ Eras & Dating</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>HC 320 = 1554 AD · 8.52 Lajen years = 1 Mnaerah year · All dates EXPLORATORY</div>
       </div>
 
       {/* Era spans */}
@@ -137,27 +137,27 @@ export default function Eras({ db }) {
         {spans.map((s, i) => (
           <div key={s.name} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderTop: `3px solid ${s.col}`, borderRadius: 'var(--r)', padding: 10, textAlign: 'center', position: 'relative' }}>
             <button onClick={() => { setEditItem(s); setEditType('span'); setEditIdx(i) }}
-              style={{ position: 'absolute', top: 6, right: 6, background: 'none', border: 'none', color: 'var(--mut)', fontSize: 12, cursor: 'pointer', padding: '2px 5px', borderRadius: 4 }}
+              style={{ position: 'absolute', top: 6, right: 6, background: 'none', border: 'none', color: 'var(--mut)', fontSize: '0.92em', cursor: 'pointer', padding: '2px 5px', borderRadius: 4 }}
               title="Edit">✎</button>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: s.col }}>{s.name}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
-            <div style={{ fontSize: 11, color: 'var(--dim)' }}>{s.my}</div>
-            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>{s.desc}</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: s.col }}>{s.name}</div>
+            <div style={{ fontSize: '1.38em', fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
+            <div style={{ fontSize: '0.85em', color: 'var(--dim)' }}>{s.my}</div>
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{s.desc}</div>
           </div>
         ))}
       </div>
 
       {/* Visual timeline */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cca)', marginBottom: 12 }}>Timeline</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cca)', marginBottom: 12 }}>Timeline</div>
         <div style={{ position: 'relative', paddingLeft: 90 }}>
           {timeline.map((e, i) => {
             const isLast = i === timeline.length - 1
             return (
               <div key={i} style={{ display: 'flex', minHeight: i===0?48:56, position: 'relative' }}>
-                <div style={{ position: 'absolute', left: -90, width: 80, textAlign: 'right', paddingRight: 12, fontSize: 10 }}>
+                <div style={{ position: 'absolute', left: -90, width: 80, textAlign: 'right', paddingRight: 12, fontSize: '0.77em' }}>
                   <div style={{ fontWeight: 600 }}>{e.ly}</div>
-                  <div style={{ color: 'var(--mut)', fontSize: 9 }}>{e.my}</div>
+                  <div style={{ color: 'var(--mut)', fontSize: '0.69em' }}>{e.my}</div>
                 </div>
                 <div style={{ position: 'relative', width: 14, flexShrink: 0 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: e.col, position: 'absolute', top: 3, left: 2, zIndex: 1 }} />
@@ -165,11 +165,11 @@ export default function Eras({ db }) {
                 </div>
                 <div style={{ padding: '0 0 12px 8px', flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: e.col }}>{e.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 1 }}>{e.desc}</div>
+                    <div style={{ fontSize: '0.92em', fontWeight: 600, color: e.col }}>{e.label}</div>
+                    <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 1 }}>{e.desc}</div>
                   </div>
                   <button onClick={() => { setEditItem(e); setEditType('timeline'); setEditIdx(i) }}
-                    style={{ background: 'none', border: 'none', color: 'var(--mut)', fontSize: 11, cursor: 'pointer', flexShrink: 0, padding: '2px 6px' }}>✎</button>
+                    style={{ background: 'none', border: 'none', color: 'var(--mut)', fontSize: '0.85em', cursor: 'pointer', flexShrink: 0, padding: '2px 6px' }}>✎</button>
                 </div>
               </div>
             )
@@ -179,15 +179,15 @@ export default function Eras({ db }) {
 
       {/* Conversion table */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cca)', marginBottom: 4 }}>Conversion Table</div>
-        <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 8 }}>Anchor: HC 320 = 1554 AD. Earth-history sections collapsed by default.</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cca)', marginBottom: 4 }}>Conversion Table</div>
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Anchor: HC 320 = 1554 AD. Earth-history sections collapsed by default.</div>
         <div style={{ overflowX: 'auto' }}>
           {ERA_TABLE.map(cat => (
             <details key={cat.cat} open={lajenCore.has(cat.cat)} style={{ marginBottom: 4 }}>
-              <summary style={{ fontSize: 10, fontWeight: 700, color: 'var(--cca)', padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {cat.cat} <span style={{ fontSize: 9, color: 'var(--mut)', fontWeight: 400, textTransform: 'none' }}>({cat.rows.length} entries)</span>
+              <summary style={{ fontSize: '0.77em', fontWeight: 700, color: 'var(--cca)', padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {cat.cat} <span style={{ fontSize: '0.69em', color: 'var(--mut)', fontWeight: 400, textTransform: 'none' }}>({cat.rows.length} entries)</span>
               </summary>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, marginBottom: 4 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em', marginBottom: 4 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--brd)' }}>
                     {['Mnaerah','Event','MY before 1554','HC Date','Lajen clock','Mnaerah clock'].map(h => (

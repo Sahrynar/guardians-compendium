@@ -37,7 +37,7 @@ function FlowchartRenderer({ content }) {
     if (!nodes[e.to]) nodes[e.to] = e.to
   })
   const nodeIds = Object.keys(nodes)
-  if (!nodeIds.length) return <div style={{ color: 'var(--mut)', fontSize: 11, fontStyle: 'italic' }}>No flowchart nodes defined</div>
+  if (!nodeIds.length) return <div style={{ color: 'var(--mut)', fontSize: '0.85em', fontStyle: 'italic' }}>No flowchart nodes defined</div>
   return (
     <div style={{ overflowX: 'auto', padding: '8px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
@@ -45,13 +45,13 @@ function FlowchartRenderer({ content }) {
           const outgoing = edges.filter(e => e.from === id)
           return (
             <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--cc)', whiteSpace: 'nowrap' }}>
+              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: '0.85em', fontWeight: 600, color: 'var(--cc)', whiteSpace: 'nowrap' }}>
                 {nodes[id]}
               </div>
               {outgoing.map((e, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--dim)', fontSize: 10 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--dim)', fontSize: '0.77em' }}>
                   <span>→{e.label ? ` (${e.label})` : ''}</span>
-                  <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cl)', borderRadius: 6, fontSize: 11, color: 'var(--cl)', whiteSpace: 'nowrap' }}>{nodes[e.to] || e.to}</div>
+                  <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cl)', borderRadius: 6, fontSize: '0.85em', color: 'var(--cl)', whiteSpace: 'nowrap' }}>{nodes[e.to] || e.to}</div>
                 </div>
               ))}
             </div>
@@ -65,12 +65,12 @@ function FlowchartRenderer({ content }) {
 // ── Table renderer ──────────────────────────────────────────────
 function TableRenderer({ content }) {
   const rows = (content || '').split('\n').map(r => r.split('|').map(c => c.trim()).filter(Boolean))
-  if (!rows.length || !rows[0].length) return <div style={{ color: 'var(--mut)', fontSize: 11, fontStyle: 'italic' }}>No table data</div>
+  if (!rows.length || !rows[0].length) return <div style={{ color: 'var(--mut)', fontSize: '0.85em', fontStyle: 'italic' }}>No table data</div>
   const header = rows[0]
   const body = rows.slice(1).filter(r => !r.every(c => /^[-:]+$/.test(c)))
   return (
     <div style={{ overflowX: 'auto', marginTop: 6 }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85em' }}>
         <thead>
           <tr>
             {header.map((h, i) => (
@@ -98,31 +98,31 @@ function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
   return (
     <div style={{ marginBottom: 12, padding: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontSize: 9, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{type}</span>
+        <span style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{type}</span>
         <div style={{ display: 'flex', gap: 3 }}>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveUp}>↑</button>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveDown}>↓</button>
-          <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: 10 }} onClick={onEdit}>✎</button>
-          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: 10 }} onClick={onDelete}>✕</button>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveUp}>↑</button>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveDown}>↓</button>
+          <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
+          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: '0.77em' }} onClick={onDelete}>✕</button>
         </div>
       </div>
 
       {type === 'text' && (
-        <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{content}</div>
+        <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
       {type === 'table' && <TableRenderer content={content} />}
       {type === 'flowchart' && <FlowchartRenderer content={content} />}
       {type === 'diagram' && (
-        <div style={{ padding: 10, background: 'rgba(0,0,0,.2)', borderRadius: 4, fontFamily: 'monospace', fontSize: 11, color: 'var(--cl)', whiteSpace: 'pre-wrap' }}>{content}</div>
+        <div style={{ padding: 10, background: 'rgba(0,0,0,.2)', borderRadius: 4, fontFamily: 'monospace', fontSize: '0.85em', color: 'var(--cl)', whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
       {type === 'image' && content && (
         <div style={{ textAlign: 'center' }}>
           <img src={content} alt={caption || ''} style={{ maxWidth: '100%', borderRadius: 4, border: '1px solid var(--brd)' }} />
-          {caption && <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 4, fontStyle: 'italic' }}>{caption}</div>}
+          {caption && <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 4, fontStyle: 'italic' }}>{caption}</div>}
         </div>
       )}
       {type === 'callout' && (
-        <div style={{ padding: '8px 12px', background: 'rgba(201,102,255,.08)', border: '1px solid rgba(201,102,255,.3)', borderLeft: '3px solid var(--cc)', borderRadius: 4, fontSize: 11, color: 'var(--tx)', lineHeight: 1.5 }}>
+        <div style={{ padding: '8px 12px', background: 'rgba(201,102,255,.08)', border: '1px solid rgba(201,102,255,.3)', borderLeft: '3px solid var(--cc)', borderRadius: 4, fontSize: '0.85em', color: 'var(--tx)', lineHeight: 1.5 }}>
           {content}
         </div>
       )}
@@ -171,7 +171,7 @@ function BlockEditor({ block, onSave, onClose }) {
       {type === 'image' ? (
         <div className="field">
           <label>Image</label>
-          <label style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: 11 }}>
+          <label style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: '0.85em' }}>
             📎 Upload Image
             <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
           </label>
@@ -190,8 +190,8 @@ function BlockEditor({ block, onSave, onClose }) {
             placeholder={placeholders[type] || ''}
             style={{ minHeight: type === 'text' ? 120 : 80 }}
           />
-          {type === 'table' && <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>Use | to separate columns, --- for header divider</div>}
-          {type === 'flowchart' && <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>Format: NodeA [Label] on its own line, then NodeA --&gt; NodeB : label</div>}
+          {type === 'table' && <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>Use | to separate columns, --- for header divider</div>}
+          {type === 'flowchart' && <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>Format: NodeA [Label] on its own line, then NodeA --&gt; NodeB : label</div>}
         </div>
       )}
 
@@ -239,7 +239,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
     <div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-outline" onClick={onCancel}>← Back</button>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: 'var(--cc)', flex: 1 }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: 'var(--cc)', flex: 1 }}>
           {article?.id ? 'Editing Article' : 'New Article'}
         </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
@@ -259,9 +259,9 @@ function ArticleEditor({ article, onSave, onCancel }) {
 
       {/* Blocks */}
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--cc)', marginBottom: 8 }}>Content Blocks</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.92em', color: 'var(--cc)', marginBottom: 8 }}>Content Blocks</div>
         {!blocks.length && (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: 11, border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
+          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: '0.85em', border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
             No blocks yet. Add your first content block below.
           </div>
         )}
@@ -326,18 +326,18 @@ export default function Wiki({ db }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cc)' }}>📖 Wiki</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cc)' }}>📖 Wiki</div>
         <div style={{ display:'flex', gap:3, alignItems:'center' }}>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cc)' : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
                 border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
           <button onClick={toggleDividers}
-            style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+            style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
               background: dividers ? 'rgba(255,255,255,.08)' : 'none',
               color: dividers ? 'var(--tx)' : 'var(--mut)',
               border:'1px solid var(--brd)', cursor:'pointer' }}>
@@ -363,7 +363,7 @@ export default function Wiki({ db }) {
         <div className="empty">
           <div className="empty-icon">📖</div>
           <p>No wiki articles yet.</p>
-          <p style={{ fontSize: 11, color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
+          <p style={{ fontSize: '0.85em', color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
             The wiki is where long-form lore lives — world history, cosmology, power system deep-dives, cultures, languages, factions. Supports text, tables, flowcharts, diagrams, images, and callouts.
           </p>
           <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
@@ -376,11 +376,11 @@ export default function Wiki({ db }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>
-                {a.summary && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
+                {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
               </div>
               <span className="badge" style={{ color: 'var(--cc)', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
             </div>
-            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
               {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
             </div>
             <div className="entry-actions" style={{ marginTop: 6 }}>

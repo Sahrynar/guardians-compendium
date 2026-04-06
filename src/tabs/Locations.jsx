@@ -31,12 +31,12 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
     <div style={{ marginBottom:2 }}>
       <div className="loc-node" onClick={() => onToggle(loc.id)}>
         {kids.length > 0
-          ? <span style={{ fontSize:9, color:'var(--cl)', display:'inline-block',
+          ? <span style={{ fontSize: '0.69em', color:'var(--cl)', display:'inline-block',
               transform: isOpen ? 'rotate(90deg)' : 'none', transition:'.2s' }}>►</span>
           : <span style={{ width:12 }} />
         }
-        <span style={{ fontSize:12, fontWeight:600 }}>{loc.name}</span>
-        {loc.loc_type && <span style={{ fontSize:9, color:'var(--mut)', marginLeft:6 }}>{loc.loc_type}</span>}
+        <span style={{ fontSize: '0.92em', fontWeight:600 }}>{loc.name}</span>
+        {loc.loc_type && <span style={{ fontSize: '0.69em', color:'var(--mut)', marginLeft:6 }}>{loc.loc_type}</span>}
         {loc.status && <span className={`badge badge-${loc.status}`} style={{ marginLeft:4 }}>{SL[loc.status]||loc.status}</span>}
         {loc.image && (
           <img src={loc.image} alt=""
@@ -45,12 +45,12 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
             onClick={e => { e.stopPropagation(); onLightbox(loc.image) }}
             onError={e => e.target.style.display='none'} />
         )}
-        <span style={{ marginLeft: loc.image ? 4 : 'auto', fontSize:9, color:'var(--mut)' }}>
+        <span style={{ marginLeft: loc.image ? 4 : 'auto', fontSize: '0.69em', color:'var(--mut)' }}>
           {kids.length > 0 ? `${kids.length} inside` : ''}
         </span>
       </div>
       {isOpen && (
-        <div style={{ padding:'6px 8px 6px 24px', fontSize:11, color:'var(--dim)' }}>
+        <div style={{ padding:'6px 8px 6px 24px', fontSize: '0.85em', color:'var(--dim)' }}>
           {loc.image && (
             <img src={loc.image} alt={loc.name}
               style={{ width:'100%', maxHeight:140, objectFit:'cover',
@@ -127,7 +127,7 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
   }, [locations, sortKey, sortDir, filterType, filterParent, search])
 
   const TH = ({ col, label }) => (
-    <th style={{ padding:'5px 8px', textAlign:'left', fontSize:9, fontWeight:700,
+    <th style={{ padding:'5px 8px', textAlign:'left', fontSize: '0.69em', fontWeight:700,
       color:'var(--mut)', textTransform:'uppercase', letterSpacing:'.05em',
       cursor:'pointer', whiteSpace:'nowrap', userSelect:'none',
       borderBottom:'1px solid var(--brd)' }}
@@ -138,7 +138,7 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
 
   return (
     <div style={{ marginTop:20 }}>
-      <div style={{ fontSize:11, fontWeight:700, color:'var(--cl)',
+      <div style={{ fontSize: '0.85em', fontWeight:700, color:'var(--cl)',
         fontFamily:"'Cinzel',serif", marginBottom:10,
         borderTop:'1px solid var(--brd)', paddingTop:14 }}>
         All Locations — Flat Table
@@ -146,27 +146,27 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
 
       {/* Table filters */}
       <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-        <input className="sx" style={{ flex:1, minWidth:120, fontSize:11 }}
+        <input className="sx" style={{ flex:1, minWidth:120, fontSize: '0.85em' }}
           placeholder="Search…" value={search}
           onChange={e => setSearch(e.target.value)} />
         <select value={filterType} onChange={e => setFilterType(e.target.value)}
-          style={{ fontSize:10, padding:'4px 8px', background:'var(--sf)',
+          style={{ fontSize: '0.77em', padding:'4px 8px', background:'var(--sf)',
             border:'1px solid var(--brd)', borderRadius:6, color:'var(--dim)' }}>
           {types.map(t => <option key={t} value={t}>{t === 'all' ? 'All types' : t}</option>)}
         </select>
         <select value={filterParent} onChange={e => setFilterParent(e.target.value)}
-          style={{ fontSize:10, padding:'4px 8px', background:'var(--sf)',
+          style={{ fontSize: '0.77em', padding:'4px 8px', background:'var(--sf)',
             border:'1px solid var(--brd)', borderRadius:6, color:'var(--dim)' }}>
           {parents.map(p => <option key={p} value={p}>{p === 'all' ? 'All parents' : p}</option>)}
         </select>
       </div>
 
-      <div style={{ fontSize:10, color:'var(--mut)', marginBottom:6 }}>
+      <div style={{ fontSize: '0.77em', color:'var(--mut)', marginBottom:6 }}>
         {filtered.length} of {locations.length} locations
       </div>
 
       <div style={{ overflowX:'auto' }}>
-        <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+        <table style={{ width:'100%', borderCollapse:'collapse', fontSize: '0.85em' }}>
           <thead>
             <tr>
               <th style={{ width:30, padding:'5px 8px', borderBottom:'1px solid var(--brd)' }} />
@@ -175,14 +175,14 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
               <TH col="parent" label="Inside" />
               <TH col="status" label="Status" />
               <th style={{ padding:'5px 8px', borderBottom:'1px solid var(--brd)',
-                fontSize:9, fontWeight:700, color:'var(--mut)',
+                fontSize: '0.69em', fontWeight:700, color:'var(--mut)',
                 textTransform:'uppercase' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {!filtered.length && (
               <tr><td colSpan={6} style={{ padding:20, textAlign:'center',
-                color:'var(--mut)', fontSize:11 }}>No locations match filter</td></tr>
+                color:'var(--mut)', fontSize: '0.85em' }}>No locations match filter</td></tr>
             )}
             {filtered.map((l, i) => (
               <tr key={l.id} style={{ background: i%2===1 ? 'rgba(255,255,255,.01)' : undefined }}>
@@ -196,8 +196,8 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
                   )}
                 </td>
                 <td style={{ padding:'6px 8px', fontWeight:600 }}>{l.name}</td>
-                <td style={{ padding:'6px 8px', color:'var(--cl)', fontSize:10 }}>{l.loc_type}</td>
-                <td style={{ padding:'6px 8px', color:'var(--mut)', fontSize:10 }}>
+                <td style={{ padding:'6px 8px', color:'var(--cl)', fontSize: '0.77em' }}>{l.loc_type}</td>
+                <td style={{ padding:'6px 8px', color:'var(--mut)', fontSize: '0.77em' }}>
                   {parentName(l.parent_id)}
                 </td>
                 <td style={{ padding:'6px 8px' }}>
@@ -206,10 +206,10 @@ function LocationTable({ locations, onEdit, onDelete, onLightbox }) {
                 <td style={{ padding:'6px 8px' }}>
                   <div style={{ display:'flex', gap:4 }}>
                     <button className="btn btn-sm btn-outline"
-                      style={{ fontSize:9, color:'var(--cl)', borderColor:'var(--cl)44', padding:'2px 6px' }}
+                      style={{ fontSize: '0.69em', color:'var(--cl)', borderColor:'var(--cl)44', padding:'2px 6px' }}
                       onClick={() => onEdit(l)}>✎</button>
                     <button className="btn btn-sm btn-outline"
-                      style={{ fontSize:9, color:'#ff3355', borderColor:'#ff335544', padding:'2px 6px' }}
+                      style={{ fontSize: '0.69em', color:'#ff3355', borderColor:'#ff335544', padding:'2px 6px' }}
                       onClick={() => onDelete(l.id)}>✕</button>
                   </div>
                 </td>
@@ -275,7 +275,7 @@ export default function Locations({ db }) {
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily:"'Cinzel',serif", fontSize:15, color:'var(--cl)' }}>🗺 Locations</div>
+        <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:'var(--cl)' }}>🗺 Locations</div>
         <button className="btn btn-primary btn-sm"
           style={{ background:'var(--cl)', color:'#000' }}
           onClick={() => openAdd()}>+ Add</button>
@@ -321,7 +321,7 @@ export default function Locations({ db }) {
         <div className="confirm-overlay open">
           <div className="confirm-box">
             <p>Delete <strong>{locations.find(l=>l.id===confirmId)?.name}</strong>?<br />
-              <span style={{ fontSize:10, color:'var(--mut)' }}>Children will be detached, not deleted.</span>
+              <span style={{ fontSize: '0.77em', color:'var(--mut)' }}>Children will be detached, not deleted.</span>
             </p>
             <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
             <button className="btn btn-danger btn-sm" onClick={() => handleDelete(confirmId)}>Delete</button>

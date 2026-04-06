@@ -6,7 +6,7 @@ const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
   'calendar_entries','flags','maps','wiki','notes','family_tree',
-  'manuscript','inventory'
+  'manuscript','inventory','journal_captures','journal_tags'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -155,6 +155,15 @@ export function useDB() {
     } catch {}
   }, [])
 
+  const getSetting = useCallback((key, fallback = '') => {
+    if (settings[key] !== undefined) return settings[key]
+    try {
+      const local = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
+      if (local[key] !== undefined) return local[key]
+    } catch {}
+    return fallback
+  }, [settings])
+
   // ── Import/Export ──────────────────────────────────────────
   const exportJSON = useCallback(() => {
     const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' })
@@ -295,7 +304,7 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting,
+    upsertEntry, deleteEntry, save, saveSetting, getSetting,
     exportJSON, exportMarkdown, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }

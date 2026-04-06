@@ -127,26 +127,26 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
         <div style={{ display:'flex', justifyContent:'space-between',
           alignItems:'flex-start', marginBottom:4 }}>
           <div>
-            <div style={{ fontSize:9, color:bookCol, fontWeight:700, marginBottom:2 }}>
+            <div style={{ fontSize: '0.69em', color:bookCol, fontWeight:700, marginBottom:2 }}>
               {[s.chapter && `Ch. ${s.chapter}`, s.scene_date_hc, s.season, s.time_of_day]
                 .filter(Boolean).join(' · ')}
             </div>
-            <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3 }}
+            <div style={{ fontSize: '0.92em', fontWeight:600, lineHeight:1.3 }}
               dangerouslySetInnerHTML={{ __html: highlight(s.name||'', search) }} />
           </div>
           <div style={{ display:'flex', gap:4, flexShrink:0, marginLeft:8 }}>
             <button className="btn btn-sm btn-outline"
-              style={{ fontSize:9, color:'var(--csc)', borderColor:'var(--csc)44', padding:'2px 6px' }}
+              style={{ fontSize: '0.69em', color:'var(--csc)', borderColor:'var(--csc)44', padding:'2px 6px' }}
               onClick={e => { e.stopPropagation(); setEditing(s); setModalOpen(true) }}>✎</button>
             <button className="btn btn-sm btn-outline"
-              style={{ fontSize:9, color:'#ff3355', borderColor:'#ff335544', padding:'2px 6px' }}
+              style={{ fontSize: '0.69em', color:'#ff3355', borderColor:'#ff335544', padding:'2px 6px' }}
               onClick={e => { e.stopPropagation(); setConfirmId(s.id) }}>✕</button>
           </div>
         </div>
 
         {/* Location */}
         {loc && (
-          <div style={{ fontSize:9, color:'var(--mut)', marginBottom:3 }}>📍 {loc}</div>
+          <div style={{ fontSize: '0.69em', color:'var(--mut)', marginBottom:3 }}>📍 {loc}</div>
         )}
 
         {/* Character tags */}
@@ -158,7 +158,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
                 onClick={e => { e.stopPropagation(); goToWithSearch?.('characters', c) }}
                 title={`Go to ${c} in Characters`}
                 style={{
-                  fontSize:9, padding:'1px 6px',
+                  fontSize: '0.69em', padding:'1px 6px',
                   background:'rgba(201,102,255,.12)', color:'var(--cc)',
                   border:'1px solid rgba(201,102,255,.25)', borderRadius:10,
                   cursor:'pointer', transition:'.15s',
@@ -173,27 +173,27 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
         {/* Items & animals inline */}
         <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom: s.summary ? 4 : 0 }}>
           {s.items_present && (
-            <div style={{ fontSize:9, color:'var(--ci)' }}>⚔ {s.items_present}</div>
+            <div style={{ fontSize: '0.69em', color:'var(--ci)' }}>⚔ {s.items_present}</div>
           )}
           {s.animals_bonds && (
-            <div style={{ fontSize:9, color:'var(--cl)' }}>🐴 {s.animals_bonds}</div>
+            <div style={{ fontSize: '0.69em', color:'var(--cl)' }}>🐴 {s.animals_bonds}</div>
           )}
         </div>
 
         {/* Summary preview */}
         {s.summary && (
-          <div style={{ fontSize:10, color:'var(--dim)', lineHeight:1.5,
+          <div style={{ fontSize: '0.77em', color:'var(--dim)', lineHeight:1.5,
             marginTop:2, borderTop:'1px solid var(--brd)', paddingTop:4 }}>
             {s.summary.slice(0,150)}{s.summary.length>150?'…':''}
           </div>
         )}
 
         {s.tension && (
-          <div style={{ fontSize:9, color:'var(--ccn)', marginTop:3 }}>⚡ {s.tension}</div>
+          <div style={{ fontSize: '0.69em', color:'var(--ccn)', marginTop:3 }}>⚡ {s.tension}</div>
         )}
 
         {/* Double-click hint */}
-        <div style={{ fontSize:8, color:'var(--mut)', marginTop:4, textAlign:'right' }}>
+        <div style={{ fontSize: '0.62em', color:'var(--mut)', marginTop:4, textAlign:'right' }}>
           double-click for full view
         </div>
       </div>
@@ -219,30 +219,30 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
           <div style={{ display:'flex', justifyContent:'space-between',
             alignItems:'flex-start', marginBottom:14 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:9, color:bookCol, fontWeight:700,
+              <div style={{ fontSize: '0.69em', color:bookCol, fontWeight:700,
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>
                 {[s.book, s.chapter && `Ch. ${s.chapter}`].filter(Boolean).join(' · ')}
               </div>
-              <div style={{ fontFamily:"'Cinzel',serif", fontSize:15,
+              <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em',
                 color:'var(--tx)', lineHeight:1.3 }}>{s.name}</div>
             </div>
             <button onClick={onClose} style={{ background:'none', border:'none',
-              cursor:'pointer', fontSize:18, color:'var(--mut)', marginLeft:10 }}>✕</button>
+              cursor:'pointer', fontSize: '1.38em', color:'var(--mut)', marginLeft:10 }}>✕</button>
           </div>
 
           {/* Meta */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginBottom:14,
             padding:10, background:'var(--card)', borderRadius:8 }}>
-            {loc && <div style={{ fontSize:10 }}>📍 <strong>{loc}</strong></div>}
-            {s.scene_date_hc && <div style={{ fontSize:10 }}>📅 {s.scene_date_hc}</div>}
-            {s.season && <div style={{ fontSize:10 }}>🌿 {s.season}</div>}
-            {s.time_of_day && <div style={{ fontSize:10 }}>🕐 {s.time_of_day}</div>}
+            {loc && <div style={{ fontSize: '0.77em' }}>📍 <strong>{loc}</strong></div>}
+            {s.scene_date_hc && <div style={{ fontSize: '0.77em' }}>📅 {s.scene_date_hc}</div>}
+            {s.season && <div style={{ fontSize: '0.77em' }}>🌿 {s.season}</div>}
+            {s.time_of_day && <div style={{ fontSize: '0.77em' }}>🕐 {s.time_of_day}</div>}
           </div>
 
           {/* Characters */}
           {chars.length > 0 && (
             <div style={{ marginBottom:12 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:'var(--cc)',
+              <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--cc)',
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:6 }}>
                 👤 Characters Present
               </div>
@@ -253,7 +253,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
                     onClick={() => { onClose(); goToWithSearch?.('characters', c) }}
                     title={`Go to ${c} in Characters`}
                     style={{
-                      fontSize:11, padding:'3px 10px',
+                      fontSize: '0.85em', padding:'3px 10px',
                       background:'rgba(201,102,255,.12)', color:'var(--cc)',
                       border:'1px solid rgba(201,102,255,.25)', borderRadius:12,
                       cursor:'pointer', transition:'.15s',
@@ -269,13 +269,13 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
           {/* Items */}
           {items.length > 0 && (
             <div style={{ marginBottom:12 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:'var(--ci)',
+              <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--ci)',
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:6 }}>
                 ⚔ Items Present
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
                 {items.map(it => (
-                  <span key={it} style={{ fontSize:11, padding:'3px 10px',
+                  <span key={it} style={{ fontSize: '0.85em', padding:'3px 10px',
                     background:'rgba(255,112,64,.12)', color:'var(--ci)',
                     border:'1px solid rgba(255,112,64,.25)', borderRadius:12 }}>{it}</span>
                 ))}
@@ -286,13 +286,13 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
           {/* Animals */}
           {animals.length > 0 && (
             <div style={{ marginBottom:12 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:'var(--cl)',
+              <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--cl)',
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:6 }}>
                 🐴 Animals / Bonds
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
                 {animals.map(a => (
-                  <span key={a} style={{ fontSize:11, padding:'3px 10px',
+                  <span key={a} style={{ fontSize: '0.85em', padding:'3px 10px',
                     background:'rgba(122,204,122,.12)', color:'var(--cl)',
                     border:'1px solid rgba(122,204,122,.25)', borderRadius:12 }}>{a}</span>
                 ))}
@@ -319,14 +319,14 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
             if (!sharedItems.length) return null
             return (
               <div style={{ marginBottom:12 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:'var(--sp)',
+                <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--sp)',
                   textTransform:'uppercase', letterSpacing:'.06em', marginBottom:6 }}>
                   ↔ Shared Items (auto-detected)
                 </div>
                 {sharedItems.map(it => {
                   const holderChar = allChars.find(c => c.id === it.holder)
                   return (
-                    <div key={it.id} style={{ fontSize:11, padding:'4px 8px',
+                    <div key={it.id} style={{ fontSize: '0.85em', padding:'4px 8px',
                       background:'rgba(255,170,51,.08)', borderRadius:6,
                       border:'1px solid rgba(255,170,51,.2)', marginBottom:4 }}>
                       <strong>{it.name}</strong>
@@ -336,7 +336,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
                     </div>
                   )
                 })}
-                <div style={{ fontSize:9, color:'var(--mut)', marginTop:4 }}>
+                <div style={{ fontSize: '0.69em', color:'var(--mut)', marginTop:4 }}>
                   If this is wrong, edit the item's holder in the Items tab.
                 </div>
               </div>
@@ -346,22 +346,22 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
           {/* Clothing */}
           {s.clothing_refs && (
             <div style={{ marginBottom:12 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:'var(--cwr)',
+              <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--cwr)',
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>
                 👗 Clothing / Appearance
               </div>
-              <div style={{ fontSize:11, color:'var(--tx)', lineHeight:1.6 }}>{s.clothing_refs}</div>
+              <div style={{ fontSize: '0.85em', color:'var(--tx)', lineHeight:1.6 }}>{s.clothing_refs}</div>
             </div>
           )}
 
           {/* Summary */}
           {s.summary && (
             <div style={{ marginBottom:12 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:'var(--dim)',
+              <div style={{ fontSize: '0.69em', fontWeight:700, color:'var(--dim)',
                 textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>
                 Summary
               </div>
-              <div style={{ fontSize:12, color:'var(--tx)', lineHeight:1.7,
+              <div style={{ fontSize: '0.92em', color:'var(--tx)', lineHeight:1.7,
                 whiteSpace:'pre-wrap' }}>{s.summary}</div>
             </div>
           )}
@@ -372,23 +372,23 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
               padding:10, background:'var(--card)', borderRadius:8 }}>
               {s.tension && (
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:9, color:'var(--ccn)', fontWeight:700,
+                  <div style={{ fontSize: '0.69em', color:'var(--ccn)', fontWeight:700,
                     marginBottom:2 }}>⚡ Tension</div>
-                  <div style={{ fontSize:11, color:'var(--tx)' }}>{s.tension}</div>
+                  <div style={{ fontSize: '0.85em', color:'var(--tx)' }}>{s.tension}</div>
                 </div>
               )}
               {s.emotional_arc && (
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:9, color:'var(--cca)', fontWeight:700,
+                  <div style={{ fontSize: '0.69em', color:'var(--cca)', fontWeight:700,
                     marginBottom:2 }}>💫 Emotional Arc</div>
-                  <div style={{ fontSize:11, color:'var(--tx)' }}>{s.emotional_arc}</div>
+                  <div style={{ fontSize: '0.85em', color:'var(--tx)' }}>{s.emotional_arc}</div>
                 </div>
               )}
             </div>
           )}
 
           {s.notes && (
-            <div style={{ fontSize:11, color:'var(--dim)', lineHeight:1.6,
+            <div style={{ fontSize: '0.85em', color:'var(--dim)', lineHeight:1.6,
               borderTop:'1px solid var(--brd)', paddingTop:10, marginTop:10 }}>{s.notes}</div>
           )}
 
@@ -409,7 +409,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
         <div style={{ display:'flex', gap:3 }}>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--ccn)' : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
                 border: `1px solid ${colCount===n ? 'var(--ccn)' : 'var(--brd)'}`,
@@ -417,7 +417,7 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
           ))}
         
         <button onClick={toggleDividers}
-          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
             background: dividers ? 'rgba(255,255,255,.08)' : 'none',
             color: dividers ? 'var(--tx)' : 'var(--mut)',
             border:'1px solid var(--brd)', cursor:'pointer' }}>
@@ -459,10 +459,10 @@ export default function Scenes({ db, goToWithSearch, crossLink, clearCrossLink }
         return (
           <div key={book} style={{ marginBottom:20 }}>
             {bookFilter === 'all' && (
-              <div style={{ fontSize:11, fontWeight:700, color:bookCol,
+              <div style={{ fontSize: '0.85em', fontWeight:700, color:bookCol,
                 fontFamily:"'Cinzel',serif", marginBottom:8,
                 borderBottom:`1px solid ${bookCol}33`, paddingBottom:4 }}>
-                {book} <span style={{ fontSize:10, color:'var(--mut)',
+                {book} <span style={{ fontSize: '0.77em', color:'var(--mut)',
                   fontFamily:'sans-serif', fontWeight:400 }}>
                   · {bookScenes.length} scene{bookScenes.length!==1?'s':''}
                 </span>

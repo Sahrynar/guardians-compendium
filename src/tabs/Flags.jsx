@@ -50,11 +50,11 @@ export default function Flags({ db }) {
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cfl)' }}>🚩 Flags & Review</div>
         <div style={{ display:'flex', gap:3 }}>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize:9, padding:'2px 7px', borderRadius:8,
+              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
                 background: colCount===n ? 'var(--cfl)' : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
                 border: `1px solid ${colCount===n ? 'var(--cfl)' : 'var(--brd)'}`,
@@ -62,7 +62,7 @@ export default function Flags({ db }) {
           ))}
         
         <button onClick={toggleDividers}
-          style={{ fontSize:9, padding:'2px 7px', borderRadius:8, marginLeft:8,
+          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
             background: dividers ? 'rgba(255,255,255,.08)' : 'none',
             color: dividers ? 'var(--tx)' : 'var(--mut)',
             border:'1px solid var(--brd)', cursor:'pointer' }}>
@@ -79,7 +79,7 @@ export default function Flags({ db }) {
             <button key={k} className={`fp ${filter===k?'active':''}`} style={{ color: 'var(--cfl)' }} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
-        <span style={{ fontSize: 10, color: 'var(--mut)', marginLeft: 8 }}>
+        <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>
           {flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved
         </span>
       </div>
@@ -97,16 +97,16 @@ export default function Flags({ db }) {
         return (
           <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1, breakInside: 'avoid', marginBottom: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
+              <div style={{ fontSize: '0.92em', fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
                 {f.name}
               </div>
               <span className="flag-pri" style={{ background: `${pc}22`, color: pc, border: `1px solid ${pc}44` }}>
                 {f.priority || 'none'}
               </span>
             </div>
-            {f.detail && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
+            {f.detail && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
             {f.resolved && f.resolved_at && (
-              <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
             )}
             <div className="entry-actions" style={{ marginTop: 4 }}>
               {!f.resolved

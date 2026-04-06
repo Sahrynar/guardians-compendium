@@ -144,7 +144,7 @@ export default function App() {
     if (db.loading) return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--dim)' }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14 }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em' }}>
           {db.hasSupabase ? 'Connecting to cloud…' : 'Loading…'}
         </div>
       </div>
@@ -189,7 +189,7 @@ export default function App() {
             onClick={() => goTo('dashboard')}
             title="Go to Dashboard"
             style={{
-              fontSize: 18, letterSpacing: '.12em',
+              fontSize: '1.38em', letterSpacing: '.12em',
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '2px 6px', borderRadius: 4, transition: '.2s',
               fontFamily: "'Cinzel', serif",
@@ -197,7 +197,7 @@ export default function App() {
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
-            THE <b style={{ color: '#dd77ff', textShadow: '0 0 14px rgba(221,119,255,.45)', fontSize: 19 }}>GUARDIANS</b>{' '}
+            THE <b style={{ color: '#dd77ff', textShadow: '0 0 14px rgba(221,119,255,.45)', fontSize: '1.46em' }}>GUARDIANS</b>{' '}
             <span style={{ color: '#aaaacc' }}>OF</span>{' '}
             <span style={{ color: '#f0e8d8', fontWeight: 600 }}>LAJEN</span>{' '}
             <span style={{ color: '#555' }}>—</span>{' '}
@@ -265,7 +265,7 @@ export default function App() {
           position: 'fixed', bottom: 56, right: 16, zIndex: 200,
           width: 44, height: 44, borderRadius: '50%',
           background: 'linear-gradient(135deg,#9933cc,#3366ff)',
-          border: 'none', color: '#fff', fontSize: 22,
+          border: 'none', color: '#fff', fontSize: '1.69em',
           cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: '.2s',
@@ -283,12 +283,12 @@ export default function App() {
             padding: 20, width: '100%', maxWidth: 420 }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, color: '#9933cc' }}>✦ Quick Capture</div>
-              <button onClick={() => setQcOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+              <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: '#9933cc' }}>✦ Quick Capture</div>
+              <button onClick={() => setQcOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '1.38em' }}>✕</button>
             </div>
             <select value={qcCat} onChange={e => setQcCat(e.target.value)}
               style={{ width: '100%', marginBottom: 10, padding: '6px 8px', background: 'var(--card)',
-                border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', fontSize: 12 }}>
+                border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', fontSize: '0.92em' }}>
               {['notes','flags','questions','canon','spellings','world'].map(k => (
                 <option key={k} value={k}>{CATS[k]?.i} {CATS[k]?.l}</option>
               ))}
@@ -298,16 +298,16 @@ export default function App() {
               placeholder="Capture a thought, flag, question, or note…"
               style={{ width: '100%', padding: '8px', background: 'var(--card)',
                 border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)',
-                fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }} />
+                fontSize: '1em', resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }} />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setQcOpen(false)}
-                style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6, background: 'none',
+                style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6, background: 'none',
                   border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => {
                 if (!qcText.trim()) return
                 db.upsertEntry(qcCat, { id: uid(), name: qcText.trim().slice(0, 80), detail: qcText.trim(), status: 'open' })
                 setQcText(''); setQcOpen(false)
-              }} style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6,
+              }} style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6,
                 background: 'linear-gradient(135deg,#9933cc,#3366ff)',
                 color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
             </div>

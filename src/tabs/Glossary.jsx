@@ -54,15 +54,15 @@ export default function Glossary({ db, goTo }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: 'var(--cc)' }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: 'var(--cc)' }}>
           📚 Glossary
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, color: 'var(--mut)' }}>
+          <span style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
             {filtered.length} term{filtered.length !== 1 ? 's' : ''}
           </span>
           <button onClick={() => goTo('wiki')}
-            style={{ fontSize: 10, padding: '3px 10px', borderRadius: 8, background: 'none',
+            style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, background: 'none',
               border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>
             → Full Wiki
           </button>
@@ -77,7 +77,7 @@ export default function Glossary({ db, goTo }) {
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {availableCats.map(c => (
             <button key={c} onClick={() => setFilterCat(c)}
-              style={{ fontSize: 10, padding: '3px 9px', borderRadius: 12, cursor: 'pointer',
+              style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer',
                 background: filterCat === c ? 'var(--cc)' : 'none',
                 color: filterCat === c ? '#000' : 'var(--dim)',
                 border: `1px solid ${filterCat === c ? 'var(--cc)' : 'var(--brd)'}` }}>
@@ -94,7 +94,7 @@ export default function Glossary({ db, goTo }) {
           return (
             <button key={l} onClick={() => setJumpLetter(jumpLetter === l ? null : l)}
               disabled={!hasEntries}
-              style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, cursor: hasEntries ? 'pointer' : 'default',
+              style={{ fontSize: '0.77em', padding: '2px 6px', borderRadius: 4, cursor: hasEntries ? 'pointer' : 'default',
                 fontFamily: "'Cinzel',serif", fontWeight: 600,
                 background: jumpLetter === l ? 'var(--cc)' : 'none',
                 color: jumpLetter === l ? '#000' : hasEntries ? 'var(--cc)' : 'var(--brd)',
@@ -110,7 +110,7 @@ export default function Glossary({ db, goTo }) {
         <div className="empty">
           <div className="empty-icon">📚</div>
           <p>No Wiki entries yet.</p>
-          <p style={{ fontSize: 11, color: 'var(--mut)', marginTop: 4 }}>
+          <p style={{ fontSize: '0.85em', color: 'var(--mut)', marginTop: 4 }}>
             The Glossary pulls from Wiki entries in the Lore, Languages, Cosmology,
             Power System, Cultures, Religions, and Factions categories.
           </p>
@@ -132,7 +132,7 @@ export default function Glossary({ db, goTo }) {
       {letters.map(letter => (
         <div key={letter} style={{ marginBottom: 20 }}>
           {/* Letter header */}
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 20, fontWeight: 700,
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.54em', fontWeight: 700,
             color: 'var(--cc)', borderBottom: '1px solid rgba(201,102,255,.2)',
             paddingBottom: 4, marginBottom: 8, letterSpacing: '.1em' }}>
             {letter}
@@ -146,13 +146,13 @@ export default function Glossary({ db, goTo }) {
               onClick={() => goTo('wiki')}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'Cinzel',serif", fontSize: 13,
+                  <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em',
                     fontWeight: 700, color: 'var(--tx)' }}>{entry.title}</span>
-                  <span style={{ fontSize: 9, color: 'var(--cc)', textTransform: 'uppercase',
+                  <span style={{ fontSize: '0.69em', color: 'var(--cc)', textTransform: 'uppercase',
                     letterSpacing: '.06em', opacity: 0.7 }}>{entry.category}</span>
                 </div>
                 {entry.summary && (
-                  <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 3, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '0.92em', color: 'var(--dim)', marginTop: 3, lineHeight: 1.5 }}>
                     {entry.summary}
                   </div>
                 )}
@@ -162,14 +162,14 @@ export default function Glossary({ db, goTo }) {
                   if (!firstText?.content) return null
                   const preview = firstText.content.slice(0, 160)
                   return (
-                    <div style={{ fontSize: 11, color: 'var(--mut)', marginTop: 3,
+                    <div style={{ fontSize: '0.85em', color: 'var(--mut)', marginTop: 3,
                       lineHeight: 1.5, fontStyle: 'italic' }}>
                       {preview}{firstText.content.length > 160 ? '…' : ''}
                     </div>
                   )
                 })()}
               </div>
-              <div style={{ flexShrink: 0, fontSize: 10, color: 'var(--mut)', paddingTop: 3 }}>
+              <div style={{ flexShrink: 0, fontSize: '0.77em', color: 'var(--mut)', paddingTop: 3 }}>
                 {(entry.blocks?.length || 0) > 0 && `${entry.blocks.length} block${entry.blocks.length !== 1 ? 's' : ''}`}
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function Glossary({ db, goTo }) {
       {/* Footer note */}
       {articles.length > 0 && (
         <div style={{ marginTop: 16, padding: '8px 12px', background: 'var(--card)',
-          border: '1px solid var(--brd)', borderRadius: 6, fontSize: 10, color: 'var(--mut)',
+          border: '1px solid var(--brd)', borderRadius: 6, fontSize: '0.77em', color: 'var(--mut)',
           lineHeight: 1.6 }}>
           💡 Glossary shows Wiki entries in Lore, Languages, Cosmology, Power System, Cultures, Religions, and Factions categories.
           To add a term, create a Wiki entry in one of those categories. Full entries open in the Wiki tab.

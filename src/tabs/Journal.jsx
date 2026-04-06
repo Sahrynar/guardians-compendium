@@ -79,7 +79,7 @@ function QuickCapture({ tags, onAdd }) {
       borderRadius: 'var(--rl)', padding: 14, marginBottom: 14,
       transition: 'border-color .2s',
     }}>
-      <div style={{ fontSize: 11, color: tag.color, fontFamily: "'Cinzel',serif", marginBottom: 10, fontWeight: 700 }}>
+      <div style={{ fontSize: '0.85em', color: tag.color, fontFamily: "'Cinzel',serif", marginBottom: 10, fontWeight: 700 }}>
         ⚡ Quick Capture
       </div>
 
@@ -93,7 +93,7 @@ function QuickCapture({ tags, onAdd }) {
           style={{
             flex: 1, padding: '7px 10px', borderRadius: 'var(--r)',
             border: '1px solid var(--brd)', background: 'var(--sf)',
-            color: 'var(--tx)', fontSize: 12, outline: 'none',
+            color: 'var(--tx)', fontSize: '0.92em', outline: 'none',
           }}
           onFocus={() => setExpanded(true)}
         />
@@ -101,7 +101,7 @@ function QuickCapture({ tags, onAdd }) {
           onClick={submit}
           style={{
             padding: '7px 14px', borderRadius: 'var(--r)', border: 'none',
-            background: tag.color, color: '#000', fontSize: 11, fontWeight: 700,
+            background: tag.color, color: '#000', fontSize: '0.85em', fontWeight: 700,
             cursor: 'pointer', transition: '.15s', flexShrink: 0,
           }}
           onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
@@ -113,7 +113,7 @@ function QuickCapture({ tags, onAdd }) {
         <div style={{ marginTop: 10 }}>
           {/* Tag picker */}
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, color: 'var(--dim)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>Tag</div>
+            <div style={{ fontSize: '0.69em', color: 'var(--dim)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>Tag</div>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {tags.map(t => (
                 <TagPill key={t.id} tag={t} active={selectedTag === t.id} onClick={() => setSelectedTag(t.id)} />
@@ -122,7 +122,7 @@ function QuickCapture({ tags, onAdd }) {
           </div>
           {/* Optional note */}
           <div>
-            <div style={{ fontSize: 9, color: 'var(--dim)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>Note (optional)</div>
+            <div style={{ fontSize: '0.69em', color: 'var(--dim)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>Note (optional)</div>
             <input
               value={note}
               onChange={e => setNote(e.target.value)}
@@ -131,7 +131,7 @@ function QuickCapture({ tags, onAdd }) {
               style={{
                 width: '100%', padding: '6px 9px', borderRadius: 'var(--r)',
                 border: '1px solid var(--brd)', background: 'var(--sf)',
-                color: 'var(--tx)', fontSize: 11, outline: 'none',
+                color: 'var(--tx)', fontSize: '0.85em', outline: 'none',
               }}
             />
           </div>
@@ -179,13 +179,13 @@ function Collections({ captures, tags, onDelete, onEdit }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ fontSize: 11, color: 'var(--cca)', fontFamily: "'Cinzel',serif", fontWeight: 700 }}>
+        <div style={{ fontSize: '0.85em', color: 'var(--cca)', fontFamily: "'Cinzel',serif", fontWeight: 700 }}>
           🗂 Collections
         </div>
         <select
           value={sortMode}
           onChange={e => setSortMode(e.target.value)}
-          style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }}
+          style={{ fontSize: '0.69em', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }}
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
@@ -207,7 +207,7 @@ function Collections({ captures, tags, onDelete, onEdit }) {
 
       {/* Entries */}
       {!filtered.length ? (
-        <div style={{ fontSize: 11, color: 'var(--mut)', padding: '16px 0', textAlign: 'center' }}>
+        <div style={{ fontSize: '0.85em', color: 'var(--mut)', padding: '16px 0', textAlign: 'center' }}>
           {captures.length ? 'Nothing in this tag yet.' : 'Nothing captured yet — use Quick Capture above!'}
         </div>
       ) : (
@@ -227,42 +227,42 @@ function Collections({ captures, tags, onDelete, onEdit }) {
                     <input
                       value={editText}
                       onChange={e => setEditText(e.target.value)}
-                      style={{ width: '100%', padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 12, marginBottom: 6, outline: 'none' }}
+                      style={{ width: '100%', padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.92em', marginBottom: 6, outline: 'none' }}
                       autoFocus
                     />
                     <input
                       value={editNote}
                       onChange={e => setEditNote(e.target.value)}
                       placeholder="Note…"
-                      style={{ width: '100%', padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', fontSize: 11, marginBottom: 8, outline: 'none' }}
+                      style={{ width: '100%', padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', fontSize: '0.85em', marginBottom: 8, outline: 'none' }}
                     />
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
                       {tags.map(t => <TagPill key={t.id} tag={t} active={editTag === t.id} onClick={() => setEditTag(t.id)} size="small" />)}
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, background: tag.color, border: 'none', color: '#000', cursor: 'pointer', fontWeight: 700 }}
+                      <button style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 4, background: tag.color, border: 'none', color: '#000', cursor: 'pointer', fontWeight: 700 }}
                         onClick={() => saveEdit(item)}>Save</button>
-                      <button style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}
+                      <button style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 4, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}
                         onClick={() => setEditingId(null)}>Cancel</button>
                     </div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Cinzel',serif", color: tag.color, marginBottom: item.note ? 3 : 0 }}>
+                      <div style={{ fontSize: '1em', fontWeight: 700, fontFamily: "'Cinzel',serif", color: tag.color, marginBottom: item.note ? 3 : 0 }}>
                         {item.text}
                       </div>
-                      {item.note && <div style={{ fontSize: 11, color: 'var(--dim)', fontStyle: 'italic' }}>{item.note}</div>}
-                      <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
+                      {item.note && <div style={{ fontSize: '0.85em', color: 'var(--dim)', fontStyle: 'italic' }}>{item.note}</div>}
+                      <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
                         {new Date(item.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         {' · '}
                         <span style={{ color: tag.color }}>{tag.label}</span>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}
+                      <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.85em', padding: '2px 4px' }}
                         onClick={() => startEdit(item)} title="Edit">✎</button>
-                      <button style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}
+                      <button style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '0.85em', padding: '2px 4px' }}
                         onClick={() => onDelete(item.id)} title="Delete">✕</button>
                     </div>
                   </div>
@@ -302,10 +302,10 @@ function SessionNotes() {
 
   return (
     <div>
-      <div style={{ fontSize: 11, color: 'var(--ct)', fontFamily: "'Cinzel',serif", fontWeight: 700, marginBottom: 10 }}>
+      <div style={{ fontSize: '0.85em', color: 'var(--ct)', fontFamily: "'Cinzel',serif", fontWeight: 700, marginBottom: 10 }}>
         📝 Session Notes
       </div>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 8 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 8 }}>
         Free-form writing — thoughts, decisions, rambles. Date-stamped automatically.
       </div>
       <textarea
@@ -316,7 +316,7 @@ function SessionNotes() {
           width: '100%', minHeight: 80, padding: '8px 10px',
           borderRadius: 'var(--r)', border: '1px solid var(--brd)',
           background: 'var(--sf)', color: 'var(--tx)',
-          fontSize: 12, resize: 'vertical', outline: 'none',
+          fontSize: '0.92em', resize: 'vertical', outline: 'none',
           lineHeight: 1.5, marginBottom: 6,
         }}
         onKeyDown={e => {
@@ -324,10 +324,10 @@ function SessionNotes() {
         }}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 9, color: 'var(--mut)' }}>Ctrl+Enter to save</span>
+        <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>Ctrl+Enter to save</span>
         <button
           onClick={saveNote}
-          style={{ padding: '5px 14px', borderRadius: 'var(--r)', border: 'none', background: 'var(--ct)', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+          style={{ padding: '5px 14px', borderRadius: 'var(--r)', border: 'none', background: 'var(--ct)', color: '#000', fontSize: '0.85em', fontWeight: 700, cursor: 'pointer' }}
         >Save Note</button>
       </div>
 
@@ -340,15 +340,15 @@ function SessionNotes() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: 'var(--tx)', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.85em', color: 'var(--tx)', lineHeight: 1.4 }}>
                     {expanded === n.id ? n.text : (n.text.length > 120 ? n.text.slice(0, 120) + '…' : n.text)}
                   </div>
-                  <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
+                  <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
                     {new Date(n.created).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
                 <button
-                  style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0 }}
+                  style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '0.85em', padding: '0 2px', flexShrink: 0 }}
                   onClick={e => { e.stopPropagation(); deleteNote(n.id) }}
                   title="Delete">✕</button>
               </div>
@@ -395,7 +395,7 @@ function TagManager({ tags, onUpdate, onClose }) {
 
   return (
     <div>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 12, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 12, lineHeight: 1.5 }}>
         Add, edit, or remove tags. The <strong style={{ color: 'var(--dim)' }}>Unsorted</strong> tag cannot be deleted — it's the fallback.
       </div>
 
@@ -416,14 +416,14 @@ function TagManager({ tags, onUpdate, onClose }) {
                 onBlur={() => setEditingId(null)}
                 onKeyDown={e => e.key === 'Enter' && setEditingId(null)}
                 autoFocus
-                style={{ flex: 1, padding: '4px 7px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }}
+                style={{ flex: 1, padding: '4px 7px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.85em', outline: 'none' }}
               />
             ) : (
-              <span style={{ flex: 1, fontSize: 11, color: t.color.startsWith('var') ? 'var(--dim)' : t.color, cursor: 'text' }}
+              <span style={{ flex: 1, fontSize: '0.85em', color: t.color.startsWith('var') ? 'var(--dim)' : t.color, cursor: 'text' }}
                 onClick={() => setEditingId(t.id)}>{t.label}</span>
             )}
             {t.id !== 'unsorted' && (
-              <button style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: 12 }}
+              <button style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '0.92em' }}
                 onClick={() => removeTag(t.id)}>✕</button>
             )}
           </div>
@@ -432,16 +432,16 @@ function TagManager({ tags, onUpdate, onClose }) {
 
       {/* Add new */}
       <div style={{ padding: '10px', background: 'rgba(255,255,255,.02)', borderRadius: 'var(--r)', marginBottom: 14 }}>
-        <div style={{ fontSize: 9, color: 'var(--dim)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.04em' }}>Add New Tag</div>
+        <div style={{ fontSize: '0.69em', color: 'var(--dim)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.04em' }}>Add New Tag</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)}
             style={{ width: 26, height: 24, padding: 0, border: '1px solid var(--brd)', borderRadius: 4, cursor: 'pointer', flexShrink: 0 }} />
           <input value={newLabel} onChange={e => setNewLabel(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addTag()}
             placeholder="Tag name…"
-            style={{ flex: 1, padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }} />
+            style={{ flex: 1, padding: '5px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.85em', outline: 'none' }} />
           <button onClick={addTag}
-            style={{ padding: '5px 10px', borderRadius: 4, border: 'none', background: 'var(--cc)', color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>+ Add</button>
+            style={{ padding: '5px 10px', borderRadius: 4, border: 'none', background: 'var(--cc)', color: '#000', fontSize: '0.77em', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>+ Add</button>
         </div>
       </div>
 
@@ -520,7 +520,7 @@ export default function Journal({ db }) {
     <div>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: 'var(--cc)' }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: 'var(--cc)' }}>
           📓 Journal
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -530,7 +530,7 @@ export default function Journal({ db }) {
               <button key={z.id}
                 onClick={() => setActiveZone(z.id)}
                 style={{
-                  padding: '3px 12px', borderRadius: 16, border: 'none', fontSize: 10, fontWeight: 600,
+                  padding: '3px 12px', borderRadius: 16, border: 'none', fontSize: '0.77em', fontWeight: 600,
                   background: activeZone === z.id ? z.color : 'none',
                   color: activeZone === z.id ? '#000' : 'var(--dim)',
                   cursor: 'pointer', transition: '.15s',
@@ -541,7 +541,7 @@ export default function Journal({ db }) {
           </div>
           <button
             onClick={() => setShowTagManager(true)}
-            style={{ fontSize: 10, padding: '4px 10px', borderRadius: 12, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer', transition: '.15s' }}
+            style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 12, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer', transition: '.15s' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cc)'; e.currentTarget.style.color = 'var(--cc)' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--brd)'; e.currentTarget.style.color = 'var(--dim)' }}
           >
@@ -580,9 +580,9 @@ export default function Journal({ db }) {
             width: '100%', maxWidth: 460, padding: 18, position: 'relative',
           }}>
             <button
-              style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'var(--dim)', fontSize: 18, cursor: 'pointer' }}
+              style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'var(--dim)', fontSize: '1.38em', cursor: 'pointer' }}
               onClick={() => setShowTagManager(false)}>✕</button>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, marginBottom: 14, color: 'var(--cc)' }}>🏷 Manage Tags</div>
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', marginBottom: 14, color: 'var(--cc)' }}>🏷 Manage Tags</div>
             <TagManager tags={tags} onUpdate={saveTags} onClose={() => setShowTagManager(false)} />
           </div>
         </div>
