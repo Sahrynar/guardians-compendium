@@ -5,7 +5,7 @@ const GLOSSARY_CATS = ['Languages', 'Lore', 'Cosmology', 'Power System', 'Cultur
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')
 
-export default function Glossary({ db, goTo }) {
+export default function Glossary({ db, goTo, goToWiki }) {
   const [search, setSearch] = useState('')
   const [jumpLetter, setJumpLetter] = useState(null)
   const [filterCat, setFilterCat] = useState('all')
@@ -115,7 +115,7 @@ export default function Glossary({ db, goTo }) {
             Power System, Cultures, Religions, and Factions categories.
           </p>
           <button className="btn btn-primary" style={{ background: 'var(--cc)', marginTop: 8 }}
-            onClick={() => goTo('wiki')}>
+            onClick={() => goToWiki ? goToWiki(entry) : goTo('wiki')}>
             → Go to Wiki
           </button>
         </div>
@@ -143,7 +143,7 @@ export default function Glossary({ db, goTo }) {
               style={{ display: 'flex', gap: 12, padding: '8px 0',
                 borderBottom: '1px solid rgba(255,255,255,.04)',
                 cursor: 'pointer' }}
-              onClick={() => goTo('wiki')}>
+              onClick={() => goToWiki ? goToWiki(entry) : goTo('wiki')}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em',

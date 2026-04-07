@@ -289,12 +289,14 @@ function ArticleEditor({ article, onSave, onCancel }) {
 }
 
 // ── Main Wiki Tab ───────────────────────────────────────────────
-export default function Wiki({ db }) {
+export default function Wiki({ db, initialEntry, onClearInitialEntry }) {
   const articles = db.db.wiki || []
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('all')
-  const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
+  const [editing, setEditing] = useState(null)
+  const [viewing, setViewing] = useState(initialEntry || null)
   const [confirmId, setConfirmId] = useState(null)
+  const [sortMode, setSortMode] = useState('alpha')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('wk_cols') || '2'))
   const [dividers, setDividers] = useState(() => db.getSetting?.('wk_cols_div') !== 'off')
   function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('wk_cols_div', next ? 'on' : 'off') }
@@ -304,6 +306,13 @@ export default function Wiki({ db }) {
     const ms = !search || JSON.stringify(a).toLowerCase().includes(search.toLowerCase())
     const mc = catFilter === 'all' || a.category === catFilter
     return ms && mc
+  }).sort((a, b) => {
+    if (sortMode === 'alpha') return (a.title || '').localeCompare(b.title || '')
+    if (sortMode === 'zalpha') return (b.title || '').localeCompare(a.title || '')
+    if (sortMode === 'newest') return new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+    if (sortMode === 'oldest') return new Date(a.updated_at || 0) - new Date(b.updated_at || 0)
+    if (sortMode === 'cat') return (a.category || '').localeCompare(b.category || '')
+    return 0
   })
 
   function handleSave(article) {
@@ -319,6 +328,40 @@ export default function Wiki({ db }) {
     setEditing(null)
   }
 
+  if (viewing !== null) {
+    const a = viewing
+    const fmtDT = iso => { try { return new Date(iso).toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) } catch { return '' } }
+    return (
+      <div>
+        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:14, flexWrap:'wrap' }}>
+          <button className="btn btn-outline btn-sm" onClick={() => { setViewing(null); onClearInitialEntry?.() }}>← Back</button>
+          <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:'var(--cc)', flex:1 }}>{a.title}</div>
+          <span className="badge" style={{ color:'var(--cc)', borderColor:'rgba(201,102,255,.3)' }}>{a.category}</span>
+          <button className="btn btn-sm btn-outline" style={{ color:'var(--cc)', borderColor:'var(--cc)' }}
+            onClick={() => { setViewing(null); setEditing(a) }}>✎ Edit</button>
+        </div>
+        {a.summary && <div style={{ fontSize:'0.92em', color:'var(--dim)', marginBottom:14, fontStyle:'italic', lineHeight:1.6 }}>{a.summary}</div>}
+        {(a.blocks || []).map((bl, i) => (
+          <div key={i} style={{ marginBottom:14 }}>
+            {bl.type === 'text' && <div style={{ fontSize:'0.92em', color:'var(--tx)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>{bl.content}</div>}
+            {bl.type === 'callout' && (
+              <div style={{ padding:12, background:'rgba(201,102,255,.08)', border:'1px solid rgba(201,102,255,.25)', borderRadius:8, fontSize:'0.92em', color:'var(--tx)', lineHeight:1.6 }}>
+                {bl.content}
+              </div>
+            )}
+            {bl.type !== 'text' && bl.type !== 'callout' && (
+              <div style={{ fontSize:'0.85em', color:'var(--dim)', fontStyle:'italic' }}>[{bl.type} block]</div>
+            )}
+            {bl.caption && <div style={{ fontSize:'0.69em', color:'var(--mut)', marginTop:4, fontStyle:'italic' }}>{bl.caption}</div>}
+          </div>
+        ))}
+        <div style={{ fontSize:'0.69em', color:'var(--mut)', borderTop:'1px solid var(--brd)', paddingTop:8, marginTop:8 }}>
+          {a.updated_at && `Updated ${fmtDT(a.updated_at)}`}
+        </div>
+      </div>
+    )
+  }
+
   if (editing !== null) {
     return <ArticleEditor article={editing?.id ? editing : null} onSave={handleSave} onCancel={() => setEditing(null)} />
   }
@@ -328,6 +371,14 @@ export default function Wiki({ db }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cc)' }}>📖 Wiki</div>
         <div style={{ display:'flex', gap:3, alignItems:'center' }}>
+          <select value={sortMode} onChange={e => setSortMode(e.target.value)}
+            style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
+            <option value="alpha">A → Z</option>
+            <option value="zalpha">Z → A</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="cat">Category</option>
+          </select>
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
@@ -370,20 +421,23 @@ export default function Wiki({ db }) {
         </div>
       )}
 
-      <div style={{ columns: colCount, columnGap:12, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
+      <div style={{ display:'grid', gridTemplateColumns: colCount > 1 ? `repeat(${colCount}, 1fr)` : '1fr', columnGap:12, gap:6 }}>
         {filtered.map(a => (
-          <div key={a.id} className="entry-card" style={{ '--card-color': 'var(--cc)', breakInside: 'avoid', marginBottom: 6 }}>
+          <div key={a.id} className="entry-card"
+            style={{ '--card-color': 'var(--cc)', cursor:'pointer' }}
+            onClick={() => setViewing(a)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>
-                {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
+                {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary.slice(0,120)}{a.summary.length>120?'…':''}</div>}
               </div>
               <span className="badge" style={{ color: 'var(--cc)', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
             </div>
             <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
-              {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
+              {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''}
+              {a.updated_at && ` · ${new Date(a.updated_at).toLocaleDateString()}`}
             </div>
-            <div className="entry-actions" style={{ marginTop: 6 }}>
+            <div className="entry-actions" style={{ marginTop: 6 }} onClick={e => e.stopPropagation()}>
               <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)' }} onClick={() => setEditing(a)}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(a.id)}>✕</button>
             </div>

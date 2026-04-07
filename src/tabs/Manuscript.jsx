@@ -85,12 +85,12 @@ function FormatBar({ textareaRef, onUpdate }) {
 }
 
 // ── Chapter editor ────────────────────────────────────────────────
-function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
+function ChapterEditor({ chapter, chars, scenes, onSave, onClose, onPrev, onNext, prevLabel, nextLabel }) {
   const [text, setText] = useState(chapter.text || '')
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
   const [notes, setNotes] = useState(chapter.notes || '')
-  const [view, setView] = useState('edit') // 'edit' | 'preview' | 'split'
+  const [view, setView] = useState('preview') // 'edit' | 'preview' | 'split'
   const [annotations, setAnnotations] = useState(chapter.annotations || [])
   const [showAnnotations, setShowAnnotations] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -241,6 +241,18 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
         <button onClick={save}
           style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6, background: 'var(--csc)',
             color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
+        {onPrev && (
+          <button onClick={onPrev} title={prevLabel}
+            style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: 'var(--card)',
+              color: 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer', whiteSpace: 'nowrap',
+              maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>← {prevLabel || 'Prev'}</button>
+        )}
+        {onNext && (
+          <button onClick={onNext} title={nextLabel}
+            style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: 'var(--card)',
+              color: 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer', whiteSpace: 'nowrap',
+              maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{nextLabel || 'Next'} →</button>
+        )}
         <button onClick={onClose}
           style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '1.38em' }}>✕</button>
       </div>
@@ -751,15 +763,28 @@ export default function Manuscript({ db }) {
       )}
 
       {/* Chapter editor */}
-      {editingChapter && (
-        <ChapterEditor
-          chapter={editingChapter}
-          chars={chars}
-          scenes={scenes}
-          onSave={saveChapter}
-          onClose={() => setEditingChapter(null)}
-        />
-      )}
+      {editingChapter && (() => {
+        const sortedChaps = [...chapters].sort((a,b) => {
+          if (a.book !== b.book) return (a.book||'').localeCompare(b.book||'')
+          return (parseInt(a.chapter_number)||0) - (parseInt(b.chapter_number)||0)
+        })
+        const idx = sortedChaps.findIndex(c => c.id === editingChapter.id)
+        const prevChap = idx > 0 ? sortedChaps[idx-1] : null
+        const nextChap = idx < sortedChaps.length-1 ? sortedChaps[idx+1] : null
+        return (
+          <ChapterEditor
+            chapter={editingChapter}
+            chars={chars}
+            scenes={scenes}
+            onSave={saveChapter}
+            onClose={() => setEditingChapter(null)}
+            onPrev={prevChap ? () => setEditingChapter(prevChap) : null}
+            onNext={nextChap ? () => setEditingChapter(nextChap) : null}
+            prevLabel={prevChap ? `Ch. ${prevChap.chapter_number} ${prevChap.title||''}`.trim() : null}
+            nextLabel={nextChap ? `Ch. ${nextChap.chapter_number} ${nextChap.title||''}`.trim() : null}
+          />
+        )
+      })()}
 
       {/* Delete confirm */}
       {confirmDelete && (

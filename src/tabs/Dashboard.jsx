@@ -94,7 +94,7 @@ export default function Dashboard({ db, goTo }) {
   )
 
   return (
-    <div style={{ display: 'flex', gap: 0, minHeight: '80vh' }}>
+    <div style={{ display: 'flex', gap: 0, minHeight: '80vh', flexWrap: 'wrap' }}>
 
       {/* ── LEFT SIDEBAR ── */}
       <div style={{ width: 190, flexShrink: 0, borderRight: '1px solid var(--brd)',
@@ -120,7 +120,7 @@ export default function Dashboard({ db, goTo }) {
       </div>
 
       {/* ── RIGHT MAIN AREA ── */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 260 }}>
 
         {/* Header image */}
         {headerImg && (
@@ -198,7 +198,7 @@ export default function Dashboard({ db, goTo }) {
         </div>
 
         {/* Four panels */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
 
           {/* Recent */}
           <div>
@@ -228,7 +228,7 @@ export default function Dashboard({ db, goTo }) {
           </div>
 
           {/* Flags */}
-          <div>
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
             {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
             {flags.length === 0
               ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>

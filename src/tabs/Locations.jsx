@@ -230,6 +230,8 @@ export default function Locations({ db }) {
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [lightbox, setLightbox] = useState(null)
+  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('loc_cols') || '1'))
+  function saveColCount(n) { setColCount(n); db.saveSetting?.('loc_cols', String(n)) }
 
   function toggle(id) {
     setExpanded(prev => {
@@ -276,6 +278,16 @@ export default function Locations({ db }) {
     <div>
       <div className="tbar">
         <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:'var(--cl)' }}>🗺 Locations</div>
+        <div style={{ display:'flex', gap:3 }}>
+          {[['XS',4],['S',3],['M',2],['L',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColCount(n)}
+              style={{ fontSize:'0.69em', padding:'2px 7px', borderRadius:8,
+                background: colCount===n ? 'var(--cl)' : 'none',
+                color: colCount===n ? '#000' : 'var(--dim)',
+                border: `1px solid ${colCount===n ? 'var(--cl)' : 'var(--brd)'}`,
+                cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
         <button className="btn btn-primary btn-sm"
           style={{ background:'var(--cl)', color:'#000' }}
           onClick={() => openAdd()}>+ Add</button>
@@ -291,14 +303,16 @@ export default function Locations({ db }) {
       )}
 
       {/* Tree */}
-      {roots.map(l => (
-        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded}
-          onToggle={toggle} onAddChild={openAdd} {...sharedHandlers} />
-      ))}
-      {orphans.map(l => (
-        <LocNode key={l.id} loc={l} locations={locations} expanded={expanded}
-          onToggle={toggle} onAddChild={openAdd} {...sharedHandlers} />
-      ))}
+      <div style={{ display:'grid', gridTemplateColumns: colCount > 1 ? `repeat(${colCount}, 1fr)` : '1fr', gap:8, alignItems:'start' }}>
+        {roots.map(l => (
+          <LocNode key={l.id} loc={l} locations={locations} expanded={expanded}
+            onToggle={toggle} onAddChild={openAdd} {...sharedHandlers} />
+        ))}
+        {orphans.map(l => (
+          <LocNode key={l.id} loc={l} locations={locations} expanded={expanded}
+            onToggle={toggle} onAddChild={openAdd} {...sharedHandlers} />
+        ))}
+      </div>
 
       {/* Flat table — linked, uses same handlers */}
       {locations.length > 0 && (

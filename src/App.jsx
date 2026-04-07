@@ -111,6 +111,8 @@ export default function App() {
     setTab(t)
   }, [tab, histIdx])
 
+  const [wikiInitialEntry, setWikiInitialEntry] = useState(null)
+
   const goBack = useCallback(() => {
     if (histIdx >= 0) {
       setTab(history[histIdx])
@@ -160,7 +162,7 @@ export default function App() {
       case 'calendar':   return <CalendarTab {...tabProps} />
       case 'manuscript':  return <Manuscript {...tabProps} />
       case 'inventory':   return <Inventory {...tabProps} />
-      case 'outfitsnapshot': return <OutfitSnapshot db={db} chars={db.db.characters || []} allEntries={db.db} />
+      case 'outfitsnapshot': return <OutfitSnapshot db={db} chars={db.db.characters || []} allEntries={[...(db.db.items||[]), ...(db.db.wardrobe||[]), ...(db.db.inventory||[])]} />
       case 'sessionlog':  return <SessionLog {...tabProps} />
       case 'tools':      return <Tools {...tabProps} />
       case 'canon':      return <Canon {...tabProps} />
@@ -169,8 +171,8 @@ export default function App() {
       case 'eras':       return <Eras {...tabProps} />
       case 'spellings':  return <Spellings {...tabProps} />
       case 'map':        return <MapTab {...tabProps} />
-      case 'wiki':       return <Wiki {...tabProps} />
-      case 'glossary':   return <Glossary db={db} goTo={goTo} />
+      case 'wiki':       return <Wiki {...tabProps} initialEntry={wikiInitialEntry} onClearInitialEntry={() => setWikiInitialEntry(null)} />
+      case 'glossary':   return <Glossary db={db} goTo={goTo} goToWiki={entry => { setWikiInitialEntry(entry); goTo('wiki') }} />
       case 'notes':      return <Notes {...tabProps} />
       case 'journal':    return <Journal {...tabProps} />
       case 'familytree': return <FamilyTree {...tabProps} />

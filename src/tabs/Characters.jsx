@@ -91,7 +91,8 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
   const [confirmId, setConfirmId] = useState(null)
   const [portraitCharId, setPortraitCharId] = useState(null)
   const [lightboxSrc, setLightboxSrc] = useState(null)
-  const [filterDeceased, setFilterDeceased] = useState('all') // 'all'|'alive'|'deceased'
+  const [filterDeceased, setFilterDeceased] = useState('all')
+  const [sortMode, setSortMode] = useState('alpha')
 
   // filterDeceased can be 'all', 'alive', 'deceased', or a book name like 'Book 1'
   const filtered = chars.filter(e => {
@@ -102,6 +103,19 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
       if (isDeceased(e) !== true) return false
     }
     return true
+  }).sort((a, b) => {
+    if (sortMode === 'alpha') return (a.display_name || a.name || '').localeCompare(b.display_name || b.name || '')
+    if (sortMode === 'zalpha') return (b.display_name || b.name || '').localeCompare(a.display_name || a.name || '')
+    if (sortMode === 'element') return (a.element || '').localeCompare(b.element || '')
+    if (sortMode === 'status') return (a.status || '').localeCompare(b.status || '')
+    if (sortMode === 'birthday') {
+      const pa = parseInt(a.birthday_lajen || '0') || 0
+      const pb = parseInt(b.birthday_lajen || '0') || 0
+      return pa - pb
+    }
+    if (sortMode === 'book') return (a.first_book || '').localeCompare(b.first_book || '')
+    if (sortMode === 'newest') return new Date(b.created || 0) - new Date(a.created || 0)
+    return 0
   })
 
   function handleSave(entry) {
@@ -209,6 +223,16 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
         </button>
         </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
+        <select value={sortMode} onChange={e => setSortMode(e.target.value)}
+          style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
+          <option value="alpha">A → Z</option>
+          <option value="zalpha">Z → A</option>
+          <option value="element">Element</option>
+          <option value="status">Status</option>
+          <option value="birthday">Birthday</option>
+          <option value="book">First Book</option>
+          <option value="newest">Newest</option>
+        </select>
         {/* Alive/Deceased filter */}
         <div style={{ display: 'flex', gap: 3 }}>
           {[['all','All'], ['alive','Alive'], ['deceased','†']].map(([v, l]) => (
@@ -225,7 +249,7 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div style={{ columns: colCount, columnGap: 12, columnRule: dividers ? '1px solid var(--brd)' : 'none', width: '100%' }}>
+      <div style={{ display:'grid', gridTemplateColumns: colCount > 1 ? `repeat(${colCount}, 1fr)` : '1fr', columnGap: 12, gap: 8, width: '100%' }}>
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
             <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>

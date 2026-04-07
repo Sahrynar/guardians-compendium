@@ -53,9 +53,10 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
     try { return JSON.parse(db.getSetting?.('outfit_snapshots') || '[]') } catch { return [] }
   })
   const [viewSnapshot, setViewSnapshot] = useState(null)
-  const [showSaved, setShowSaved] = useState(false)
+  const [showSaved, setShowSaved] = useState(true)
 
-  const scenes = db.db.timeline || []
+  const scenes = db.db.scenes || []
+  const sortedChars = [...chars].sort((a,b) => (a.display_name||a.name||'').localeCompare(b.display_name||b.name||''))
   const charObj = chars.find(c => c.id === selectedChar)
   const charItems = useMemo(() => {
     if (!selectedChar) return []
@@ -141,7 +142,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
         <label>Character</label>
         <select value={selectedChar} onChange={e => { setSelectedChar(e.target.value); setSlots({}) }}>
           <option value="">— Pick character —</option>
-          {chars.map(c => <option key={c.id} value={c.id}>{c.display_name || c.name}</option>)}
+          {sortedChars.map(c => <option key={c.id} value={c.id}>{c.display_name || c.name}</option>)}
         </select>
       </div>
 
@@ -172,9 +173,14 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
                 placeholder="e.g. Lila at Book 1 opening" />
             </div>
             <div className="field" style={{ flex: 1, minWidth: 160, margin: 0 }}>
-              <label>Link to scene/event (optional)</label>
-              <input value={linkedScene} onChange={e => setLinkedScene(e.target.value)}
-                placeholder="e.g. Ch. 1 — Barn power manifestation" />
+              <label>Link to scene (optional)</label>
+              <select value={linkedScene} onChange={e => setLinkedScene(e.target.value)}
+                style={{ width:'100%', fontSize:'0.85em', padding:'5px 8px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:6, color:'var(--tx)' }}>
+                <option value="">— none —</option>
+                {scenes.sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(s => (
+                  <option key={s.id} value={s.id}>{s.name}{s.book ? ` (${s.book})` : ''}</option>
+                ))}
+              </select>
             </div>
             <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)', alignSelf: 'flex-end' }}
               onClick={saveSnapshot} disabled={!snapshotName.trim()}>

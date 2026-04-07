@@ -2,7 +2,24 @@ import { useState, useEffect, useMemo } from 'react'
 import { uid, CATS } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
-// ── Element color palette ──────────────────────────────────────
+// ── Spectrum palette cycling by session number ─────────────────
+const SPECTRUM = [
+  { bg: '#FFF0F5', border: '#C9546A', text: '#7A1A30' }, // pink
+  { bg: '#FFF0F0', border: '#C94444', text: '#7A1A1A' }, // red
+  { bg: '#FFF4EE', border: '#C96A3A', text: '#7A3010' }, // orange
+  { bg: '#FFFBEE', border: '#C9A020', text: '#7A5A00' }, // yellow
+  { bg: '#F2FAF0', border: '#3B8B3B', text: '#1A5A1A' }, // green
+  { bg: '#EEFAF8', border: '#1A8B7A', text: '#0A4A40' }, // teal
+  { bg: '#EAF3FF', border: '#1A5AAA', text: '#0A2A6A' }, // blue
+  { bg: '#F0EEFF', border: '#5A3ACC', text: '#2A1A7A' }, // indigo
+  { bg: '#F8EEFF', border: '#8A3ACC', text: '#4A1A7A' }, // violet
+]
+function spectrumCol(sessionNumber) {
+  const idx = ((sessionNumber || 1) - 1) % SPECTRUM.length
+  return SPECTRUM[idx]
+}
+
+// ── Element color palette (used in session form) ───────────────
 const ELEMENT_COLORS = {
   Water: { bg: '#EAF3FF', border: '#1A3F7A', text: '#1A3F7A' },
   Fire:  { bg: '#FFF2EA', border: '#7A1A1A', text: '#7A1A1A' },
@@ -118,7 +135,7 @@ function emptySession(num) {
 // ── Session card (view mode) ───────────────────────────────────
 function SessionCard({ session, onEdit, onDelete, selected, onSelect, fontSize = 12 }) {
   const [expanded, setExpanded] = useState(false)
-  const col = ELEMENT_COLORS[session.element] || ELEMENT_COLORS.Mixed
+  const col = spectrumCol(session.session_number)
   const hasContent = SECTION_LABELS.some(({ k }) => session[k] && session[k].trim())
 
   return (

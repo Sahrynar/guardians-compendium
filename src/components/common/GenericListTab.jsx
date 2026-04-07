@@ -100,9 +100,9 @@ export default function GenericListTab({
     catch { return null }
   }
 
-  // Masonry column layout if columns prop provided
+  // Grid column layout if columns prop provided
   const listStyle = columns && columns > 1
-    ? { columns, columnGap: 10, columnRule: columnRule || 'none' }
+    ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, columnGap: 10 }
     : {}
 
   return (

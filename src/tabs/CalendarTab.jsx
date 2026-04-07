@@ -20,12 +20,25 @@ function moonSVG(day) {
 }
 
 export default function CalendarTab({ db }) {
-  const [expandedMonth, setExpandedMonth] = useState(null)
+  const [expandedMonths, setExpandedMonths] = useState(new Set())
   const [expandAll, setExpandAll] = useState(false)
-  const [gridSize, setGridSize] = useState('M') // XS S M L XL
+  const [gridSize, setGridSize] = useState('M')
   const [dayModal, setDayModal] = useState(null)
   const [dayText, setDayText] = useState('')
   const [editingEntry, setEditingEntry] = useState(null)
+
+  function toggleMonth(mi) {
+    if (expandAll) return // when expandAll is on, individual toggles are ignored
+    setExpandedMonths(prev => {
+      const next = new Set(prev)
+      if (next.has(mi)) next.delete(mi); else next.add(mi)
+      return next
+    })
+  }
+
+  function isExpanded(mi) {
+    return expandAll || expandedMonths.has(mi)
+  }
 
   const GRID_COLS = { XS: 6, S: 5, M: 4, L: 3, XL: 2 }
 
@@ -79,7 +92,7 @@ export default function CalendarTab({ db }) {
 
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
-        <button onClick={() => { setExpandAll(v => !v); setExpandedMonth(null) }}
+        <button onClick={() => { setExpandAll(v => { if (v) setExpandedMonths(new Set()); return !v }) }}
           style={{ fontSize: '0.85em', padding: '4px 14px', borderRadius: 8, cursor: 'pointer',
             background: expandAll ? 'var(--cca)' : 'var(--card)',
             color: expandAll ? '#000' : 'var(--dim)',
@@ -102,13 +115,13 @@ export default function CalendarTab({ db }) {
         {MONTHS.map((m, mi) => {
           const mc = MC[mi]
           const stc = SEASON_TAG_COLORS[m.ssn] || '#888'
-          const isExp = expandAll || expandedMonth === mi
+          const isExp = isExpanded(mi)
           const birthdays = getCharBirthdays(m.n)
           const events = getTimelineForMonth(m.n)
           const dayEntries = calEntries.filter(e => e.month_idx === mi)
 
           return (
-            <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}` }} onClick={() => !expandAll && setExpandedMonth(isExp ? null : mi)}>
+            <div key={mi} className="cal-month" style={{ borderTop: `3px solid ${mc}`, background: isExp ? `${mc}08` : undefined, transition: 'background .2s' }} onClick={() => toggleMonth(mi)}>
               <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.85em', fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
               <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
               <div style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
