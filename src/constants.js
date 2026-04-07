@@ -49,9 +49,10 @@ export const SEASON_TAG_COLORS = {
   Summer: '#00ffcc', Harvest: '#f4c430', Winter: '#6688cc', Spring: '#7fff00'
 }
 
-// ── Rainbow spectrum — 18 stops, Pink→HotPink, cycling ────────
-// Used everywhere a rainbow is requested: nav tabs, session log cards,
-// sidebar items, per-tab card accents when rainbow mode is on.
+// ── 18-stop rainbow (full visible spectrum, warm→cool, cycling) ─
+// Pink → Coral → Red → Red-Orange → Orange → Amber → Yellow →
+// Yellow-Green → Green → Teal → Cyan → Sky Blue → Blue →
+// Indigo → Violet → Purple → Magenta → Hot Pink → (repeat)
 export const RAINBOW = [
   '#ff69b4', // 0  Pink
   '#ff6b6b', // 1  Coral
@@ -73,60 +74,59 @@ export const RAINBOW = [
   '#ff48c4', // 17 Hot Pink
 ]
 
-// TAB_ORDER keys → their fixed rainbow stop index
-// Dashboard is white (special). Characters starts at index 0 (Pink).
+// Helper: get rainbow colour by index (wraps around)
+export const rainbowAt = (i) => RAINBOW[i % RAINBOW.length]
+
+// ── Per-tab rainbow colour map (Dashboard = white) ─────────────
 export const TAB_RAINBOW = {
   dashboard:  '#ffffff',
-  characters: RAINBOW[0],
-  wardrobe:   RAINBOW[1],
-  items:      RAINBOW[2],
-  locations:  RAINBOW[3],
-  timeline:   RAINBOW[4],
-  scenes:     RAINBOW[5],
-  calendar:   RAINBOW[6],
-  tools:      RAINBOW[7],
-  canon:      RAINBOW[8],
-  world:      RAINBOW[9],
-  questions:  RAINBOW[10],
-  eras:       RAINBOW[11],
-  spellings:  RAINBOW[12],
-  map:        RAINBOW[13],
-  wiki:       RAINBOW[14],
-  notes:      RAINBOW[15],
-  journal:    RAINBOW[16],
-  familytree: RAINBOW[17],
-  flags:      RAINBOW[0],   // cycles back
-  manuscript: RAINBOW[5],
-  sessionlog: RAINBOW[2],
-  inventory:  RAINBOW[4],
-  outfitsnapshot: RAINBOW[11],
+  characters: '#ff69b4', // Pink
+  wardrobe:   '#ff6b6b', // Coral
+  items:      '#e63946', // Red
+  locations:  '#f4442e', // Red-Orange
+  timeline:   '#ff8c00', // Orange
+  scenes:     '#ffb700', // Amber
+  calendar:   '#ffd600', // Yellow
+  tools:      '#aacc00', // Yellow-Green
+  canon:      '#38b000', // Green
+  world:      '#0fb5a0', // Teal
+  questions:  '#00b4d8', // Cyan
+  eras:       '#4cc9f0', // Sky Blue
+  spellings:  '#3a86ff', // Blue
+  map:        '#4361ee', // Indigo
+  wiki:       '#7b2d8b', // Violet
+  notes:      '#9d4edd', // Purple
+  journal:    '#c77dff', // Magenta
+  familytree: '#ff48c4', // Hot Pink
+  flags:      '#ff69b4', // cycles back to Pink
+  manuscript: '#ff6b6b', // Coral (for tabs that include it)
+  inventory:  '#e63946', // Red
+  outfitsnapshot: '#f4442e', // Red-Orange
+  sessionlog: '#ff8c00', // Orange
 }
-
-// Helper: get rainbow color for a list index (cycling)
-export function rainbowAt(i) { return RAINBOW[i % RAINBOW.length] }
 
 // ── Category config ─────────────────────────────────────────────
 export const CATS = {
-  dashboard:  { l: 'Dashboard',    i: '⊞',  c: TAB_RAINBOW.dashboard },
-  characters: { l: 'Characters',   i: '👤', c: TAB_RAINBOW.characters },
-  wardrobe:   { l: 'Wardrobe',     i: '👗', c: TAB_RAINBOW.wardrobe },
-  items:      { l: 'Items',        i: '⚔',  c: TAB_RAINBOW.items },
-  locations:  { l: 'Locations',    i: '🗺',  c: TAB_RAINBOW.locations },
-  timeline:   { l: 'Timeline',     i: '⏳', c: TAB_RAINBOW.timeline },
-  scenes:     { l: 'Scenes',       i: '🎬', c: TAB_RAINBOW.scenes },
-  calendar:   { l: 'Calendar',     i: '🌙', c: TAB_RAINBOW.calendar },
-  tools:      { l: 'Tools',        i: '🔧', c: TAB_RAINBOW.tools },
-  canon:      { l: 'Canon',        i: '✦',  c: TAB_RAINBOW.canon },
-  world:      { l: 'World',        i: '🌐', c: TAB_RAINBOW.world },
-  questions:  { l: 'Questions',    i: '❓', c: TAB_RAINBOW.questions },
-  eras:       { l: 'Eras & Dating',i: '⧖',  c: TAB_RAINBOW.eras },
-  spellings:  { l: 'Spellings',    i: '✎',  c: TAB_RAINBOW.spellings },
-  map:        { l: 'Maps',         i: '🌍', c: TAB_RAINBOW.map },
-  wiki:       { l: 'Wiki',         i: '📖', c: TAB_RAINBOW.wiki },
-  notes:      { l: 'Notes',        i: '📝', c: TAB_RAINBOW.notes },
-  journal:    { l: 'Journal',      i: '📓', c: TAB_RAINBOW.journal },
-  familytree: { l: 'Family Tree',  i: '🌳', c: TAB_RAINBOW.familytree },
-  flags:      { l: 'Flags',        i: '🚩', c: TAB_RAINBOW.flags },
+  dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
+  characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
+  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
+  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
+  locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
+  timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
+  scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
+  calendar:   { l: 'Calendar',     i: '🌙', c: 'var(--cca)' },
+  tools:      { l: 'Tools',        i: '🔧', c: 'var(--ctl)' },
+  canon:      { l: 'Canon',        i: '✦',  c: 'var(--ccn)' },
+  world:      { l: 'World',        i: '🌐', c: 'var(--cw)' },
+  questions:  { l: 'Questions',    i: '❓', c: 'var(--cq)' },
+  eras:       { l: 'Eras & Dating',i: '⧖',  c: 'var(--cca)' },
+  spellings:  { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
+  map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
+  wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
+  notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
+  journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
+  familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
+  flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
 }
 
 // ── Character field definitions ────────────────────────────────
@@ -157,27 +157,24 @@ export const CHAR_FIELDS = [
 // ── Era timeline data ──────────────────────────────────────────
 export const ERA_TIMELINE = [
   { era: 'seeding',  label: 'Seeding',              ly: '~HC -300,000', my: '~35,000 BC',  desc: 'Guardians (non-physical) seed modern Lajen humans.', col: 'var(--dim)' },
-  { era: 'guardian', label: 'Guardian Era begins',  ly: 'HC -38,897',   my: '~3,010 BC',   desc: 'Lajen cataclysm (human-caused). Guardians arrive physically.', col: TAB_RAINBOW.characters },
-  { era: 'guardian', label: 'Stone circles built',  ly: 'HC -26,552',   my: '~1,600 BC',   desc: 'Calling across all 7 planes. Portal comes online.', col: TAB_RAINBOW.characters },
-  { era: 'guardian', label: 'Guardian sacrifice',   ly: 'HC -12,639',   my: '~33 AD',      desc: 'Sevorech breaks. 12 Guardians sacrifice immortality.', col: TAB_RAINBOW.canon },
-  { era: 'praelyn',  label: 'Praelyn arrive',       ly: 'HC -12,639',   my: '~33 AD',      desc: 'Serynae (Thirdform) arrives while Guardians still dying.', col: TAB_RAINBOW.locations },
-  { era: 'hc',       label: 'Lurlen falls — HC 1',  ly: 'HC 1',         my: '~1516 AD',    desc: 'Hadryen conquers. Calendar reset. Rose flees.', col: TAB_RAINBOW.calendar },
-  { era: 'hc',       label: 'Book 1 opens — HC 320',ly: 'HC 320',       my: '1554 AD',     desc: 'Lila arrives in Lajen.', col: TAB_RAINBOW.items },
+  { era: 'guardian', label: 'Guardian Era begins',  ly: 'HC -38,897',   my: '~3,010 BC',   desc: 'Lajen cataclysm (human-caused). Guardians arrive physically.', col: 'var(--cc)' },
+  { era: 'guardian', label: 'Stone circles built',  ly: 'HC -26,552',   my: '~1,600 BC',   desc: 'Calling across all 7 planes. Portal comes online.', col: 'var(--cc)' },
+  { era: 'guardian', label: 'Guardian sacrifice',   ly: 'HC -12,639',   my: '~33 AD',      desc: 'Sevorech breaks. 12 Guardians sacrifice immortality.', col: 'var(--ccn)' },
+  { era: 'praelyn',  label: 'Praelyn arrive',       ly: 'HC -12,639',   my: '~33 AD',      desc: 'Serynae (Thirdform) arrives while Guardians still dying.', col: 'var(--cl)' },
+  { era: 'hc',       label: 'Lurlen falls — HC 1',  ly: 'HC 1',         my: '~1516 AD',    desc: 'Hadryen conquers. Calendar reset. Rose flees.', col: 'var(--cca)' },
+  { era: 'hc',       label: 'Book 1 opens — HC 320',ly: 'HC 320',       my: '1554 AD',     desc: 'Lila arrives in Lajen.', col: 'var(--ci)' },
 ]
 
 export const ERA_SPANS = [
-  { name: 'Guardian Era', ly: '~26,258 LY', my: '~3,083 MY', col: TAB_RAINBOW.characters, desc: 'From cataclysm to sacrifice' },
-  { name: 'Praelyn Era',  ly: '~12,640 LY', my: '~1,484 MY', col: TAB_RAINBOW.locations,  desc: 'From sacrifice to Lurlen falls' },
-  { name: 'HC Era',       ly: '~320 LY',    my: '~37.5 MY',  col: TAB_RAINBOW.calendar,   desc: 'From Lurlen falls to Book 1' },
+  { name: 'Guardian Era', ly: '~26,258 LY', my: '~3,083 MY', col: 'var(--cc)',  desc: 'From cataclysm to sacrifice' },
+  { name: 'Praelyn Era',  ly: '~12,640 LY', my: '~1,484 MY', col: 'var(--cl)',  desc: 'From sacrifice to Lurlen falls' },
+  { name: 'HC Era',       ly: '~320 LY',    my: '~37.5 MY',  col: 'var(--cca)', desc: 'From Lurlen falls to Book 1' },
 ]
 
 // ── Colour helpers ─────────────────────────────────────────────
-export function needsDarkText(hex) {
-  if (!hex || hex.startsWith('var(')) return false
-  const r = parseInt(hex.slice(1,3),16)
-  const g = parseInt(hex.slice(3,5),16)
-  const b = parseInt(hex.slice(5,7),16)
-  return (r*299 + g*587 + b*114) / 1000 > 150
+export function needsDarkText(c) {
+  return ['var(--cl)','var(--cca)','var(--cw)','var(--csp)',
+          'var(--csc)','var(--cwr)','var(--ctl)','var(--cfl)'].includes(c)
 }
 
 export function hexToRgba(hex) {
