@@ -5,8 +5,7 @@ const LS_KEY = 'gcomp3'
 const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps','wiki','notes','family_tree',
-  'manuscript','inventory','journal_captures','journal_tags'
+  'calendar_entries','flags','maps','wiki','notes','family_tree','images','manuscript'
 ]
 
 // ── Local storage helpers ──────────────────────────────────────
@@ -155,62 +154,12 @@ export function useDB() {
     } catch {}
   }, [])
 
-  const getSetting = useCallback((key, fallback = '') => {
-    if (settings[key] !== undefined) return settings[key]
-    try {
-      const local = JSON.parse(localStorage.getItem('gcomp_settings') || '{}')
-      if (local[key] !== undefined) return local[key]
-    } catch {}
-    return fallback
-  }, [settings])
-
   // ── Import/Export ──────────────────────────────────────────
   const exportJSON = useCallback(() => {
     const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `guardians_backup_${new Date().toISOString().slice(0,10)}.json`
-    a.click()
-  }, [db])
-
-  const exportMarkdown = useCallback((categories) => {
-    // categories = array of category keys to include
-    const lines = []
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    lines.push(`# The Guardians of Lajen — Compendium Export`)
-    lines.push(`*Exported ${date}*\n`)
-
-    const LABELS = {
-      canon: 'Canon Decisions', characters: 'Characters', world: 'World',
-      questions: 'Questions', flags: 'Flags', spellings: 'Spellings',
-      locations: 'Locations', items: 'Items', wardrobe: 'Wardrobe',
-      scenes: 'Scenes', timeline: 'Timeline', wiki: 'Wiki',
-      notes: 'Notes', inventory: 'Inventory', manuscript: 'Manuscript'
-    }
-
-    categories.forEach(cat => {
-      const entries = db[cat]
-      if (!Array.isArray(entries) || !entries.length) return
-      lines.push(`---\n`)
-      lines.push(`## ${LABELS[cat] || cat}\n`)
-
-      entries.forEach(e => {
-        const name = e.name || e.title || e.display_name || e.word || '(unnamed)'
-        lines.push(`### ${name}`)
-        if (e.status) lines.push(`*Status: ${e.status}*`)
-        if (e.detail) lines.push(`\n${e.detail}`)
-        if (e.description) lines.push(`\n${e.description}`)
-        if (e.summary) lines.push(`\n${e.summary}`)
-        if (e.notes) lines.push(`\n*Notes: ${e.notes}*`)
-        if (e.books?.length) lines.push(`\n*Books: ${e.books.join(', ')}*`)
-        lines.push('')
-      })
-    })
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `guardians_export_${new Date().toISOString().slice(0,10)}.md`
     a.click()
   }, [db])
 
@@ -304,8 +253,8 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting, getSetting,
-    exportJSON, exportMarkdown, importJSON, importAster, exportAster,
+    upsertEntry, deleteEntry, save, saveSetting,
+    exportJSON, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }
 }

@@ -20,27 +20,10 @@ function moonSVG(day) {
 }
 
 export default function CalendarTab({ db }) {
-  const [expandedMonths, setExpandedMonths] = useState(new Set())
-  const [expandAll, setExpandAll] = useState(false)
-  const [gridSize, setGridSize] = useState('M')
-  const [dayModal, setDayModal] = useState(null)
+  const [expandedMonth, setExpandedMonth] = useState(null)
+  const [dayModal, setDayModal] = useState(null) // { mi, day }
   const [dayText, setDayText] = useState('')
   const [editingEntry, setEditingEntry] = useState(null)
-
-  function toggleMonth(mi) {
-    if (expandAll) return // when expandAll is on, individual toggles are ignored
-    setExpandedMonths(prev => {
-      const next = new Set(prev)
-      if (next.has(mi)) next.delete(mi); else next.add(mi)
-      return next
-    })
-  }
-
-  function isExpanded(mi) {
-    return expandAll || expandedMonths.has(mi)
-  }
-
-  const GRID_COLS = { XS: 6, S: 5, M: 4, L: 3, XL: 2 }
 
   const calEntries = db.db.calendar_entries || []
   const timelineEvents = db.db.timeline || []
@@ -85,61 +68,40 @@ export default function CalendarTab({ db }) {
 
   return (
     <div>
-      <div style={{ textAlign: 'center', padding: '12px 0 6px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cca)' }}>🌙 The Lajen Calendar</div>
-        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>12 months × 30 days · 5-day week · 4 seasons × 90 days</div>
+      <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cca)' }}>🌙 The Lajen Calendar</div>
+        <div style={{ fontSize: 10, color: 'var(--mut)' }}>12 months × 30 days · 5-day week · 4 seasons × 90 days</div>
       </div>
 
-      {/* Toolbar */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
-        <button onClick={() => { setExpandAll(v => { if (v) setExpandedMonths(new Set()); return !v }) }}
-          style={{ fontSize: '0.85em', padding: '4px 14px', borderRadius: 8, cursor: 'pointer',
-            background: expandAll ? 'var(--cca)' : 'var(--card)',
-            color: expandAll ? '#000' : 'var(--dim)',
-            border: `1px solid ${expandAll ? 'var(--cca)' : 'var(--brd)'}` }}>
-          {expandAll ? '⊟ Collapse All' : '⊞ Expand All'}
-        </button>
-        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.69em', color: 'var(--mut)', marginRight: 4 }}>SIZE</span>
-          {['XS','S','M','L','XL'].map(s => (
-            <button key={s} onClick={() => setGridSize(s)}
-              style={{ fontSize: '0.77em', padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
-                background: gridSize === s ? 'var(--cca)' : 'none',
-                color: gridSize === s ? '#000' : 'var(--dim)',
-                border: `1px solid ${gridSize === s ? 'var(--cca)' : 'var(--brd)'}` }}>{s}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="cal-grid" style={{ gridTemplateColumns: `repeat(${GRID_COLS[gridSize]}, 1fr)` }}>
+      <div className="cal-grid">
         {MONTHS.map((m, mi) => {
           const mc = MC[mi]
           const stc = SEASON_TAG_COLORS[m.ssn] || '#888'
-          const isExp = isExpanded(mi)
+          const isExp = expandedMonth === mi
           const birthdays = getCharBirthdays(m.n)
           const events = getTimelineForMonth(m.n)
           const dayEntries = calEntries.filter(e => e.month_idx === mi)
 
           return (
-            <div key={mi} className="cal-month" style={{ borderTop: `3px solid ${mc}`, background: isExp ? `${mc}08` : undefined, transition: 'background .2s' }} onClick={() => toggleMonth(mi)}>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.85em', fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
-              <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
-              <div style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
-              <div style={{ fontSize: '0.62em', color: 'var(--mut)' }}>{m.eq}</div>
+            <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}` }} onClick={() => setExpandedMonth(isExp ? null : mi)}>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
+              <div style={{ fontSize: 9, color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
+              <div style={{ fontSize: 9, padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
+              <div style={{ fontSize: 8, color: 'var(--mut)' }}>{m.eq}</div>
 
               {/* Birthdays and events preview */}
               {birthdays.map(c => (
-                <div key={c.id} style={{ borderLeft: '2px solid var(--cc)', fontSize: '0.69em', paddingLeft: 4, marginTop: 2 }}>🎂 {c.name}</div>
+                <div key={c.id} style={{ borderLeft: '2px solid var(--cc)', fontSize: 9, paddingLeft: 4, marginTop: 2 }}>🎂 {c.name}</div>
               ))}
               {events.map(e => (
-                <div key={e.id} style={{ borderLeft: '2px solid var(--ct)', fontSize: '0.69em', paddingLeft: 4, marginTop: 2 }}>⏳ {e.name}</div>
+                <div key={e.id} style={{ borderLeft: '2px solid var(--ct)', fontSize: 9, paddingLeft: 4, marginTop: 2 }}>⏳ {e.name}</div>
               ))}
               {dayEntries.length > 0 && (
-                <div style={{ fontSize: '0.62em', color: 'var(--cc)', marginTop: 2 }}>📝 {dayEntries.length} note{dayEntries.length > 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 8, color: 'var(--cc)', marginTop: 2 }}>📝 {dayEntries.length} note{dayEntries.length > 1 ? 's' : ''}</div>
               )}
 
-              {!birthdays.length && !events.length && !dayEntries.length && !isExp && !expandAll && (
-                <div style={{ fontSize: '0.62em', color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>
+              {!birthdays.length && !events.length && !dayEntries.length && !isExp && (
+                <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>
               )}
 
               {/* Expanded day grid */}
@@ -147,7 +109,7 @@ export default function CalendarTab({ db }) {
                 <div style={{ marginTop: 6, borderTop: '1px solid var(--brd)', paddingTop: 6 }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 1, marginBottom: 4 }}>
                     {WEEKDAYS.map(d => (
-                      <div key={d} style={{ fontSize: '0.54em', color: 'var(--mut)', textAlign: 'center' }}>{d.slice(0,3)}</div>
+                      <div key={d} style={{ fontSize: 7, color: 'var(--mut)', textAlign: 'center' }}>{d.slice(0,3)}</div>
                     ))}
                   </div>
                   <div className="day-grid">
@@ -162,10 +124,10 @@ export default function CalendarTab({ db }) {
                           title={`Day ${day} (${WEEKDAYS[di%5]}) — click to add note`}
                           onClick={() => openDayModal(mi, day)}
                         >
-                          <div style={{ fontWeight: 600, fontSize: '0.77em' }}>{day}</div>
+                          <div style={{ fontWeight: 600, fontSize: 10 }}>{day}</div>
                           <div dangerouslySetInnerHTML={{ __html: moonSVG(day) }} />
                           {hasEntry && (
-                            <div style={{ fontSize: '0.54em', color: 'var(--cc)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: 7, color: 'var(--cc)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {stored[0].text.slice(0, 8)}
                             </div>
                           )}
@@ -191,15 +153,15 @@ export default function CalendarTab({ db }) {
           <>
             {/* Existing entries */}
             {getEntriesForDay(dayModal.mi, dayModal.day).map(e => (
-              <div key={e.id} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderLeft: '2px solid var(--cc)', borderRadius: 4, padding: '6px 8px', marginBottom: 4, fontSize: '0.85em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={e.id} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderLeft: '2px solid var(--cc)', borderRadius: 4, padding: '6px 8px', marginBottom: 4, fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{e.text}</span>
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button
-                    style={{ background: 'none', border: 'none', color: 'var(--cc)', cursor: 'pointer', fontSize: '0.85em' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--cc)', cursor: 'pointer', fontSize: 11 }}
                     onClick={() => { setEditingEntry(e); setDayText(e.text) }}
                   >✎</button>
                   <button
-                    style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', fontSize: '0.85em' }}
+                    style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', fontSize: 11 }}
                     onClick={() => deleteEntry(e.id)}
                   >✕</button>
                 </div>

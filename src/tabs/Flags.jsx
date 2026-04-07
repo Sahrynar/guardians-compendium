@@ -4,37 +4,25 @@ import { uid } from '../constants'
 
 export default function Flags({ db }) {
   const flags = db.db.flags || []
-  const [filter, setFilter] = useState('active')
-  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('fl_cols') || '2'))
-  function saveColCount(n) { setColCount(n); db.saveSetting?.('fl_cols', String(n)) } // 'active' | 'resolved' | 'all'
-  const [dividers, setDividers] = useState(() => db.getSetting?.('fl_cols_div') !== 'off')
-  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('fl_cols_div', next ? 'on' : 'off') }
+  const [filter, setFilter] = useState('active') // 'active' | 'resolved' | 'all'
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ name: '', priority: 'high', detail: '' })
   const [confirmId, setConfirmId] = useState(null)
-
-  const [sortMode, setSortMode] = useState('newest')
 
   const filtered = flags.filter(f => {
     if (filter === 'active') return !f.resolved
     if (filter === 'resolved') return !!f.resolved
     return true
   }).sort((a, b) => {
-    if (sortMode === 'alpha') return (a.name || '').localeCompare(b.name || '')
-    if (sortMode === 'oldest') return new Date(a.created || 0) - new Date(b.created || 0)
-    if (sortMode === 'priority') {
-      const order = { urgent: 0, high: 1, medium: 2, low: 3 }
-      return (order[a.priority||'']||4) - (order[b.priority||'']||4)
-    }
-    return new Date(b.created || 0) - new Date(a.created || 0) // newest first
+    const order = { urgent: 0, high: 1, medium: 2, low: 3 }
+    return (order[a.priority||'']||4) - (order[b.priority||'']||4)
   })
 
   const priCol = { urgent: '#ff3355', high: '#ff7040', medium: '#ffcc00', low: '#7acc7a' }
 
   function addFlag() {
     if (!form.name.trim()) return
-    const now = new Date().toISOString()
-    db.upsertEntry('flags', { id: uid(), ...form, resolved: false, created: now, updated_at: now })
+    db.upsertEntry('flags', { id: uid(), ...form, resolved: false, created: new Date().toISOString() })
     setForm({ name: '', priority: 'high', detail: '' })
     setModalOpen(false)
   }
@@ -50,25 +38,7 @@ export default function Flags({ db }) {
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cfl)' }}>🚩 Flags & Review</div>
-        <div style={{ display:'flex', gap:3 }}>
-          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
-            <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
-                background: colCount===n ? 'var(--cfl)' : 'none',
-                color: colCount===n ? '#000' : 'var(--dim)',
-                border: `1px solid ${colCount===n ? 'var(--cfl)' : 'var(--brd)'}`,
-                cursor:'pointer' }}>{l}</button>
-          ))}
-        
-        <button onClick={toggleDividers}
-          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
-            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
-            color: dividers ? 'var(--tx)' : 'var(--mut)',
-            border:'1px solid var(--brd)', cursor:'pointer' }}>
-          {dividers ? '┃ on' : '┃ off'}
-        </button>
-        </div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
       </div>
 
@@ -79,7 +49,7 @@ export default function Flags({ db }) {
             <button key={k} className={`fp ${filter===k?'active':''}`} style={{ color: 'var(--cfl)' }} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
-        <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>
+        <span style={{ fontSize: 10, color: 'var(--mut)', marginLeft: 8 }}>
           {flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved
         </span>
       </div>
@@ -91,22 +61,21 @@ export default function Flags({ db }) {
         </div>
       )}
 
-      <div style={{ columns: colCount, columnGap: 12, columnRule: dividers ? '1px solid var(--brd)' : 'none' }}>
       {filtered.map(f => {
         const pc = priCol[f.priority] || 'var(--dim)'
         return (
-          <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1, breakInside: 'avoid', marginBottom: 6 }}>
+          <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.92em', fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
                 {f.name}
               </div>
               <span className="flag-pri" style={{ background: `${pc}22`, color: pc, border: `1px solid ${pc}44` }}>
                 {f.priority || 'none'}
               </span>
             </div>
-            {f.detail && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
+            {f.detail && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
             {f.resolved && f.resolved_at && (
-              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
+              <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
             )}
             <div className="entry-actions" style={{ marginTop: 4 }}>
               {!f.resolved
@@ -118,7 +87,6 @@ export default function Flags({ db }) {
           </div>
         )
       })}
-      </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Flag" color="var(--cfl)">
         <div className="field"><label>Description *</label>

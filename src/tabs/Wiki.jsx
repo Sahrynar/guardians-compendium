@@ -37,7 +37,7 @@ function FlowchartRenderer({ content }) {
     if (!nodes[e.to]) nodes[e.to] = e.to
   })
   const nodeIds = Object.keys(nodes)
-  if (!nodeIds.length) return <div style={{ color: 'var(--mut)', fontSize: '0.85em', fontStyle: 'italic' }}>No flowchart nodes defined</div>
+  if (!nodeIds.length) return <div style={{ color: 'var(--mut)', fontSize: 11, fontStyle: 'italic' }}>No flowchart nodes defined</div>
   return (
     <div style={{ overflowX: 'auto', padding: '8px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
@@ -45,13 +45,13 @@ function FlowchartRenderer({ content }) {
           const outgoing = edges.filter(e => e.from === id)
           return (
             <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: '0.85em', fontWeight: 600, color: 'var(--cc)', whiteSpace: 'nowrap' }}>
+              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--cc)', whiteSpace: 'nowrap' }}>
                 {nodes[id]}
               </div>
               {outgoing.map((e, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--dim)', fontSize: '0.77em' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--dim)', fontSize: 10 }}>
                   <span>→{e.label ? ` (${e.label})` : ''}</span>
-                  <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cl)', borderRadius: 6, fontSize: '0.85em', color: 'var(--cl)', whiteSpace: 'nowrap' }}>{nodes[e.to] || e.to}</div>
+                  <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cl)', borderRadius: 6, fontSize: 11, color: 'var(--cl)', whiteSpace: 'nowrap' }}>{nodes[e.to] || e.to}</div>
                 </div>
               ))}
             </div>
@@ -65,12 +65,12 @@ function FlowchartRenderer({ content }) {
 // ── Table renderer ──────────────────────────────────────────────
 function TableRenderer({ content }) {
   const rows = (content || '').split('\n').map(r => r.split('|').map(c => c.trim()).filter(Boolean))
-  if (!rows.length || !rows[0].length) return <div style={{ color: 'var(--mut)', fontSize: '0.85em', fontStyle: 'italic' }}>No table data</div>
+  if (!rows.length || !rows[0].length) return <div style={{ color: 'var(--mut)', fontSize: 11, fontStyle: 'italic' }}>No table data</div>
   const header = rows[0]
   const body = rows.slice(1).filter(r => !r.every(c => /^[-:]+$/.test(c)))
   return (
     <div style={{ overflowX: 'auto', marginTop: 6 }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85em' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
         <thead>
           <tr>
             {header.map((h, i) => (
@@ -98,31 +98,31 @@ function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
   return (
     <div style={{ marginBottom: 12, padding: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{type}</span>
+        <span style={{ fontSize: 9, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{type}</span>
         <div style={{ display: 'flex', gap: 3 }}>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveUp}>↑</button>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveDown}>↓</button>
-          <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
-          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: '0.77em' }} onClick={onDelete}>✕</button>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveUp}>↑</button>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveDown}>↓</button>
+          <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: 10 }} onClick={onEdit}>✎</button>
+          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: 10 }} onClick={onDelete}>✕</button>
         </div>
       </div>
 
       {type === 'text' && (
-        <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{content}</div>
+        <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
       {type === 'table' && <TableRenderer content={content} />}
       {type === 'flowchart' && <FlowchartRenderer content={content} />}
       {type === 'diagram' && (
-        <div style={{ padding: 10, background: 'rgba(0,0,0,.2)', borderRadius: 4, fontFamily: 'monospace', fontSize: '0.85em', color: 'var(--cl)', whiteSpace: 'pre-wrap' }}>{content}</div>
+        <div style={{ padding: 10, background: 'rgba(0,0,0,.2)', borderRadius: 4, fontFamily: 'monospace', fontSize: 11, color: 'var(--cl)', whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
       {type === 'image' && content && (
         <div style={{ textAlign: 'center' }}>
           <img src={content} alt={caption || ''} style={{ maxWidth: '100%', borderRadius: 4, border: '1px solid var(--brd)' }} />
-          {caption && <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 4, fontStyle: 'italic' }}>{caption}</div>}
+          {caption && <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 4, fontStyle: 'italic' }}>{caption}</div>}
         </div>
       )}
       {type === 'callout' && (
-        <div style={{ padding: '8px 12px', background: 'rgba(201,102,255,.08)', border: '1px solid rgba(201,102,255,.3)', borderLeft: '3px solid var(--cc)', borderRadius: 4, fontSize: '0.85em', color: 'var(--tx)', lineHeight: 1.5 }}>
+        <div style={{ padding: '8px 12px', background: 'rgba(201,102,255,.08)', border: '1px solid rgba(201,102,255,.3)', borderLeft: '3px solid var(--cc)', borderRadius: 4, fontSize: 11, color: 'var(--tx)', lineHeight: 1.5 }}>
           {content}
         </div>
       )}
@@ -171,7 +171,7 @@ function BlockEditor({ block, onSave, onClose }) {
       {type === 'image' ? (
         <div className="field">
           <label>Image</label>
-          <label style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: '0.85em' }}>
+          <label style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: 11 }}>
             📎 Upload Image
             <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
           </label>
@@ -190,8 +190,8 @@ function BlockEditor({ block, onSave, onClose }) {
             placeholder={placeholders[type] || ''}
             style={{ minHeight: type === 'text' ? 120 : 80 }}
           />
-          {type === 'table' && <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>Use | to separate columns, --- for header divider</div>}
-          {type === 'flowchart' && <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>Format: NodeA [Label] on its own line, then NodeA --&gt; NodeB : label</div>}
+          {type === 'table' && <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>Use | to separate columns, --- for header divider</div>}
+          {type === 'flowchart' && <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>Format: NodeA [Label] on its own line, then NodeA --&gt; NodeB : label</div>}
         </div>
       )}
 
@@ -239,7 +239,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
     <div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-outline" onClick={onCancel}>← Back</button>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: 'var(--cc)', flex: 1 }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: 'var(--cc)', flex: 1 }}>
           {article?.id ? 'Editing Article' : 'New Article'}
         </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
@@ -259,9 +259,9 @@ function ArticleEditor({ article, onSave, onCancel }) {
 
       {/* Blocks */}
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.92em', color: 'var(--cc)', marginBottom: 8 }}>Content Blocks</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--cc)', marginBottom: 8 }}>Content Blocks</div>
         {!blocks.length && (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: '0.85em', border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
+          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: 11, border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
             No blocks yet. Add your first content block below.
           </div>
         )}
@@ -289,77 +289,23 @@ function ArticleEditor({ article, onSave, onCancel }) {
 }
 
 // ── Main Wiki Tab ───────────────────────────────────────────────
-export default function Wiki({ db, initialEntry, onClearInitialEntry }) {
+export default function Wiki({ db }) {
   const articles = db.db.wiki || []
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('all')
-  const [editing, setEditing] = useState(null)
-  const [viewing, setViewing] = useState(initialEntry || null)
+  const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
-  const [sortMode, setSortMode] = useState('alpha')
-  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('wk_cols') || '2'))
-  const [dividers, setDividers] = useState(() => db.getSetting?.('wk_cols_div') !== 'off')
-  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('wk_cols_div', next ? 'on' : 'off') }
-  function saveColCount(n) { setColCount(n); db.saveSetting?.('wk_cols', String(n)) }
 
   const filtered = articles.filter(a => {
     const ms = !search || JSON.stringify(a).toLowerCase().includes(search.toLowerCase())
     const mc = catFilter === 'all' || a.category === catFilter
     return ms && mc
-  }).sort((a, b) => {
-    if (sortMode === 'alpha') return (a.title || '').localeCompare(b.title || '')
-    if (sortMode === 'zalpha') return (b.title || '').localeCompare(a.title || '')
-    if (sortMode === 'newest') return new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
-    if (sortMode === 'oldest') return new Date(a.updated_at || 0) - new Date(b.updated_at || 0)
-    if (sortMode === 'cat') return (a.category || '').localeCompare(b.category || '')
-    return 0
   })
 
   function handleSave(article) {
-    const isNew = !articles.find(a => a.id === article.id)
-    if (isNew) {
-      const newTitle = (article.title || '').toLowerCase().trim()
-      const dupe = articles.find(a => (a.title || '').toLowerCase().trim() === newTitle)
-      if (dupe && !window.confirm(`An article titled "${dupe.title}" already exists. Save anyway?`)) return
-    }
-    const stamped = { ...article, updated_at: new Date().toISOString() }
-    if (isNew) stamped.created = stamped.created || stamped.updated_at
-    db.upsertEntry('wiki', stamped)
+    if (!db.db.wiki) db.db.wiki = []
+    db.upsertEntry('wiki', article)
     setEditing(null)
-  }
-
-  if (viewing !== null) {
-    const a = viewing
-    const fmtDT = iso => { try { return new Date(iso).toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) } catch { return '' } }
-    return (
-      <div>
-        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:14, flexWrap:'wrap' }}>
-          <button className="btn btn-outline btn-sm" onClick={() => { setViewing(null); onClearInitialEntry?.() }}>← Back</button>
-          <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:'var(--cc)', flex:1 }}>{a.title}</div>
-          <span className="badge" style={{ color:'var(--cc)', borderColor:'rgba(201,102,255,.3)' }}>{a.category}</span>
-          <button className="btn btn-sm btn-outline" style={{ color:'var(--cc)', borderColor:'var(--cc)' }}
-            onClick={() => { setViewing(null); setEditing(a) }}>✎ Edit</button>
-        </div>
-        {a.summary && <div style={{ fontSize:'0.92em', color:'var(--dim)', marginBottom:14, fontStyle:'italic', lineHeight:1.6 }}>{a.summary}</div>}
-        {(a.blocks || []).map((bl, i) => (
-          <div key={i} style={{ marginBottom:14 }}>
-            {bl.type === 'text' && <div style={{ fontSize:'0.92em', color:'var(--tx)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>{bl.content}</div>}
-            {bl.type === 'callout' && (
-              <div style={{ padding:12, background:'rgba(201,102,255,.08)', border:'1px solid rgba(201,102,255,.25)', borderRadius:8, fontSize:'0.92em', color:'var(--tx)', lineHeight:1.6 }}>
-                {bl.content}
-              </div>
-            )}
-            {bl.type !== 'text' && bl.type !== 'callout' && (
-              <div style={{ fontSize:'0.85em', color:'var(--dim)', fontStyle:'italic' }}>[{bl.type} block]</div>
-            )}
-            {bl.caption && <div style={{ fontSize:'0.69em', color:'var(--mut)', marginTop:4, fontStyle:'italic' }}>{bl.caption}</div>}
-          </div>
-        ))}
-        <div style={{ fontSize:'0.69em', color:'var(--mut)', borderTop:'1px solid var(--brd)', paddingTop:8, marginTop:8 }}>
-          {a.updated_at && `Updated ${fmtDT(a.updated_at)}`}
-        </div>
-      </div>
-    )
   }
 
   if (editing !== null) {
@@ -369,32 +315,7 @@ export default function Wiki({ db, initialEntry, onClearInitialEntry }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cc)' }}>📖 Wiki</div>
-        <div style={{ display:'flex', gap:3, alignItems:'center' }}>
-          <select value={sortMode} onChange={e => setSortMode(e.target.value)}
-            style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
-            <option value="alpha">A → Z</option>
-            <option value="zalpha">Z → A</option>
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="cat">Category</option>
-          </select>
-          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
-            <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
-                background: colCount===n ? 'var(--cc)' : 'none',
-                color: colCount===n ? '#000' : 'var(--dim)',
-                border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
-                cursor:'pointer' }}>{l}</button>
-          ))}
-          <button onClick={toggleDividers}
-            style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
-              background: dividers ? 'rgba(255,255,255,.08)' : 'none',
-              color: dividers ? 'var(--tx)' : 'var(--mut)',
-              border:'1px solid var(--brd)', cursor:'pointer' }}>
-            {dividers ? '┃ on' : '┃ off'}
-          </button>
-        </div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cc)' }}>📖 Wiki</div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 
@@ -414,30 +335,27 @@ export default function Wiki({ db, initialEntry, onClearInitialEntry }) {
         <div className="empty">
           <div className="empty-icon">📖</div>
           <p>No wiki articles yet.</p>
-          <p style={{ fontSize: '0.85em', color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
+          <p style={{ fontSize: 11, color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
             The wiki is where long-form lore lives — world history, cosmology, power system deep-dives, cultures, languages, factions. Supports text, tables, flowcharts, diagrams, images, and callouts.
           </p>
           <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
         </div>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns: colCount > 1 ? `repeat(${colCount}, 1fr)` : '1fr', columnGap:12, gap:6 }}>
+      <div className="cg">
         {filtered.map(a => (
-          <div key={a.id} className="entry-card"
-            style={{ '--card-color': 'var(--cc)', cursor:'pointer' }}
-            onClick={() => setViewing(a)}>
+          <div key={a.id} className="entry-card" style={{ '--card-color': 'var(--cc)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>
-                {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary.slice(0,120)}{a.summary.length>120?'…':''}</div>}
+                {a.summary && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
               </div>
               <span className="badge" style={{ color: 'var(--cc)', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
             </div>
-            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
-              {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''}
-              {a.updated_at && ` · ${new Date(a.updated_at).toLocaleDateString()}`}
+            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
+              {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
             </div>
-            <div className="entry-actions" style={{ marginTop: 6 }} onClick={e => e.stopPropagation()}>
+            <div className="entry-actions" style={{ marginTop: 6 }}>
               <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)' }} onClick={() => setEditing(a)}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(a.id)}>✕</button>
             </div>

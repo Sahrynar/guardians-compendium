@@ -308,9 +308,9 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
       onTouchStart={editMode ? onTouchStart : undefined}
     >
       {node.image && <img src={node.image} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', float: 'right', marginLeft: 6, marginBottom: 3, border: `2px solid ${col}` }} />}
-      <div style={{ fontSize: '0.85em', fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>{node.name}</div>
-      {node.birth_year && <div style={{ fontSize: '0.69em', color: 'var(--dim)' }}>{node.birth_year}{node.death_year ? ` \u2013 ${node.death_year}` : ''}</div>}
-      {node.title && <div style={{ fontSize: '0.69em', color: 'var(--mut)', fontStyle: 'italic' }}>{node.title}</div>}
+      <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>{node.name}</div>
+      {node.birth_year && <div style={{ fontSize: 9, color: 'var(--dim)' }}>{node.birth_year}{node.death_year ? ` \u2013 ${node.death_year}` : ''}</div>}
+      {node.title && <div style={{ fontSize: 9, color: 'var(--mut)', fontStyle: 'italic' }}>{node.title}</div>}
       {selected && editMode && (
         <div style={{ display: 'flex', gap: 3, marginTop: 5, flexWrap: 'wrap' }}>
           <button style={bs(col)} onClick={e => { e.stopPropagation(); onEdit(node) }}>✎ Edit</button>
@@ -321,265 +321,9 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
     </div>
   )
 }
-const bs = col => ({ background: 'none', border: `1px solid ${col}44`, color: col, fontSize: '0.69em', cursor: 'pointer', padding: '1px 5px', borderRadius: 3 })
+const bs = col => ({ background: 'none', border: `1px solid ${col}44`, color: col, fontSize: 9, cursor: 'pointer', padding: '1px 5px', borderRadius: 3 })
 
 // ── Main component ──────────────────────────────────────────────
-
-// ── Relationship Web (force-directed) ────────────────────────────
-function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode, setEdgeModal, setNodeModal }) {
-  const canvasRef = useRef(null)
-  const [positions, setPositions] = useState(() => {
-    const pos = {}
-    nodes.forEach((n, i) => {
-      const angle = (i / nodes.length) * 2 * Math.PI
-      const r = Math.min(300, 80 + nodes.length * 8)
-      pos[n.id] = { x: 500 + r * Math.cos(angle), y: 400 + r * Math.sin(angle), vx: 0, vy: 0 }
-    })
-    return pos
-  })
-  const [dragging, setDragging] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const panRef = useRef(null)
-  const animRef = useRef(null)
-  const posRef = useRef(positions)
-  posRef.current = positions
-
-  // Simple force simulation
-  useEffect(() => {
-    let running = true
-    function tick() {
-      if (!running) return
-      setPositions(prev => {
-        const next = {}
-        const ids = Object.keys(prev)
-        ids.forEach(id => { next[id] = { ...prev[id] } })
-
-        // Repulsion between all nodes
-        for (let i = 0; i < ids.length; i++) {
-          for (let j = i + 1; j < ids.length; j++) {
-            const a = next[ids[i]], b = next[ids[j]]
-            const dx = b.x - a.x, dy = b.y - a.y
-            const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy))
-            const force = Math.min(2000, 800 / (dist * dist))
-            const fx = (dx / dist) * force, fy = (dy / dist) * force
-            a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy
-          }
-        }
-
-        // Attraction along edges
-        edges.forEach(e => {
-          const a = next[e.from], b = next[e.to]
-          if (!a || !b) return
-          const dx = b.x - a.x, dy = b.y - a.y
-          const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy))
-          const target = 180
-          const force = (dist - target) * 0.03
-          const fx = (dx / dist) * force, fy = (dy / dist) * force
-          a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy
-        })
-
-        // Center gravity
-        ids.forEach(id => {
-          const n = next[id]
-          n.vx += (500 - n.x) * 0.002
-          n.vy += (400 - n.y) * 0.002
-        })
-
-        // Apply velocity with damping
-        ids.forEach(id => {
-          const n = next[id]
-          n.vx *= 0.85; n.vy *= 0.85
-          n.x += n.vx; n.y += n.vy
-        })
-
-        return next
-      })
-      animRef.current = requestAnimationFrame(tick)
-    }
-    // Run for 3 seconds then stop
-    animRef.current = requestAnimationFrame(tick)
-    setTimeout(() => { running = false; cancelAnimationFrame(animRef.current) }, 3000)
-    return () => { running = false; cancelAnimationFrame(animRef.current) }
-  }, [nodes.length, edges.length])
-
-  const W = 1000, H = 800
-  const NODE_R = 36
-
-  function handleNodeDrag(id, e) {
-    e.stopPropagation()
-    const startX = e.clientX, startY = e.clientY
-    const startPos = { ...posRef.current[id] }
-    function onMove(me) {
-      const dx = (me.clientX - startX) / zoom
-      const dy = (me.clientY - startY) / zoom
-      setPositions(prev => ({ ...prev, [id]: { ...prev[id], x: startPos.x + dx, y: startPos.y + dy, vx: 0, vy: 0 } }))
-    }
-    function onUp() {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
-  function onBgDown(e) {
-    if (e.button !== 0) return
-    panRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
-  }
-  function onBgMove(e) {
-    if (!panRef.current) return
-    setPan({ x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y })
-  }
-  function onBgUp() { panRef.current = null }
-
-  const sel = selected ? nodes.find(n => n.id === selected) : null
-  const selEdges = selected ? edges.filter(e => e.from === selected || e.to === selected) : []
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {/* Web canvas */}
-      <div style={{ overflow: 'hidden', maxHeight: '72vh', minHeight: 400, border: '1px solid var(--brd)',
-        borderRadius: 'var(--rl)', background: '#060608', position: 'relative', cursor: 'grab' }}
-        onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
-        onWheel={e => { e.preventDefault(); setZoom(z => Math.max(0.1, Math.min(4, z - e.deltaY * 0.001))) }}
-        onTouchStart={e => {
-          if (e.touches.length === 2) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX
-            const dy = e.touches[0].clientY - e.touches[1].clientY
-            e.currentTarget._pinchDist = Math.sqrt(dx*dx + dy*dy)
-            e.currentTarget._pinchZoom = zoom
-          }
-        }}
-        onTouchMove={e => {
-          if (e.touches.length === 2 && e.currentTarget._pinchDist) {
-            e.preventDefault()
-            const dx = e.touches[0].clientX - e.touches[1].clientX
-            const dy = e.touches[0].clientY - e.touches[1].clientY
-            const dist = Math.sqrt(dx*dx + dy*dy)
-            const scale = dist / e.currentTarget._pinchDist
-            setZoom(Math.max(0.1, Math.min(4, e.currentTarget._pinchZoom * scale)))
-          }
-        }}>
-
-        <svg width="100%" height="100%" style={{ minHeight: 400 }}
-          viewBox={`${-pan.x/zoom} ${-pan.y/zoom} ${W/zoom} ${H/zoom}`}>
-
-          {/* Edges */}
-          {edges.map((e, i) => {
-            const a = positions[e.from], b = positions[e.to]
-            if (!a || !b) return null
-            const c = allEdgeColors[e.type] || '#666688'
-            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
-            const isSelected = selected === e.from || selected === e.to
-            return (
-              <g key={e.id || i} style={{ cursor: editMode ? 'pointer' : 'default' }}
-                onClick={() => editMode && setEdgeModal(e)}>
-                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-                  stroke={c} strokeWidth={isSelected ? 2.5 : 1.5}
-                  opacity={selected && !isSelected ? 0.15 : 0.8} />
-                <text x={mx} y={my - 5} textAnchor="middle" fontSize={9} fill={c}
-                  opacity={isSelected || !selected ? 0.9 : 0.2}
-                  style={{ pointerEvents: 'none' }}>{e.type}</text>
-              </g>
-            )
-          })}
-
-          {/* Nodes */}
-          {nodes.map(n => {
-            const pos = positions[n.id]
-            if (!pos) return null
-            const col = allNodeColors[n.node_type] || '#8899bb'
-            const isSel = selected === n.id
-            const isDim = selected && !selEdges.some(e => e.from === n.id || e.to === n.id) && n.id !== selected
-            return (
-              <g key={n.id} style={{ cursor: 'pointer' }}
-                onMouseDown={e => handleNodeDrag(n.id, e)}
-                onClick={e => { e.stopPropagation(); setSelected(s => s === n.id ? null : n.id) }}
-                onDoubleClick={() => editMode && setNodeModal(n)}
-                opacity={isDim ? 0.2 : 1}>
-                <circle cx={pos.x} cy={pos.y} r={NODE_R}
-                  fill={`${col}22`} stroke={col}
-                  strokeWidth={isSel ? 3 : 1.5} />
-                {n.image ? (
-                  <image href={n.image} x={pos.x - NODE_R + 4} y={pos.y - NODE_R + 4}
-                    width={NODE_R * 2 - 8} height={NODE_R * 2 - 8}
-                    style={{ clipPath: 'circle()', borderRadius: '50%' }}
-                    preserveAspectRatio="xMidYMid slice" />
-                ) : (
-                  <text x={pos.x} y={pos.y - 2} textAnchor="middle" fontSize={10}
-                    fill={col} fontWeight="600" style={{ pointerEvents: 'none' }}>
-                    {(n.name || '').split(' ')[0]}
-                  </text>
-                )}
-                <text x={pos.x} y={pos.y + NODE_R + 13} textAnchor="middle" fontSize={9}
-                  fill={col} opacity={0.85} style={{ pointerEvents: 'none' }}>
-                  {n.name}
-                </text>
-                {n.title && (
-                  <text x={pos.x} y={pos.y + NODE_R + 23} textAnchor="middle" fontSize={8}
-                    fill="rgba(255,255,255,.4)" style={{ pointerEvents: 'none' }}>
-                    {n.title}
-                  </text>
-                )}
-              </g>
-            )
-          })}
-        </svg>
-
-        {/* Zoom controls */}
-        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4, alignItems:'center', background:'rgba(0,0,0,.5)', borderRadius:8, padding:'4px 8px' }}>
-          <button onClick={() => setZoom(z => Math.max(0.1, z - 0.15))}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize: '1.23em' }}>−</button>
-          <span style={{ fontSize: '0.77em', color:'var(--cca)', minWidth:40, textAlign:'center', fontWeight:700 }}>{Math.round(zoom*100)}%</span>
-          <button onClick={() => setZoom(z => Math.min(4, z + 0.15))}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize: '1.23em' }}>+</button>
-          <button onClick={() => { setZoom(1); setPan({x:0,y:0}) }}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--mut)', cursor:'pointer', fontSize: '0.92em' }}>⊙</button>
-        </div>
-      </div>
-
-      {/* Selected node info panel */}
-      {sel && (
-        <div style={{ marginTop: 8, padding: '10px 14px', background: 'var(--card)',
-          border: '1px solid var(--brd)', borderRadius: 8 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1em', color: allNodeColors[sel.node_type]||'var(--cc)' }}>
-              {sel.name}
-            </div>
-            <button onClick={() => setSelected(null)}
-              style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize: '1.23em' }}>✕</button>
-          </div>
-          {sel.title && <div style={{ fontSize: '0.77em', color:'var(--mut)', marginBottom:6 }}>{sel.title}</div>}
-          {selEdges.length > 0 && (
-            <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-              {selEdges.map((e, i) => {
-                const other = nodes.find(n => n.id === (e.from === sel.id ? e.to : e.from))
-                const c = allEdgeColors[e.type] || '#666688'
-                return (
-                  <span key={i} style={{ fontSize: '0.77em', padding:'2px 8px', borderRadius:10,
-                    background:`${c}22`, color:c, border:`1px solid ${c}44` }}>
-                    {e.type}: {other?.name || '?'}
-                  </span>
-                )
-              })}
-            </div>
-          )}
-          {editMode && (
-            <div style={{ display:'flex', gap:6, marginTop:8 }}>
-              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
-                onClick={() => setNodeModal(sel)}>✎ Edit</button>
-              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', color:'var(--cl)', borderColor:'var(--cl)' }}
-                onClick={() => setEdgeModal({ from: sel.id })}>+ Add Relation</button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function FamilyTree({ db }) {
   const raw = (db.db.family_tree || [{ id: '_root', nodes: [], edges: [], bg_color: '#060608', bg_image: null }])[0]
 
@@ -592,7 +336,6 @@ export default function FamilyTree({ db }) {
   const [nodeModal,setNodeModal]= useState(null)
   const [edgeModal,setEdgeModal]= useState(null)
   const [editMode, setEditMode] = useState(false)
-  const [viewMode, setViewMode] = useState('tree') // 'tree' | 'web'
   const [clearDlg, setClearDlg] = useState(false)
   const [showUnk,  setShowUnk]  = useState(false)
   const [zoom,     setZoom]     = useState(1)
@@ -765,17 +508,7 @@ export default function FamilyTree({ db }) {
     <div>
       {/* ── Toolbar ── */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cl)' }}>🌳 Family Tree</div>
-        <div style={{ display:'flex', gap:3 }}>
-          {[['🌳 Tree','tree'],['🕸 Web','web']].map(([l,v]) => (
-            <button key={v} onClick={() => setViewMode(v)}
-              style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:10,
-                background: viewMode===v ? 'var(--cl)' : 'none',
-                color: viewMode===v ? '#000' : 'var(--dim)',
-                border: `1px solid ${viewMode===v ? 'var(--cl)' : 'var(--brd)'}`,
-                cursor:'pointer' }}>{l}</button>
-          ))}
-        </div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cl)' }}>🌳 Family Tree</div>
         <button className="btn btn-sm btn-outline" style={{ color: editMode ? 'var(--cc)' : 'var(--dim)', borderColor: editMode ? 'var(--cc)' : 'var(--brd)' }} onClick={() => setEditMode(v => !v)}>
           {editMode ? '✓ Editing' : '✎ Edit Mode'}
         </button>
@@ -793,7 +526,7 @@ export default function FamilyTree({ db }) {
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
           <button style={bs('var(--dim)')} onClick={() => setZoom(z => Math.max(0.25, z - 0.15))}>−</button>
-          <span style={{ fontSize: '0.69em', color: 'var(--cca)', minWidth: 32, textAlign: 'center' }}>{Math.round(zoom*100)}%</span>
+          <span style={{ fontSize: 9, color: 'var(--cca)', minWidth: 32, textAlign: 'center' }}>{Math.round(zoom*100)}%</span>
           <button style={bs('var(--dim)')} onClick={() => setZoom(z => Math.min(3, z + 0.15))}>+</button>
           <button style={bs('var(--mut)')} onClick={() => { setZoom(1); setPan({ x:0, y:0 }) }} title="Reset view">⊙</button>
         </div>
@@ -803,26 +536,26 @@ export default function FamilyTree({ db }) {
       {/* ── BG controls ── */}
       {editMode && (
         <div className="tbar" style={{ paddingTop: 0, gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.77em', color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 10, color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 5 }}>
             BG: <input type="color" value={bgColor} onChange={e => { setBgColor(e.target.value); persist(null,null,e.target.value,undefined) }} style={{ width:26, height:20, padding:0, border:'1px solid var(--brd)', borderRadius:3, cursor:'pointer' }} />
           </span>
-          <label style={{ fontSize: '0.77em', color:'var(--dim)', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+          <label style={{ fontSize:10, color:'var(--dim)', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
             🖼 BG: <input ref={bgRef} type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setBgImage(ev.target.result);persist(null,null,null,ev.target.result)};r.readAsDataURL(f) }} />
             <span style={{ color:'var(--cc)', textDecoration:'underline' }}>Upload</span>
           </label>
-          {bgImage && <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544', fontSize: '0.69em' }} onClick={() => { setBgImage(null); persist(null,null,null,null) }}>Remove BG</button>}
-          <span style={{ fontSize: '0.69em', color:'var(--mut)' }}>Drag nodes to reposition · Scroll to zoom · Drag background to pan</span>
+          {bgImage && <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544', fontSize:9 }} onClick={() => { setBgImage(null); persist(null,null,null,null) }}>Remove BG</button>}
+          <span style={{ fontSize:9, color:'var(--mut)' }}>Drag nodes to reposition · Scroll to zoom · Drag background to pan</span>
         </div>
       )}
 
       {/* ── Unknown panel ── */}
       {showUnk && unknownEdges.length > 0 && (
         <div style={{ margin:'4px 0', padding:10, background:`${UNK_COL}11`, border:`1px solid ${UNK_COL}44`, borderRadius:6 }}>
-          <div style={{ fontSize: '0.77em', color:UNK_COL, fontWeight:700, marginBottom:6 }}>⚠ Unknown Relationships — click any to edit:</div>
+          <div style={{ fontSize:10, color:UNK_COL, fontWeight:700, marginBottom:6 }}>⚠ Unknown Relationships — click any to edit:</div>
           <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
             {unknownEdges.map(e => {
               const fn = nodes.find(n => n.id===e.from), tn = nodes.find(n => n.id===e.to)
-              return <button key={e.id} style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:4, background:'var(--card)', border:`1px solid ${UNK_COL}66`, color:UNK_COL, cursor:'pointer' }} onClick={() => { setEdgeModal(e); setShowUnk(false) }}>{fn?.name||'?'} ↔ {tn?.name||'?'}</button>
+              return <button key={e.id} style={{ fontSize:9, padding:'2px 7px', borderRadius:4, background:'var(--card)', border:`1px solid ${UNK_COL}66`, color:UNK_COL, cursor:'pointer' }} onClick={() => { setEdgeModal(e); setShowUnk(false) }}>{fn?.name||'?'} ↔ {tn?.name||'?'}</button>
             })}
           </div>
         </div>
@@ -833,7 +566,7 @@ export default function FamilyTree({ db }) {
         <div className="empty">
           <div className="empty-icon">🌳</div>
           <p>No family tree yet.</p>
-          <p style={{ fontSize: '0.85em', color:'var(--mut)', maxWidth:340, margin:'6px auto 14px' }}>
+          <p style={{ fontSize:11, color:'var(--mut)', maxWidth:340, margin:'6px auto 14px' }}>
             Click <strong>⟳ Sync Characters</strong> to auto-populate, or add people manually in Edit Mode.
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
@@ -843,13 +576,8 @@ export default function FamilyTree({ db }) {
         </div>
       )}
 
-      {/* ── Canvas / Web ── */}
-      {nodes.length > 0 && viewMode === 'web' && (
-        <RelationshipWeb nodes={nodes} edges={edges}
-          allEdgeColors={allEdgeColors} allNodeColors={allNodeColors}
-          editMode={editMode} setEdgeModal={setEdgeModal} setNodeModal={setNodeModal} />
-      )}
-      {nodes.length > 0 && viewMode === 'tree' && (
+      {/* ── Canvas ── */}
+      {nodes.length > 0 && (
         <div style={{ overflow:'hidden', maxHeight:'72vh', minHeight:300, border:'1px solid var(--brd)', borderRadius:'var(--rl)', background: bgImage ? `url(${bgImage}) center/cover` : bgColor, position:'relative', cursor: panning ? 'grabbing' : 'default' }}
           onWheel={onWheel} onMouseDown={onBgDown} onMouseMove={onBgMove} onMouseUp={onBgUp} onMouseLeave={onBgUp}
           onTouchStart={onTouchStartCanvas}
@@ -860,7 +588,7 @@ export default function FamilyTree({ db }) {
           {syncToast && (
             <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', zIndex:50,
               background:'rgba(0,0,0,.85)', border:'1px solid var(--sl)', borderRadius:6,
-              padding:'5px 14px', fontSize: '0.85em', color:'var(--sl)', whiteSpace:'nowrap', pointerEvents:'none' }}>
+              padding:'5px 14px', fontSize:11, color:'var(--sl)', whiteSpace:'nowrap', pointerEvents:'none' }}>
               {syncToast}
             </div>
           )}
@@ -905,7 +633,7 @@ export default function FamilyTree({ db }) {
 
       {/* ── Legend ── */}
       {nodes.length > 0 && (
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap', padding:'6px 0', fontSize: '0.69em', color:'var(--dim)' }}>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', padding:'6px 0', fontSize:9, color:'var(--dim)' }}>
           {allEdgeTypes.map(t => {
             const c = allEdgeColors[t]||'#666688', isUnk = t==='Unknown', cnt = isUnk ? unknownEdges.length : 0
             return (
@@ -921,7 +649,7 @@ export default function FamilyTree({ db }) {
       )}
 
       {nodes.length > 0 && (
-        <div style={{ fontSize: '0.69em', color:'var(--mut)', paddingBottom:4 }}>
+        <div style={{ fontSize:9, color:'var(--mut)', paddingBottom:4 }}>
           {nodes.length} people · {edges.length} relationships
           {unknownEdges.length > 0 && <span style={{ color:UNK_COL, marginLeft:8, fontWeight:700 }}>· {unknownEdges.length} Unknown — click ⚠ to review</span>}
         </div>
@@ -940,7 +668,7 @@ export default function FamilyTree({ db }) {
           onAddEdgeType={(t,c) => saveCustom([...customEdgeTypes,t], undefined, {...customEdgeColors,[t]:c}, undefined)} />}
       </Modal>
       <Modal open={clearDlg} onClose={() => setClearDlg(false)} title="Clear Family Tree" color="#ff3355">
-        <p style={{ fontSize: '0.92em', color:'var(--dim)', marginBottom:16 }}>Remove all {nodes.length} people and {edges.length} relationships? Cannot be undone.</p>
+        <p style={{ fontSize:12, color:'var(--dim)', marginBottom:16 }}>Remove all {nodes.length} people and {edges.length} relationships? Cannot be undone.</p>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setClearDlg(false)}>Cancel</button>
           <button className="btn btn-primary" style={{ background:'#ff3355' }} onClick={clearTree}>Clear Tree</button>
@@ -950,7 +678,7 @@ export default function FamilyTree({ db }) {
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Person" color="#ff3355">
         {deleteConfirm && (
           <>
-            <p style={{ fontSize: '0.92em', color:'var(--dim)', marginBottom:16 }}>
+            <p style={{ fontSize:12, color:'var(--dim)', marginBottom:16 }}>
               Remove <strong style={{ color:'var(--tx)' }}>{deleteConfirm.name}</strong> from the tree?
               All their relationships will also be removed. This cannot be undone.
             </p>
@@ -1010,11 +738,11 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
       <div className="field"><label>Portrait Image</label>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           {image && <img src={image} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',border:'1px solid var(--brd)'}} />}
-          <label style={{cursor:'pointer',fontSize: '0.85em',color:'var(--cc)',textDecoration:'underline'}}>
+          <label style={{cursor:'pointer',fontSize:11,color:'var(--cc)',textDecoration:'underline'}}>
             {image?'Change':'Upload photo'}
             <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setImage(ev.target.result);r.readAsDataURL(f)}} />
           </label>
-          {image && <button style={{background:'none',border:'none',color:'#ff3355',cursor:'pointer',fontSize: '0.85em'}} onClick={()=>setImage(null)}>Remove</button>}
+          {image && <button style={{background:'none',border:'none',color:'#ff3355',cursor:'pointer',fontSize:11}} onClick={()=>setImage(null)}>Remove</button>}
         </div>
       </div>
       <div className="field"><label>Notes</label><textarea value={form.notes} onChange={s('notes')} /></div>
@@ -1064,15 +792,15 @@ function EdgeForm({ edge, nodes, onSave, onDelete, onCancel, edgeTypes, edgeColo
         {form.type==='__custom__' && (
           <div style={{display:'flex',gap:8,marginTop:4,alignItems:'center'}}>
             <input style={{flex:1}} value={customType} onChange={e=>setCustomType(e.target.value)} placeholder="e.g. Ix'Citlatl Member, The Rebels" />
-            <span style={{fontSize: '0.69em',color:'var(--dim)'}}>Color:</span>
+            <span style={{fontSize:9,color:'var(--dim)'}}>Color:</span>
             <input type="color" value={customColor} onChange={e=>setCustomColor(e.target.value)} style={{width:28,height:22,padding:0,border:'1px solid var(--brd)',borderRadius:3,cursor:'pointer'}} />
           </div>
         )}
-        {dirNote && <div style={{fontSize: '0.69em',color:'var(--cca)',marginTop:3}}>{dirNote}</div>}
+        {dirNote && <div style={{fontSize:9,color:'var(--cca)',marginTop:3}}>{dirNote}</div>}
       </div>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <div style={{width:24,height:3,background:previewCol,borderRadius:2}} />
-        <span style={{fontSize: '0.69em',color:previewCol}}>{form.type!=='__custom__'?form.type:customType||'Custom'}</span>
+        <span style={{fontSize:9,color:previewCol}}>{form.type!=='__custom__'?form.type:customType||'Custom'}</span>
       </div>
       <div className="field">
         <label>Custom Label <span style={{color:'var(--mut)',fontWeight:400}}>(optional — overrides type name on the line)</span></label>

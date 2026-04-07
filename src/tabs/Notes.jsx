@@ -1,55 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
-import { uid } from '../constants'
+import { uid, TAB_RAINBOW, RAINBOW, rainbowAt } from '../constants'
 
 const NOTE_CATS = ['General', 'Canon', 'Brainstorm', 'Research', 'Todo', 'Quote', 'Other']
+const SIZES = ['XS', 'S', 'M', 'L', 'XL']
+const SIZE_COLS = { XS: 1, S: 1, M: 2, L: 3, XL: 4 }
+const COLOR = TAB_RAINBOW.notes
 
-function fmtDT(iso) {
-  if (!iso) return ''
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: 'short', day: 'numeric', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    })
-  } catch { return '' }
-}
-
-export default function Notes({ db }) {
+export default function Notes({ db, rainbowOn, colDivider }) {
   const notes = db.db.notes || []
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
-  const [viewNote, setViewNote] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
+  const [size, setSize] = useState(() => {
+    try { return localStorage.getItem('gcomp_notes_size') || 'M' } catch { return 'M' }
+  })
+
+  useEffect(() => {
+    const saved = db.settings?.notes_size
+    if (saved && SIZES.includes(saved)) setSize(saved)
+  }, [db.settings])
+
+  function setAndSaveSize(s) {
+    setSize(s)
+    try { localStorage.setItem('gcomp_notes_size', s) } catch {}
+    db.saveSetting('notes_size', s)
+  }
 
   const filtered = notes.filter(n => {
     const ms = !search || JSON.stringify(n).toLowerCase().includes(search.toLowerCase())
     const mc = catFilter === 'all' || n.category === catFilter
     return ms && mc
-  }).sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))
+  }).sort((a, b) => new Date(b.updated||0) - new Date(a.updated||0))
 
   const usedCats = [...new Set(notes.map(n => n.category).filter(Boolean))]
 
   function handleSave(form) {
-    const now = new Date().toISOString()
-    const entry = {
-      ...form,
-      id: form.id || uid(),
-      updated: now,
-      created: form.created || now,
-    }
-    db.upsertEntry('notes', entry)
-    setModalOpen(false)
-    setEditing(null)
+    db.upsertEntry('notes', { ...form, id: form.id || uid(), updated: new Date().toISOString() })
+    setModalOpen(false); setEditing(null)
   }
+
+  const cols = SIZE_COLS[size] || 2
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cw)' }}>📝 Notes & Lore</div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cw)', color: '#000' }}
-          onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: COLOR }}>📝 Notes & Lore</div>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {SIZES.map(s => (
+              <button key={s} onClick={() => setAndSaveSize(s)}
+                style={{ fontSize: 9, padding: '2px 6px', borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${size === s ? COLOR : 'var(--brd)'}`,
+                  background: size === s ? `${COLOR}22` : 'none',
+                  color: size === s ? COLOR : 'var(--mut)' }}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-primary btn-sm" style={{ background: COLOR, color: '#000' }}
+            onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
+        </div>
       </div>
 
       <div className="tbar" style={{ padding: '0 0 8px' }}>
@@ -57,9 +71,9 @@ export default function Notes({ db }) {
       </div>
 
       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 10 }}>
-        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: 'var(--cw)' }} onClick={() => setCatFilter('all')}>All</button>
+        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: COLOR }} onClick={() => setCatFilter('all')}>All</button>
         {usedCats.map(c => (
-          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: 'var(--cw)' }} onClick={() => setCatFilter(c)}>{c}</button>
+          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: COLOR }} onClick={() => setCatFilter(c)}>{c}</button>
         ))}
       </div>
 
@@ -67,80 +81,49 @@ export default function Notes({ db }) {
         <div className="empty">
           <div className="empty-icon">📝</div>
           <p>No notes yet.</p>
-          <button className="btn btn-primary" style={{ background: 'var(--cw)', color: '#000' }}
+          <button className="btn btn-primary" style={{ background: COLOR, color: '#000' }}
             onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Note</button>
         </div>
       )}
 
-      <div className="cg">
-        {filtered.map((n, i) => (
-          <div key={n.id} className="entry-card"
-            style={{ '--card-color': 'var(--cw)', background: i%2===1?'rgba(255,255,255,.01)':undefined, cursor: 'pointer' }}
-            onClick={() => setViewNote(n)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              {n.title && <div className="entry-title" style={{ fontSize: '1em' }}>{n.title}</div>}
-              {n.category && (
-                <span className="badge" style={{ color: 'var(--cw)', borderColor: 'rgba(255,204,0,.3)', flexShrink: 0, marginLeft: 8 }}>{n.category}</span>
-              )}
+      <div className={`cg${colDivider ? ' with-dividers' : ''}`}
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {filtered.map((n, i) => {
+          const cardCol = rainbowOn ? rainbowAt(i) : COLOR
+          const isExpanded = expandedId === n.id
+          return (
+            <div key={n.id} className="entry-card"
+              style={{ '--card-color': cardCol, cursor: 'pointer' }}
+              onClick={() => setExpandedId(isExpanded ? null : n.id)}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                {n.title && <div className="entry-title" style={{ fontSize: 13 }}>{n.title}</div>}
+                {n.category && <span className="badge" style={{ color: cardCol, borderColor: `${cardCol}44`, flexShrink: 0, marginLeft: 8 }}>{n.category}</span>}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--dim)', lineHeight: 1.5, marginTop: 4, whiteSpace: 'pre-wrap' }}>
+                {isExpanded
+                  ? n.content
+                  : (n.content?.length > 200 ? n.content.slice(0, 200) + '…' : n.content)}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 6 }}>
+                {n.updated ? new Date(n.updated).toLocaleDateString() : ''}
+                {!isExpanded && n.content?.length > 200 && <span style={{ color: cardCol, marginLeft: 6 }}>▼ expand</span>}
+                {isExpanded && <span style={{ color: cardCol, marginLeft: 6 }}>▲ collapse</span>}
+              </div>
+              <div className="entry-actions" onClick={e => e.stopPropagation()}>
+                <button className="btn btn-sm btn-outline" style={{ color: cardCol, borderColor: cardCol }}
+                  onClick={() => { setEditing(n); setModalOpen(true) }}>✎ Edit</button>
+                <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }}
+                  onClick={() => setConfirmId(n.id)}>✕</button>
+              </div>
             </div>
-            <div style={{ fontSize: '0.85em', color: 'var(--dim)', lineHeight: 1.5, marginTop: 4, whiteSpace: 'pre-wrap' }}>
-              {n.content?.length > 200 ? n.content.slice(0, 200) + '…' : n.content}
-            </div>
-            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 6 }}>
-              {n.updated ? fmtDT(n.updated) : fmtDT(n.created)}
-            </div>
-            <div className="entry-actions" onClick={e => e.stopPropagation()}>
-              <button className="btn btn-sm btn-outline" style={{ color: 'var(--cw)', borderColor: 'var(--cw)' }}
-                onClick={() => { setEditing(n); setModalOpen(true) }}>✎ Edit</button>
-              <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }}
-                onClick={() => setConfirmId(n.id)}>✕</button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      {/* View popup */}
-      {viewNote && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.8)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setViewNote(null)}>
-          <div style={{ background: 'var(--sf)', border: '1px solid var(--cw)44', borderRadius: 12,
-            padding: 20, maxWidth: 600, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <div>
-                {viewNote.title && (
-                  <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: 'var(--cw)', marginBottom: 4 }}>{viewNote.title}</div>
-                )}
-                {viewNote.category && (
-                  <span className="badge" style={{ color: 'var(--cw)', borderColor: 'rgba(255,204,0,.3)' }}>{viewNote.category}</span>
-                )}
-              </div>
-              <button onClick={() => setViewNote(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--mut)', fontSize: '1.38em', cursor: 'pointer' }}>✕</button>
-            </div>
-            <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.7, whiteSpace: 'pre-wrap', marginBottom: 12 }}>
-              {viewNote.content}
-            </div>
-            <div style={{ fontSize: '0.69em', color: 'var(--mut)', borderTop: '1px solid var(--brd)', paddingTop: 8 }}>
-              {viewNote.created && `Created ${fmtDT(viewNote.created)}`}
-              {viewNote.updated && viewNote.updated !== viewNote.created && ` · Edited ${fmtDT(viewNote.updated)}`}
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline btn-sm" style={{ color: 'var(--cw)', borderColor: 'var(--cw)' }}
-                onClick={() => { setViewNote(null); setEditing(viewNote); setModalOpen(true) }}>✎ Edit</button>
-              <button className="btn btn-outline btn-sm" onClick={() => setViewNote(null)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
-        title={editing?.id ? 'Edit Note' : 'Add Note'} color="var(--cw)">
-        {(editing !== null) && (
-          <NoteForm note={editing} onSave={handleSave}
-            onCancel={() => { setModalOpen(false); setEditing(null) }} cats={NOTE_CATS} />
-        )}
+        title={editing?.id ? 'Edit Note' : 'Add Note'} color={COLOR}>
+        {editing !== null && <NoteForm note={editing} onSave={handleSave}
+          onCancel={() => { setModalOpen(false); setEditing(null) }} cats={NOTE_CATS} />}
       </Modal>
 
       {confirmId && (
@@ -163,8 +146,7 @@ function NoteForm({ note, onSave, onCancel, cats }) {
   return (
     <>
       <div className="field-row">
-        <div className="field"><label>Title (optional)</label>
-          <input value={form.title} onChange={s('title')} placeholder="Note title…" /></div>
+        <div className="field"><label>Title (optional)</label><input value={form.title} onChange={s('title')} placeholder="Note title…" /></div>
         <div className="field"><label>Category</label>
           <select value={form.category} onChange={s('category')}>
             {cats.map(c => <option key={c} value={c}>{c}</option>)}
@@ -172,12 +154,14 @@ function NoteForm({ note, onSave, onCancel, cats }) {
         </div>
       </div>
       <div className="field"><label>Content *</label>
-        <textarea value={form.content} onChange={s('content')} placeholder="Write your note…" style={{ minHeight: 120 }} />
+        <textarea value={form.content} onChange={s('content')} placeholder="Write your note…" style={{ minHeight: 140 }} />
       </div>
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-primary" style={{ background: 'var(--cw)', color: '#000' }}
-          onClick={() => onSave(form)}>{note.id ? 'Save' : 'Add Note'}</button>
+        <button className="btn btn-primary" style={{ background: TAB_RAINBOW.notes, color: '#000' }}
+          onClick={() => onSave(form)}>
+          {note.id ? 'Save' : 'Add Note'}
+        </button>
       </div>
     </>
   )

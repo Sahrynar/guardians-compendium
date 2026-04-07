@@ -1,35 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
-import { uid, CATS } from '../constants'
+import { useState, useEffect } from 'react'
+import { uid, RAINBOW, rainbowAt } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
-// ── Spectrum palette cycling by session number ─────────────────
-const SPECTRUM = [
-  { bg: '#FFF0F5', border: '#C9546A', text: '#7A1A30' }, // pink
-  { bg: '#FFF0F0', border: '#C94444', text: '#7A1A1A' }, // red
-  { bg: '#FFF4EE', border: '#C96A3A', text: '#7A3010' }, // orange
-  { bg: '#FFFBEE', border: '#C9A020', text: '#7A5A00' }, // yellow
-  { bg: '#F2FAF0', border: '#3B8B3B', text: '#1A5A1A' }, // green
-  { bg: '#EEFAF8', border: '#1A8B7A', text: '#0A4A40' }, // teal
-  { bg: '#EAF3FF', border: '#1A5AAA', text: '#0A2A6A' }, // blue
-  { bg: '#F0EEFF', border: '#5A3ACC', text: '#2A1A7A' }, // indigo
-  { bg: '#F8EEFF', border: '#8A3ACC', text: '#4A1A7A' }, // violet
-]
-function spectrumCol(sessionNumber) {
-  const idx = ((sessionNumber || 1) - 1) % SPECTRUM.length
-  return SPECTRUM[idx]
-}
-
-// ── Element color palette (used in session form) ───────────────
-const ELEMENT_COLORS = {
-  Water: { bg: '#EAF3FF', border: '#1A3F7A', text: '#1A3F7A' },
-  Fire:  { bg: '#FFF2EA', border: '#7A1A1A', text: '#7A1A1A' },
-  Earth: { bg: '#F2FAF0', border: '#3B6D11', text: '#3B6D11' },
-  Air:   { bg: '#FDFBEA', border: '#5A4A00', text: '#5A4A00' },
-  Mixed: { bg: 'var(--card)', border: 'var(--brd)', text: 'var(--cc)' },
-}
-
-const ELEMENT_OPTS = ['Mixed', 'Water', 'Fire', 'Earth', 'Air']
-
+// ── Section definitions ────────────────────────────────────────
 const SECTION_LABELS = [
   { k: 'decisions',  l: 'Canon Decisions / Locks' },
   { k: 'built',      l: 'Built / Fixed' },
@@ -40,85 +13,59 @@ const SECTION_LABELS = [
   { k: 'notes',      l: 'Notes' },
 ]
 
+// ── Size config ────────────────────────────────────────────────
+const SIZES = ['XS', 'S', 'M', 'L', 'XL']
+const SIZE_COLS = { XS: 1, S: 1, M: 2, L: 2, XL: 3 }
+
 // ── Supabase helpers ───────────────────────────────────────────
 async function sbLoadSessions() {
   if (!hasSupabase) return null
   try {
-    const { data, error } = await supabase
-      .from('session_log')
-      .select('*')
-      .order('date', { ascending: true })
-    if (error) {
-      // Table or column doesn't exist — fall back to localStorage
-      console.warn('Session log table not available:', error.message)
-      return null
-    }
+    const { data, error } = await supabase.from('session_log').select('*').order('session_number', { ascending: true })
+    if (error) { console.warn('Session log table not available:', error.message); return null }
     return data || []
-  } catch (e) {
-    console.warn('Session log load failed:', e)
-    return null
-  }
+  } catch (e) { console.warn('Session log load failed:', e); return null }
 }
 
 async function sbUpsertSession(entry) {
   if (!hasSupabase) return
   try {
-    const { error } = await supabase
-      .from('session_log')
-      .upsert(entry, { onConflict: 'id' })
+    const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id' })
     if (error) console.warn('Session log upsert skipped:', error.message)
-  } catch (e) {
-    console.warn('Session log upsert failed:', e)
-  }
+  } catch {}
 }
 
 async function sbDeleteSession(id) {
   if (!hasSupabase) return
   try {
-    const { error } = await supabase
-      .from('session_log')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from('session_log').delete().eq('id', id)
     if (error) console.warn('Session log delete skipped:', error.message)
-  } catch (e) {
-    console.warn('Session log delete failed:', e)
-  }
+  } catch {}
 }
 
 // ── Local storage fallback ─────────────────────────────────────
 const LS_KEY = 'gcomp_session_log'
-function lsLoad() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || [] } catch { return [] }
-}
-function lsSave(sessions) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(sessions)) } catch {}
-}
+function lsLoad() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || [] } catch { return [] } }
+function lsSave(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch {} }
 
 // ── Format a session as markdown ──────────────────────────────
 function sessionToMd(s) {
-  const lines = []
-  lines.push(`# Session ${s.session_number} · ${s.date}`)
-  if (s.element && s.element !== 'Mixed') lines.push(`*Element: ${s.element}*`)
+  const lines = [`# Session ${s.session_number} · ${s.date}`]
   if (s.topics) lines.push(`\n**Topics:** ${s.topics}`)
-  if (s.opened_at || s.closed_at) {
-    lines.push(`\nOpened: ${s.opened_at || '—'} | Closed: ${s.closed_at || '—'}`)
-  }
+  if (s.opened_at || s.closed_at) lines.push(`\nOpened: ${s.opened_at || '—'} | Closed: ${s.closed_at || '—'}`)
   SECTION_LABELS.forEach(({ k, l }) => {
-    if (s[k] && s[k].trim()) {
-      lines.push(`\n## ${l}\n\n${s[k]}`)
-    }
+    if (s[k] && s[k].trim()) lines.push(`\n## ${l}\n\n${s[k]}`)
   })
   lines.push('\n---')
   return lines.join('\n')
 }
 
-// ── Empty session template ─────────────────────────────────────
+// ── Empty session ──────────────────────────────────────────────
 function emptySession(num) {
   return {
     id: uid(),
     session_number: num,
     date: new Date().toLocaleDateString('en-CA'),
-    element: 'Mixed',
     topics: '',
     opened_at: '',
     closed_at: '',
@@ -132,70 +79,97 @@ function emptySession(num) {
   }
 }
 
+// ── Get card accent color by list position ─────────────────────
+function cardColor(listIndex) {
+  return RAINBOW[listIndex % RAINBOW.length]
+}
+
 // ── Session card (view mode) ───────────────────────────────────
-function SessionCard({ session, onEdit, onDelete, selected, onSelect, fontSize = 12 }) {
+function SessionCard({ session, listIndex, onEdit, onDelete, selected, onSelect, size }) {
   const [expanded, setExpanded] = useState(false)
-  const col = spectrumCol(session.session_number)
+  const accent = cardColor(listIndex)
+  const tintBg = `${accent}12`
   const hasContent = SECTION_LABELS.some(({ k }) => session[k] && session[k].trim())
 
   return (
-    <div style={{
-      background: col.bg,
-      border: `1.5px solid ${col.border}`,
-      borderRadius: 10,
-      marginBottom: 10,
-      overflow: 'hidden',
-    }}>
+    <div
+      className="session-card"
+      style={{ background: tintBg, borderColor: accent }}
+    >
       {/* Header */}
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 14px', cursor: 'pointer',
-        }}
-        onClick={() => setExpanded(e => !e)}
-      >
+      <div className="session-card-header" onClick={() => setExpanded(e => !e)}>
         <input
           type="checkbox"
           checked={selected}
           onClick={e => e.stopPropagation()}
           onChange={e => onSelect(e.target.checked)}
-          style={{ flexShrink: 0 }}
+          style={{ flexShrink: 0, accentColor: accent }}
         />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: fontSize + 1, fontWeight: 700, color: col.text }}>
-            Session {session.session_number} · {session.date}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "'Cinzel', serif",
+            fontSize: size === 'XS' ? 11 : size === 'S' ? 12 : 13,
+            fontWeight: 700,
+            color: accent,
+            letterSpacing: '.05em',
+          }}>
+            SESSION · {session.date}
+            {session.session_number ? ` · #${session.session_number}` : ''}
           </div>
           {session.topics && (
-            <div style={{ fontSize: fontSize - 1, color: col.text, opacity: 0.75, marginTop: 2 }}>
+            <div style={{
+              fontSize: size === 'XS' ? 10 : 11,
+              color: 'var(--dim)',
+              marginTop: 2,
+              lineHeight: 1.4,
+            }}>
               {session.topics}
             </div>
           )}
+          {(session.opened_at || session.closed_at) && (
+            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>
+              {session.opened_at && `Opened: ${session.opened_at}`}
+              {session.opened_at && session.closed_at && ' · '}
+              {session.closed_at && `Closed: ${session.closed_at}`}
+            </div>
+          )}
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0, alignItems: 'center' }}>
           <button
             onClick={e => { e.stopPropagation(); onEdit(session) }}
-            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col.border}`, background: 'none', color: col.text, cursor: 'pointer' }}
+            style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4,
+              border: `1px solid ${accent}66`, background: 'none', color: accent, cursor: 'pointer' }}
           >Edit</button>
           <button
             onClick={e => { e.stopPropagation(); onDelete(session.id) }}
-            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: '1px solid #cc4444', background: 'none', color: '#cc4444', cursor: 'pointer' }}
+            style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4,
+              border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}
           >✕</button>
-          <span style={{ color: col.text, fontSize: '1.08em', opacity: 0.6 }}>{expanded ? '▲' : '▼'}</span>
+          <span style={{ color: accent, fontSize: 13, opacity: 0.6 }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
       {/* Expanded content */}
       {expanded && hasContent && (
-        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${col.border}33` }}>
+        <div className="session-card-body" style={{ borderTop: `1px solid ${accent}33` }}>
           {SECTION_LABELS.map(({ k, l }) => {
             if (!session[k] || !session[k].trim()) return null
             return (
-              <div key={k} style={{ marginTop: 10 }}>
-                <div style={{ fontSize: fontSize - 2, fontWeight: 700, color: col.text, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>{l}</div>
-                <div style={{ fontSize: fontSize, color: col.text, whiteSpace: 'pre-wrap', lineHeight: 1.6, opacity: 0.9 }}>{session[k]}</div>
+              <div key={k}>
+                <div className="session-section-label" style={{ color: accent }}>{l}</div>
+                <div className="session-section-body"
+                  style={{ fontSize: size === 'XS' ? 10 : size === 'S' ? 11 : 12 }}>
+                  {session[k]}
+                </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {expanded && !hasContent && (
+        <div className="session-card-body" style={{ borderTop: `1px solid ${accent}33`, padding: '8px 14px' }}>
+          <span style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No content recorded for this session.</span>
         </div>
       )}
     </div>
@@ -203,106 +177,111 @@ function SessionCard({ session, onEdit, onDelete, selected, onSelect, fontSize =
 }
 
 // ── Session form (add/edit) ────────────────────────────────────
-function SessionForm({ initial, onSave, onCancel }) {
+function SessionForm({ initial, onSave, onCancel, listIndex }) {
   const [form, setForm] = useState(initial)
-  const col = ELEMENT_COLORS[form.element] || ELEMENT_COLORS.Mixed
+  const accent = cardColor(listIndex)
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
   const inputStyle = {
     width: '100%', padding: '6px 9px', borderRadius: 6,
-    border: `1px solid ${col.border}66`, background: 'var(--sf)',
-    color: 'var(--tx)', fontSize: '0.92em', outline: 'none', boxSizing: 'border-box',
+    border: `1px solid ${accent}44`, background: 'var(--sf)',
+    color: 'var(--tx)', fontSize: 12, outline: 'none', boxSizing: 'border-box',
   }
-  const taStyle = { ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }
+  const taStyle = { ...inputStyle, minHeight: 90, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }
+  const labelStyle = { fontSize: 9, color: accent, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3, display: 'block', fontWeight: 700 }
 
   return (
     <div style={{
-      background: col.bg, border: `2px solid ${col.border}`,
+      background: `${accent}0e`,
+      border: `2px solid ${accent}`,
       borderRadius: 12, padding: 16, marginBottom: 14,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: col.text, fontWeight: 700 }}>
-          {initial.session_number ? `Edit Session ${initial.session_number}` : 'New Session'}
-        </div>
-        <button onClick={onCancel}
-          style={{ background: 'none', border: 'none', color: col.text, cursor: 'pointer',
-            fontSize: '1.38em', opacity: 0.6, padding: '0 4px', lineHeight: 1 }}
-          title="Close">✕</button>
+      <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: accent, marginBottom: 12, fontWeight: 700 }}>
+        {initial.session_number ? `Edit Session ${initial.session_number}` : 'New Session'}
       </div>
 
-      {/* Top row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
         <div>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Session #</div>
-          <input type="number" value={form.session_number} onChange={e => set('session_number', e.target.value)} style={inputStyle} />
+          <label style={labelStyle}>Session #</label>
+          <input style={inputStyle} type="number" value={form.session_number}
+            onChange={e => set('session_number', e.target.value)} />
         </div>
         <div>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Date</div>
-          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} />
+          <label style={labelStyle}>Date</label>
+          <input style={inputStyle} type="date" value={form.date}
+            onChange={e => set('date', e.target.value)} />
         </div>
         <div>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Element</div>
-          <select value={form.element} onChange={e => set('element', e.target.value)} style={inputStyle}>
-            {ELEMENT_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <label style={labelStyle}>Opened</label>
+          <input style={inputStyle} value={form.opened_at}
+            onChange={e => set('opened_at', e.target.value)} placeholder="e.g. 2:00 PM" />
         </div>
         <div>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Opened</div>
-          <input value={form.opened_at} onChange={e => set('opened_at', e.target.value)} placeholder="e.g. 9:43 AM CDT" style={inputStyle} />
-        </div>
-        <div>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Closed</div>
-          <input value={form.closed_at} onChange={e => set('closed_at', e.target.value)} placeholder="e.g. 11:30 PM CDT" style={inputStyle} />
+          <label style={labelStyle}>Closed</label>
+          <input style={inputStyle} value={form.closed_at}
+            onChange={e => set('closed_at', e.target.value)} placeholder="e.g. 5:30 PM" />
         </div>
       </div>
 
-      {/* Topics */}
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>Topics (brief summary line)</div>
-        <input value={form.topics} onChange={e => set('topics', e.target.value)} placeholder="e.g. Session Log tab · Journal migration · Aster import expansion" style={inputStyle} />
+        <label style={labelStyle}>Topics</label>
+        <input style={inputStyle} value={form.topics}
+          onChange={e => set('topics', e.target.value)}
+          placeholder="Session 14 · Tab wiring · Global search · Font size pass" />
       </div>
 
-      {/* Sections */}
       {SECTION_LABELS.map(({ k, l }) => (
-        <div key={k} style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: '0.77em', color: col.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.04em' }}>{l}</div>
-          <textarea
-            value={form[k]}
+        <div key={k} style={{ marginBottom: 10 }}>
+          <label style={labelStyle}>{l}</label>
+          <textarea style={taStyle} value={form[k] || ''}
             onChange={e => set(k, e.target.value)}
-            placeholder={`${l}…`}
-            style={taStyle}
-          />
+            placeholder={`Record ${l.toLowerCase()} here…`} />
         </div>
       ))}
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-        <button onClick={onCancel} style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.92em' }}>Cancel</button>
-        <button onClick={() => onSave(form)} style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: col.border, color: '#fff', cursor: 'pointer', fontSize: '0.92em', fontWeight: 700 }}>Save Session</button>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+        <button onClick={onCancel}
+          style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6,
+            border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+          Cancel
+        </button>
+        <button onClick={() => onSave(form)}
+          style={{ fontSize: 11, padding: '5px 14px', borderRadius: 6,
+            border: 'none', background: accent, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
+          Save Session
+        </button>
       </div>
     </div>
   )
 }
 
-// ── Main SessionLog tab ────────────────────────────────────────
-export default function SessionLog({ db }) {
+// ── Main SessionLog component ──────────────────────────────────
+export default function SessionLog({ db, rainbowOn }) {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [selected, setSelected] = useState(new Set())
-  const [msg, setMsg] = useState('')
   const [search, setSearch] = useState('')
-  const [filterEl, setFilterEl] = useState('All')
-  const [fontSize, setFontSize] = useState(12)
-  const [activeView, setActiveView] = useState('sessions') // 'sessions' | 'activity'
+  const [msg, setMsg] = useState('')
+  const [size, setSize] = useState(() => {
+    try { return localStorage.getItem('gcomp_sessionlog_size') || 'M' } catch { return 'M' }
+  })
 
-  function flash(text, ms = 2500) {
-    setMsg(text)
-    setTimeout(() => setMsg(''), ms)
+  function flash(m) { setMsg(m); setTimeout(() => setMsg(''), 2800) }
+
+  function setAndSaveSize(s) {
+    setSize(s)
+    try { localStorage.setItem('gcomp_sessionlog_size', s) } catch {}
+    db.saveSetting('sessionlog_size', s)
   }
 
-  // Load on mount
+  useEffect(() => {
+    const saved = db.settings?.sessionlog_size
+    if (saved && SIZES.includes(saved)) setSize(saved)
+  }, [db.settings])
+
   useEffect(() => {
     async function load() {
       setLoading(true)
@@ -310,10 +289,7 @@ export default function SessionLog({ db }) {
       setSessions(local)
       if (hasSupabase) {
         const remote = await sbLoadSessions()
-        if (remote) {
-          setSessions(remote)
-          lsSave(remote)
-        }
+        if (remote) { setSessions(remote); lsSave(remote) }
       }
       setLoading(false)
     }
@@ -344,33 +320,18 @@ export default function SessionLog({ db }) {
   }
 
   function toggleSelect(id, checked) {
-    setSelected(prev => {
-      const n = new Set(prev)
-      checked ? n.add(id) : n.delete(id)
-      return n
-    })
+    setSelected(prev => { const n = new Set(prev); checked ? n.add(id) : n.delete(id); return n })
   }
-
-  function selectAll() {
-    const visible = filtered.map(s => s.id)
-    setSelected(new Set(visible))
-  }
-
-  function clearSelection() { setSelected(new Set()) }
 
   function exportSelected() {
-    const toExport = sessions
-      .filter(s => selected.has(s.id))
-      .sort((a, b) => a.session_number - b.session_number)
+    const toExport = sessions.filter(s => selected.has(s.id)).sort((a, b) => a.session_number - b.session_number)
     if (!toExport.length) { flash('No sessions selected.'); return }
     const header = `# The Guardians of Lajen — Session Log\n\n*Exported ${new Date().toLocaleDateString()}*\n\n---\n\n`
-    const body = toExport.map(sessionToMd).join('\n\n')
-    const blob = new Blob([header + body], { type: 'text/markdown' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
+    const blob = new Blob([header + toExport.map(sessionToMd).join('\n\n')], { type: 'text/markdown' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = toExport.length === 1
       ? `session_${toExport[0].session_number}_${toExport[0].date}.md`
-      : `guardians_sessions_export_${new Date().toISOString().slice(0,10)}.md`
+      : `guardians_sessions_${new Date().toISOString().slice(0,10)}.md`
     a.click()
     flash(`Exported ${toExport.length} session${toExport.length > 1 ? 's' : ''}.`)
   }
@@ -379,25 +340,21 @@ export default function SessionLog({ db }) {
     const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number)
     if (!sorted.length) { flash('No sessions to export.'); return }
     const header = `# The Guardians of Lajen — Complete Session Log\n\n*Sahrynar (Melissa) & Claude · Exported ${new Date().toLocaleDateString()}*\n\n---\n\n`
-    const body = sorted.map(sessionToMd).join('\n\n')
-    const blob = new Blob([header + body], { type: 'text/markdown' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
+    const blob = new Blob([header + sorted.map(sessionToMd).join('\n\n')], { type: 'text/markdown' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `guardians_session_log_complete_${new Date().toISOString().slice(0,10)}.md`
     a.click()
     flash(`Exported all ${sorted.length} sessions.`)
   }
 
-  // Filter
   const filtered = sessions.filter(s => {
-    const matchEl = filterEl === 'All' || s.element === filterEl
     const q = search.toLowerCase()
-    const matchQ = !q || [s.topics, s.decisions, s.built, s.notes, s.questions, s.flags, s.todo, s.completed]
+    return !q || [s.topics, s.decisions, s.built, s.notes, s.questions, s.flags, s.todo, s.completed]
       .some(f => f && f.toLowerCase().includes(q))
-    return matchEl && matchQ
   })
 
-  const nextNum = sessions.length ? Math.max(...sessions.map(s => Number(s.session_number))) + 1 : 13
+  const nextNum = sessions.length ? Math.max(...sessions.map(s => Number(s.session_number))) + 1 : 1
+  const cols = SIZE_COLS[size] || 1
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--dim)', fontFamily: "'Cinzel',serif" }}>
@@ -407,214 +364,107 @@ export default function SessionLog({ db }) {
 
   return (
     <div>
-      {/* View toggle */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14, alignItems: 'center' }}>
-        {[['sessions','📋 Sessions'],['activity','⚡ Activity Log']].map(([v,l]) => (
-          <button key={v} onClick={() => setActiveView(v)}
-            style={{ fontSize: '0.85em', padding: '4px 14px', borderRadius: 16, fontWeight: 600,
-              background: activeView === v ? 'var(--cc)' : 'var(--card)',
-              color: activeView === v ? '#000' : 'var(--dim)',
-              border: `1px solid ${activeView === v ? 'var(--cc)' : 'var(--brd)'}`,
-              cursor: 'pointer' }}>{l}</button>
-        ))}
-      </div>
-
-      {/* ── Activity Log view ── */}
-      {activeView === 'activity' && (
-        <ActivityLog db={db} />
-      )}
-
-      {/* ── Sessions view ── */}
-      {activeView === 'sessions' && (<>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: 'var(--cc)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, color: RAINBOW[2] }}>
           📋 Session Log
         </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Font size controls */}
-          <div style={{ display:'flex', gap:2, alignItems:'center', marginRight: 4 }}>
-            <button onClick={() => setFontSize(s => Math.max(9, s - 1))}
-              style={{ fontSize: '0.77em', padding:'2px 6px', borderRadius:4, background:'none',
-                border:'1px solid var(--brd)', color:'var(--dim)', cursor:'pointer' }}>A−</button>
-            <button onClick={() => setFontSize(s => Math.min(18, s + 1))}
-              style={{ fontSize: '0.77em', padding:'2px 6px', borderRadius:4, background:'none',
-                border:'1px solid var(--brd)', color:'var(--dim)', cursor:'pointer' }}>A+</button>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Size picker */}
+          <div style={{ display: 'flex', gap: 2 }}>
+            {SIZES.map(s => (
+              <button key={s} onClick={() => setAndSaveSize(s)}
+                style={{ fontSize: 9, padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${size === s ? RAINBOW[2] : 'var(--brd)'}`,
+                  background: size === s ? `${RAINBOW[2]}22` : 'none',
+                  color: size === s ? RAINBOW[2] : 'var(--mut)' }}>
+                {s}
+              </button>
+            ))}
           </div>
           {selected.size > 0 && (
             <>
-              <button onClick={exportSelected} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: '1px solid var(--cc)', background: 'none', color: 'var(--cc)', cursor: 'pointer' }}>
-                ↓ Export {selected.size} selected
+              <button onClick={exportSelected} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 8,
+                border: `1px solid ${RAINBOW[2]}`, background: 'none', color: RAINBOW[2], cursor: 'pointer' }}>
+                ↓ Export {selected.size}
               </button>
-              <button onClick={clearSelection} style={{ fontSize: '0.85em', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+              <button onClick={() => setSelected(new Set())} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 8,
+                border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
                 Clear
               </button>
             </>
           )}
-          <button onClick={exportAll} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-            ↓ Export All
+          <button onClick={exportAll} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 8,
+            border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+            ↓ All
           </button>
-          <button
-            onClick={() => { setAdding(true); setEditing(null) }}
-            style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: 'none', background: 'var(--cc)', color: '#000', cursor: 'pointer', fontWeight: 700 }}
-          >
+          <button onClick={() => { setAdding(true); setEditing(null) }}
+            style={{ fontSize: 10, padding: '3px 10px', borderRadius: 8,
+              border: 'none', background: RAINBOW[2], color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
             + New Session
           </button>
         </div>
       </div>
 
-      {/* Flash message */}
+      {/* Flash */}
       {msg && (
-        <div style={{ fontSize: '0.92em', color: 'var(--cc)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>
+        <div style={{ fontSize: 11, color: RAINBOW[2], marginBottom: 8, padding: '5px 10px',
+          background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>
           {msg}
         </div>
       )}
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+      {/* Search */}
+      <div style={{ marginBottom: 12 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search sessions…"
-          style={{ flex: 1, minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.92em', outline: 'none' }}
-        />
-        {filtered.length > 0 && (
-          <button onClick={selectAll} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-            Select all visible
-          </button>
-        )}
+          style={{ width: '100%', padding: '6px 10px', borderRadius: 6,
+            border: '1px solid var(--brd)', background: 'var(--sf)',
+            color: 'var(--tx)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
       </div>
 
       {/* Add form */}
       {adding && (
-        <SessionForm
-          initial={emptySession(nextNum)}
-          onSave={saveSession}
-          onCancel={() => setAdding(false)}
-        />
+        <SessionForm initial={emptySession(nextNum)} listIndex={sessions.length}
+          onSave={saveSession} onCancel={() => setAdding(false)} />
       )}
 
       {/* Edit form */}
       {editing && (
-        <SessionForm
-          initial={editing}
-          onSave={saveSession}
-          onCancel={() => setEditing(null)}
-        />
+        <SessionForm initial={editing}
+          listIndex={sessions.findIndex(s => s.id === editing.id)}
+          onSave={saveSession} onCancel={() => setEditing(null)} />
       )}
 
-      {/* Session list */}
+      {/* Session grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--dim)', fontStyle: 'italic', fontSize: '1em' }}>
-          {sessions.length === 0 ? 'No sessions yet. Add your first one!' : 'No sessions match this filter.'}
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)', fontStyle: 'italic', fontSize: 13 }}>
+          {sessions.length === 0 ? 'No sessions yet. Add your first one!' : 'No sessions match your search.'}
         </div>
       ) : (
-        filtered.map(s => (
-          <SessionCard
-            key={s.id}
-            session={s}
-            onEdit={s => { setEditing(s); setAdding(false) }}
-            onDelete={deleteSession}
-            selected={selected.has(s.id)}
-            onSelect={checked => toggleSelect(s.id, checked)}
-            fontSize={fontSize}
-          />
-        ))
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gap: 'var(--col-gap, 6px)',
+        }}>
+          {filtered.map((s, i) => (
+            <SessionCard
+              key={s.id}
+              session={s}
+              listIndex={i}
+              onEdit={s => { setEditing(s); setAdding(false) }}
+              onDelete={deleteSession}
+              selected={selected.has(s.id)}
+              onSelect={checked => toggleSelect(s.id, checked)}
+              size={size}
+            />
+          ))}
+        </div>
       )}
 
-      <div style={{ fontSize: '0.85em', color: 'var(--dim)', textAlign: 'center', marginTop: 12 }}>
-        {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Synced to cloud' : 'Local only'}
+      <div style={{ fontSize: 10, color: 'var(--mut)', textAlign: 'center', marginTop: 12 }}>
+        {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Cloud sync on' : 'Local only'}
       </div>
-      </>)}
-    </div>
-  )
-}
-
-// ── Activity Log component ────────────────────────────────────────
-function ActivityLog({ db }) {
-  const [filterCat, setFilterCat] = useState('all')
-  const [limit, setLimit] = useState(50)
-
-  // Gather all entries with updated_at or created fields, sort by recency
-  const allActivity = useMemo(() => {
-    if (!db?.db) return []
-    const items = []
-    const skip = new Set(['family_tree','settings','session_log'])
-    Object.entries(db.db).forEach(([cat, entries]) => {
-      if (skip.has(cat) || !Array.isArray(entries)) return
-      entries.forEach(e => {
-        const ts = e.updated_at || e.updated || e.created || null
-        if (!ts) return
-        items.push({
-          id: e.id,
-          cat,
-          name: e.name || e.title || e.display_name || e.word || e.chapter_num || '(unnamed)',
-          ts,
-          status: e.status || null,
-        })
-      })
-    })
-    return items.sort((a, b) => new Date(b.ts) - new Date(a.ts))
-  }, [db?.db])
-
-  const cats = useMemo(() => {
-    const c = new Set(allActivity.map(a => a.cat))
-    return ['all', ...c]
-  }, [allActivity])
-
-  const filtered = filterCat === 'all' ? allActivity : allActivity.filter(a => a.cat === filterCat)
-
-  if (!allActivity.length) return (
-    <div className="empty">
-      <div className="empty-icon">⚡</div>
-      <p>No activity yet — entries with timestamps will appear here.</p>
-    </div>
-  )
-
-  return (
-    <div>
-      <div style={{ fontSize: '0.85em', color: 'var(--mut)', marginBottom: 10 }}>
-        Showing entries with edit timestamps, newest first.
-      </div>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-        {cats.map(c => {
-          const cat = CATS?.[c]
-          return (
-            <button key={c} onClick={() => setFilterCat(c)}
-              style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer',
-                background: filterCat === c ? (cat?.c || 'var(--cc)') : 'none',
-                color: filterCat === c ? '#000' : 'var(--dim)',
-                border: `1px solid ${filterCat === c ? (cat?.c || 'var(--cc)') : 'var(--brd)'}` }}>
-              {c === 'all' ? 'All' : (cat?.i ? `${cat.i} ${cat.l}` : c)}
-            </button>
-          )
-        })}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {filtered.slice(0, limit).map((a, i) => {
-          const d = new Date(a.ts)
-          const dateStr = isNaN(d) ? a.ts : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          const timeStr = isNaN(d) ? '' : d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-          return (
-            <div key={a.id + i} style={{ display: 'flex', alignItems: 'center', gap: 10,
-              padding: '6px 10px', background: i % 2 === 0 ? 'var(--card)' : 'transparent',
-              borderRadius: 4, fontSize: '0.85em' }}>
-              <span style={{ minWidth: 90, color: 'var(--mut)', fontSize: '0.77em' }}>{dateStr}</span>
-              {timeStr && <span style={{ minWidth: 60, color: 'var(--mut)', fontSize: '0.77em' }}>{timeStr}</span>}
-              <span style={{ flex: 1, color: 'var(--tx)', fontWeight: 500 }}>{a.name}</span>
-              <span style={{ fontSize: '0.77em', color: 'var(--cc)', opacity: 0.7 }}>{a.cat}</span>
-              {a.status && <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{a.status}</span>}
-            </div>
-          )
-        })}
-      </div>
-      {filtered.length > limit && (
-        <button onClick={() => setLimit(l => l + 50)}
-          style={{ marginTop: 10, fontSize: '0.85em', padding: '5px 14px', borderRadius: 6,
-            background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>
-          Show more ({filtered.length - limit} remaining)
-        </button>
-      )}
     </div>
   )
 }
