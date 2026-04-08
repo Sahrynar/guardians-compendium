@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'WizardOfTheMoon';
+  src: url('/WizardOfTheMoon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {
   --bg: #060608;
@@ -61,38 +68,22 @@ button { cursor: pointer; }
 .cg { display: grid; gap: 6px; }
 
 /* ── Nav ────────────────────────────────────────────────────── */
-/* ── Site header (above nav) ─────────────────────────────────── */
-.site-header {
-  background: var(--bg);
-  border-bottom: 1px solid var(--brd);
-  position: relative;
-  user-select: none;
-}
-.site-header:hover { background: rgba(255,255,255,.01); }
-
-/* Pencil icon — subtle, only visible on hover of header zone */
-.header-pencil {
-  position: absolute; top: 8px; right: 10px;
-  background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.15);
-  border-radius: 50%; width: 26px; height: 26px;
-  font-size: 13px; color: rgba(255,255,255,.5);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .2s;
-  z-index: 10;
-}
-.site-header:hover .header-pencil { opacity: 1; }
-
-/* ── Nav ────────────────────────────────────────────────────── */
 .nav {
   position: sticky; top: 0; z-index: 100;
   background: var(--bg);
   border-bottom: 1px solid var(--brd);
-  padding: 5px 10px;
+  padding: 6px 10px;
 }
 .nav-top {
   display: flex; align-items: center;
-  justify-content: space-between; margin-bottom: 4px;
+  justify-content: space-between; margin-bottom: 5px;
 }
+.nav-title {
+  font-family: 'Cinzel', serif; font-size: 12px;
+  color: var(--dim); letter-spacing: .08em;
+  text-align: center; flex: 1;
+}
+.nav-title b { color: var(--cc); }
 .nav-btns { display: flex; gap: 4px; align-items: center; }
 .nav-btn {
   background: var(--sf); border: 1px solid var(--brd);
@@ -100,10 +91,6 @@ button { cursor: pointer; }
   padding: 3px 8px; font-size: 11px; transition: .2s;
 }
 .nav-btn:hover { color: var(--tx); border-color: var(--brh); }
-/* Bigger nav buttons for back/forward/home and A+/A- */
-.nav-btn-lg {
-  padding: 5px 12px; font-size: 14px; font-weight: 600;
-}
 
 /* ── Tabs ────────────────────────────────────────────────────── */
 .tabs-bar {

@@ -66,23 +66,24 @@ export default function Dashboard({ db, goTo }) {
     <div key={item.id || i} onClick={onClick}
       style={{ padding: '4px 6px', borderRadius: 4, cursor: 'pointer', marginBottom: 2,
         background: i % 2 === 0 ? 'var(--card)' : 'transparent',
-        borderLeft: `2px solid ${color}` }}
+        borderLeft: `2px solid ${color}`, minWidth: 0, overflow: 'hidden' }}
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
       <div style={{ fontSize: 11, color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {item.name}
       </div>
       {item.detail && <div style={{ fontSize: 9, color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.detail}</div>}
-      {item.cat && <div style={{ fontSize: 9, color: color, opacity: 0.8 }}>{CATS[item.cat]?.i} {CATS[item.cat]?.l}</div>}
+      {item.cat && <div style={{ fontSize: 9, color: color, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CATS[item.cat]?.i} {CATS[item.cat]?.l}</div>}
     </div>
   )
 
   const panelHead = (icon, label, color, count) => (
     <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase',
       letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span>{icon} {label}</span>
-      {count != null && <span style={{ color: 'var(--mut)', fontWeight: 400 }}>+{count}</span>}
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      minWidth: 0, overflow: 'hidden' }}>
+      <span style={{ whiteSpace: 'nowrap' }}>{icon} {label}</span>
+      {count != null && <span style={{ color: 'var(--mut)', fontWeight: 400, flexShrink: 0 }}>+{count}</span>}
     </div>
   )
 
@@ -148,7 +149,7 @@ export default function Dashboard({ db, goTo }) {
       </div>
 
       {/* ── Main body: left nav + 3 panels ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 1fr 1fr', gap: 12, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '160px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
 
         {/* Left nav — thin, rainbow list */}
         <div>
@@ -174,7 +175,7 @@ export default function Dashboard({ db, goTo }) {
         </div>
 
         {/* Recent */}
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
           {recent.length === 0
             ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
@@ -187,7 +188,7 @@ export default function Dashboard({ db, goTo }) {
         </div>
 
         {/* Questions */}
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('?', 'Questions', 'var(--cq)', (data.questions || []).filter(q => q.status === 'open').length)}
           {questions.length === 0
             ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
@@ -200,7 +201,7 @@ export default function Dashboard({ db, goTo }) {
         </div>
 
         {/* Flags */}
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
           {flags.length === 0
             ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>

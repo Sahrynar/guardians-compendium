@@ -152,7 +152,7 @@ export default function App() {
   function renderTab() {
     if (db.loading) return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--dim)' }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14 }}>
           {db.hasSupabase ? 'Connecting to cloud…' : 'Loading…'}
         </div>
@@ -197,7 +197,7 @@ export default function App() {
           // Image mode
           <div style={{ position: 'relative' }}>
             <img src={headerImg} alt="header"
-              style={{ width: '100%', maxHeight: 120, objectFit: 'cover', display: 'block' }} />
+              style={{ width: '100%', height: 'auto', display: 'block' }} />
             {/* Pencil — hover only, top right */}
             <button
               className="header-pencil"
@@ -216,7 +216,7 @@ export default function App() {
           <div style={{ position: 'relative', padding: '10px 16px 8px', textAlign: 'center' }}>
             <span style={{
               fontFamily: "'WizardOfTheMoon', 'Cinzel', serif",
-              fontSize: 32,
+              fontSize: 48,
               background: 'linear-gradient(90deg,#ff69b4,#ff6b6b,#ff8c00,#ffd600,#38b000,#00b4d8,#4361ee,#9d4edd,#c77dff,#ff48c4)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               letterSpacing: '.02em', display: 'inline-block', lineHeight: 1.2,
