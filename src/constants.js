@@ -49,12 +49,11 @@ export const SEASON_TAG_COLORS = {
   Summer: '#00ffcc', Harvest: '#f4c430', Winter: '#6688cc', Spring: '#7fff00'
 }
 
-// ── 18-stop rainbow (full visible spectrum, warm→cool, cycling) ─
-// Pink → Coral → Red → Red-Orange → Orange → Amber → Yellow →
-// Yellow-Green → Green → Teal → Cyan → Sky Blue → Blue →
-// Indigo → Violet → Purple → Magenta → Hot Pink → (repeat)
+// ── 18-stop rainbow (locked Session 18) ──────────────────────────
+// Artistic colour wheel: Pink → warm arc → cool arc → Magenta → Hot Pink → back to Pink
+// Bubblegum Pink starts, Hot Pink ends, Magenta bridges Purple to Hot Pink
 export const RAINBOW = [
-  '#ff69b4', // 0  Pink
+  '#ff69b4', // 0  Pink (Bubblegum)
   '#ff6b6b', // 1  Coral
   '#e63946', // 2  Red
   '#f4442e', // 3  Red-Orange
@@ -74,59 +73,65 @@ export const RAINBOW = [
   '#ff48c4', // 17 Hot Pink
 ]
 
-// Helper: get rainbow colour by index (wraps around)
-export const rainbowAt = (i) => RAINBOW[i % RAINBOW.length]
+// Rainbow colour by position — wraps automatically
+export const rainbowAt = (i) => RAINBOW[((i % 18) + 18) % 18]
 
-// ── Per-tab rainbow colour map (Dashboard = white) ─────────────
+// ── Per-tab rainbow colour map (24 tabs, spectrum distributed evenly) ──
+// Dashboard = white (special neutral). Remaining 23 tabs distributed across 18 stops,
+// cycling as needed so every tab has a distinct colour.
 export const TAB_RAINBOW = {
-  dashboard:  '#ffffff',
-  characters: '#ff69b4', // Pink
-  wardrobe:   '#ff6b6b', // Coral
-  items:      '#e63946', // Red
-  locations:  '#f4442e', // Red-Orange
-  timeline:   '#ff8c00', // Orange
-  scenes:     '#ffb700', // Amber
-  calendar:   '#ffd600', // Yellow
-  tools:      '#aacc00', // Yellow-Green
-  canon:      '#38b000', // Green
-  world:      '#0fb5a0', // Teal
-  questions:  '#00b4d8', // Cyan
-  eras:       '#4cc9f0', // Sky Blue
-  spellings:  '#3a86ff', // Blue
-  map:        '#4361ee', // Indigo
-  wiki:       '#7b2d8b', // Violet
-  notes:      '#9d4edd', // Purple
-  journal:    '#c77dff', // Magenta
-  familytree: '#ff48c4', // Hot Pink
-  flags:      '#ff69b4', // cycles back to Pink
-  manuscript: '#ff6b6b', // Coral (for tabs that include it)
-  inventory:  '#e63946', // Red
-  outfitsnapshot: '#f4442e', // Red-Orange
-  sessionlog: '#ff8c00', // Orange
+  dashboard:    '#ffffff', // special: white
+  wiki:         '#ff69b4', // 0  Pink
+  glossary:     '#ff6b6b', // 1  Coral
+  characters:   '#e63946', // 2  Red
+  familytree:   '#f4442e', // 3  Red-Orange
+  world:        '#ff8c00', // 4  Orange
+  locations:    '#ffb700', // 5  Amber
+  map:          '#ffd600', // 6  Yellow
+  manuscript:   '#aacc00', // 7  Yellow-Green
+  scenes:       '#38b000', // 8  Green
+  timeline:     '#0fb5a0', // 9  Teal
+  eras:         '#00b4d8', // 10 Cyan
+  calendar:     '#4cc9f0', // 11 Sky Blue
+  inventory:    '#3a86ff', // 12 Blue
+  wardrobe:     '#4361ee', // 13 Indigo
+  items:        '#7b2d8b', // 14 Violet
+  flags:        '#9d4edd', // 15 Purple
+  questions:    '#c77dff', // 16 Magenta
+  canon:        '#ff48c4', // 17 Hot Pink
+  spellings:    '#ff69b4', // cycles: Pink
+  notes:        '#ff6b6b', // cycles: Coral
+  journal:      '#38b000', // cycles: Green (distinct from adjacent)
+  tools:        '#3a86ff', // cycles: Blue
+  sessionlog:   '#9d4edd', // cycles: Purple
 }
 
 // ── Category config ─────────────────────────────────────────────
 export const CATS = {
-  dashboard:  { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
-  characters: { l: 'Characters',   i: '👤', c: 'var(--cc)' },
-  wardrobe:   { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
-  items:      { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
-  locations:  { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
-  timeline:   { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
-  scenes:     { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
-  calendar:   { l: 'Calendar',     i: '🌙', c: 'var(--cca)' },
-  tools:      { l: 'Tools',        i: '🔧', c: 'var(--ctl)' },
-  canon:      { l: 'Canon',        i: '✦',  c: 'var(--ccn)' },
-  world:      { l: 'World',        i: '🌐', c: 'var(--cw)' },
-  questions:  { l: 'Questions',    i: '❓', c: 'var(--cq)' },
-  eras:       { l: 'Eras & Dating',i: '⧖',  c: 'var(--cca)' },
-  spellings:  { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
-  map:        { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
-  wiki:       { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
-  notes:      { l: 'Notes',        i: '📝', c: 'var(--cw)' },
-  journal:    { l: 'Journal',      i: '📓', c: 'var(--cc)' },
-  familytree: { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
-  flags:      { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
+  dashboard:   { l: 'Dashboard',    i: '⊞',  c: 'var(--cd)' },
+  wiki:        { l: 'Wiki',         i: '📖', c: 'var(--cc)' },
+  glossary:    { l: 'Glossary',     i: '📚', c: 'var(--csp)' },
+  characters:  { l: 'Characters',   i: '👤', c: 'var(--cc)' },
+  familytree:  { l: 'Family Tree',  i: '🌳', c: 'var(--cl)' },
+  world:       { l: 'World',        i: '🌐', c: 'var(--cw)' },
+  locations:   { l: 'Locations',    i: '🗺',  c: 'var(--cl)' },
+  map:         { l: 'Maps',         i: '🌍', c: 'var(--cl)' },
+  manuscript:  { l: 'Manuscript',   i: '📜', c: 'var(--csc)' },
+  scenes:      { l: 'Scenes',       i: '🎬', c: 'var(--csc)' },
+  timeline:    { l: 'Timeline',     i: '⏳', c: 'var(--ct)' },
+  eras:        { l: 'Eras & Dating',i: '⧖',  c: 'var(--cca)' },
+  calendar:    { l: 'Calendar',     i: '🌙', c: 'var(--cca)' },
+  inventory:   { l: 'Inventory',    i: '🎒', c: 'var(--ci)' },
+  wardrobe:    { l: 'Wardrobe',     i: '👗', c: 'var(--cwr)' },
+  items:       { l: 'Items',        i: '⚔',  c: 'var(--ci)' },
+  flags:       { l: 'Flags',        i: '🚩', c: 'var(--cfl)' },
+  questions:   { l: 'Questions',    i: '❓', c: 'var(--cq)' },
+  canon:       { l: 'Canon',        i: '✦',  c: 'var(--ccn)' },
+  spellings:   { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
+  notes:       { l: 'Notes',        i: '📝', c: 'var(--cw)' },
+  journal:     { l: 'Journal',      i: '📓', c: 'var(--cc)' },
+  tools:       { l: 'Tools',        i: '🔧', c: 'var(--ctl)' },
+  sessionlog:  { l: 'Session Log',  i: '📋', c: 'var(--ct)' },
 }
 
 // ── Character field definitions ────────────────────────────────

@@ -24,12 +24,18 @@ import Wiki from './tabs/Wiki'
 import FamilyTree from './tabs/FamilyTree'
 import Notes from './tabs/Notes'
 import Journal from './tabs/Journal'
+import Manuscript from './tabs/Manuscript'
+import Inventory from './tabs/Inventory'
+import OutfitSnapshot from './tabs/OutfitSnapshot'
+import SessionLog from './tabs/SessionLog'
+import Glossary from './tabs/Glossary'
 import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
-  'dashboard','characters','wardrobe','items','locations',
-  'timeline','scenes','calendar','tools','canon','world',
-  'questions','eras','spellings','map','wiki','notes','journal','familytree','flags'
+  'dashboard','wiki','glossary','characters','familytree','world','locations','map',
+  'manuscript','scenes','timeline','eras','calendar',
+  'inventory','wardrobe','items','flags','questions','canon','spellings',
+  'notes','journal','tools','sessionlog'
 ]
 
 const VALID_TABS = new Set(TAB_ORDER)
@@ -161,6 +167,10 @@ export default function App() {
       case 'journal':    return <Journal {...tabProps} />
       case 'familytree': return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
+      case 'manuscript': return <Manuscript {...tabProps} />
+      case 'inventory':  return <Inventory {...tabProps} />
+      case 'glossary':   return <Glossary db={db} goTo={goTo} />
+      case 'sessionlog': return <SessionLog db={db} />
       default:           return <Dashboard {...tabProps} />
     }
   }
@@ -183,19 +193,19 @@ export default function App() {
             title="Go to Dashboard"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: '2px 6px', borderRadius: 4, transition: '.2s',
+              padding: '2px 6px', borderRadius: 4, transition: '.2s', flex: 1,
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
             <span style={{
-              fontFamily: "'Fondamento', cursive",
-              fontSize: 18,
-              background: 'linear-gradient(90deg,#ff69b4,#ff8c00,#ffd600,#38b000,#00b4d8,#9d4edd,#ff48c4)',
+              fontFamily: "'WizardOfTheMoon', 'Cinzel', serif",
+              fontSize: 22,
+              background: 'linear-gradient(90deg,#ff69b4,#ff6b6b,#ff8c00,#ffd600,#38b000,#00b4d8,#4361ee,#9d4edd,#c77dff,#ff48c4)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              letterSpacing: '.04em',
+              letterSpacing: '.02em', display: 'inline-block',
             }}>
-              The Guardians of Lajen Worldbuilding Compendium
+              The Guardians of Lajen — Worldbuilding Compendium
             </span>
           </button>
 
@@ -217,20 +227,18 @@ export default function App() {
             {TAB_ORDER.map(k => {
               const c = CATS[k]
               if (!c) return null
-              const tabHex = TAB_RAINBOW[k] || '#aaaaaa'
-              const isActive = tab === k
               return (
                 <button
                   key={k}
                   className="tab-btn"
                   style={{
-                    '--tab-color': tabHex,
-                    borderColor: tabHex,
-                    color: isActive ? (k === 'dashboard' ? '#1a1a2e' : '#fff') : tabHex,
-                    background: isActive
-                      ? tabHex
-                      : 'transparent',
-                    opacity: isActive ? 1 : 0.55,
+                    borderColor: TAB_RAINBOW[k] || '#aaaaaa',
+                    color: tab === k
+                      ? (k === 'dashboard' ? '#1a1a2e' : '#ffffff')
+                      : (TAB_RAINBOW[k] || '#aaaaaa'),
+                    background: tab === k ? (TAB_RAINBOW[k] || '#aaaaaa') : 'transparent',
+                    opacity: tab === k ? 1 : 0.55,
+                    fontWeight: tab === k ? 700 : 600,
                   }}
                   onClick={() => goTo(k)}
                 >
