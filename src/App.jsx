@@ -198,18 +198,19 @@ export default function App() {
           <div style={{ position: 'relative' }}>
             <img src={headerImg} alt="header"
               style={{ width: '100%', height: 'auto', display: 'block' }} />
-            {/* Pencil — hover only, top right */}
-            <button
-              className="header-pencil"
-              onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
-              title="Change header image"
-            >✎</button>
-            <button
-              className="header-pencil"
-              style={{ right: 36 }}
-              onClick={e => { e.stopPropagation(); removeHeaderImg() }}
-              title="Remove image"
-            >✕</button>
+            {/* Corner hover zone — top right only */}
+            <div className="header-corner-zone">
+              <button
+                className="header-corner-btn"
+                onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
+                title="Change header image"
+              >✎</button>
+              <button
+                className="header-corner-btn"
+                onClick={e => { e.stopPropagation(); removeHeaderImg() }}
+                title="Remove image"
+              >✕</button>
+            </div>
           </div>
         ) : (
           // Title mode
@@ -223,12 +224,14 @@ export default function App() {
             }}>
               The Guardians of Lajen — Worldbuilding Compendium
             </span>
-            {/* Pencil icon — subtle, top right corner */}
-            <button
-              className="header-pencil"
-              onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
-              title="Upload header image"
-            >✎</button>
+            {/* Corner hover zone — top right only */}
+            <div className="header-corner-zone">
+              <button
+                className="header-corner-btn"
+                onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
+                title="Upload header image"
+              >✎</button>
+            </div>
           </div>
         )}
       </div>
