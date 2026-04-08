@@ -26,7 +26,6 @@ import Notes from './tabs/Notes'
 import Journal from './tabs/Journal'
 import Manuscript from './tabs/Manuscript'
 import Inventory from './tabs/Inventory'
-import OutfitSnapshot from './tabs/OutfitSnapshot'
 import SessionLog from './tabs/SessionLog'
 import Glossary from './tabs/Glossary'
 import IOBar from './components/common/IOBar'
@@ -58,9 +57,21 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [histIdx, setHistIdx] = useState(-1)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
+  const [headerImg, setHeaderImg] = useState(() => {
+    try { return '' } catch { return '' }
+  })
   const tabBarRef = useRef(null)
+  const headerImgRef = useRef(null)
 
-  // ── Apply font size on mount AND on change ──────────────────────
+  // Load header image from db settings once db is ready
+  useEffect(() => {
+    if (!db.loading) {
+      const img = db.settings?.dashboard_header_image || ''
+      setHeaderImg(img)
+    }
+  }, [db.loading])
+
+  // ── Apply font size ──────────────────────────────────────────────
   useEffect(() => {
     const fs = fontSize + 'px'
     document.documentElement.style.setProperty('--fs', fs)
@@ -68,29 +79,19 @@ export default function App() {
     document.body.style.fontSize = fs
   }, [fontSize])
 
-  // ── Persist active tab ──────────────────────────────────────────
+  // ── Persist active tab ───────────────────────────────────────────
   useEffect(() => {
     try { localStorage.setItem('gcomp_active_tab', tab) } catch {}
   }, [tab])
 
-  // ── Tab bar touch-drag scroll ───────────────────────────────────
+  // ── Tab bar touch-drag scroll ────────────────────────────────────
   useEffect(() => {
     const bar = tabBarRef.current
     if (!bar) return
     let startX = 0, startScroll = 0, dragging = false
-
-    function onTouchStart(e) {
-      startX = e.touches[0].clientX
-      startScroll = bar.scrollLeft
-      dragging = true
-    }
-    function onTouchMove(e) {
-      if (!dragging) return
-      const dx = startX - e.touches[0].clientX
-      bar.scrollLeft = startScroll + dx
-    }
+    function onTouchStart(e) { startX = e.touches[0].clientX; startScroll = bar.scrollLeft; dragging = true }
+    function onTouchMove(e) { if (!dragging) return; bar.scrollLeft = startScroll + (startX - e.touches[0].clientX) }
     function onTouchEnd() { dragging = false }
-
     bar.addEventListener('touchstart', onTouchStart, { passive: true })
     bar.addEventListener('touchmove', onTouchMove, { passive: true })
     bar.addEventListener('touchend', onTouchEnd)
@@ -109,17 +110,11 @@ export default function App() {
   }, [tab, histIdx])
 
   const goBack = useCallback(() => {
-    if (histIdx >= 0) {
-      setTab(history[histIdx])
-      setHistIdx(prev => prev - 1)
-    }
+    if (histIdx >= 0) { setTab(history[histIdx]); setHistIdx(prev => prev - 1) }
   }, [history, histIdx])
 
   const goFwd = useCallback(() => {
-    if (histIdx < history.length - 1) {
-      setHistIdx(prev => prev + 1)
-      setTab(history[histIdx + 1])
-    }
+    if (histIdx < history.length - 1) { setHistIdx(prev => prev + 1); setTab(history[histIdx + 1]) }
   }, [history, histIdx])
 
   const adjFont = useCallback((d) => {
@@ -133,6 +128,23 @@ export default function App() {
   function scrollTabs(dir) {
     const bar = tabBarRef.current
     if (bar) bar.scrollBy({ left: dir * 150, behavior: 'smooth' })
+  }
+
+  function handleHeaderImg(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const url = ev.target.result
+      setHeaderImg(url)
+      db.saveSetting('dashboard_header_image', url)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function removeHeaderImg() {
+    setHeaderImg('')
+    db.saveSetting('dashboard_header_image', '')
   }
 
   const tabProps = { db, goTo, tab }
@@ -177,37 +189,63 @@ export default function App() {
 
   return (
     <div>
-      {/* ── Nav bar (sticky) ── */}
-      <nav className="nav">
-        <div className="nav-top">
-          <div className="nav-btns">
-            <button className="nav-btn" onClick={goBack} title="Back">←</button>
-            <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
-            <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
-          </div>
+      {/* ── Header zone (above nav) — title OR image + pencil ── */}
+      <div className="site-header" onClick={() => goTo('dashboard')}
+        style={{ cursor: 'pointer', position: 'relative' }}>
 
-          {/* Title — clickable home link */}
-          <button
-            className="nav-title"
-            onClick={() => goTo('dashboard')}
-            title="Go to Dashboard"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '2px 6px', borderRadius: 4, transition: '.2s', flex: 1,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
+        {headerImg ? (
+          // Image mode
+          <div style={{ position: 'relative' }}>
+            <img src={headerImg} alt="header"
+              style={{ width: '100%', maxHeight: 120, objectFit: 'cover', display: 'block' }} />
+            {/* Pencil — hover only, top right */}
+            <button
+              className="header-pencil"
+              onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
+              title="Change header image"
+            >✎</button>
+            <button
+              className="header-pencil"
+              style={{ right: 36 }}
+              onClick={e => { e.stopPropagation(); removeHeaderImg() }}
+              title="Remove image"
+            >✕</button>
+          </div>
+        ) : (
+          // Title mode
+          <div style={{ position: 'relative', padding: '10px 16px 8px', textAlign: 'center' }}>
             <span style={{
               fontFamily: "'WizardOfTheMoon', 'Cinzel', serif",
-              fontSize: 22,
+              fontSize: 32,
               background: 'linear-gradient(90deg,#ff69b4,#ff6b6b,#ff8c00,#ffd600,#38b000,#00b4d8,#4361ee,#9d4edd,#c77dff,#ff48c4)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              letterSpacing: '.02em', display: 'inline-block',
+              letterSpacing: '.02em', display: 'inline-block', lineHeight: 1.2,
             }}>
               The Guardians of Lajen — Worldbuilding Compendium
             </span>
-          </button>
+            {/* Pencil icon — subtle, top right corner */}
+            <button
+              className="header-pencil"
+              onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }}
+              title="Upload header image"
+            >✎</button>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden file input */}
+      <input ref={headerImgRef} type="file" accept="image/*"
+        style={{ display: 'none' }} onChange={handleHeaderImg} />
+
+      {/* ── Nav bar (sticky) — buttons + tab bar only, NO title here ── */}
+      <nav className="nav">
+        {/* Controls row */}
+        <div className="nav-top">
+          <div className="nav-btns">
+            <button className="nav-btn nav-btn-lg" onClick={goBack} title="Back">←</button>
+            <button className="nav-btn nav-btn-lg" onClick={() => goTo('dashboard')} title="Home">⌂</button>
+            <button className="nav-btn nav-btn-lg" onClick={goFwd} title="Forward">→</button>
+          </div>
 
           <div className="nav-btns">
             <span
@@ -215,8 +253,8 @@ export default function App() {
               title={`Sync: ${db.syncStatus}${db.hasSupabase ? '' : ' (local only)'}`}
               style={{ marginRight: 4 }}
             />
-            <button className="nav-btn" onClick={() => adjFont(-1)} title="Smaller text">A−</button>
-            <button className="nav-btn" onClick={() => adjFont(1)} title="Larger text">A+</button>
+            <button className="nav-btn nav-btn-lg" onClick={() => adjFont(-1)} title="Smaller text">A−</button>
+            <button className="nav-btn nav-btn-lg" onClick={() => adjFont(1)} title="Larger text">A+</button>
           </div>
         </div>
 
@@ -227,18 +265,18 @@ export default function App() {
             {TAB_ORDER.map(k => {
               const c = CATS[k]
               if (!c) return null
+              const tabHex = TAB_RAINBOW[k] || '#aaaaaa'
+              const isActive = tab === k
               return (
                 <button
                   key={k}
                   className="tab-btn"
                   style={{
-                    borderColor: TAB_RAINBOW[k] || '#aaaaaa',
-                    color: tab === k
-                      ? (k === 'dashboard' ? '#1a1a2e' : '#ffffff')
-                      : (TAB_RAINBOW[k] || '#aaaaaa'),
-                    background: tab === k ? (TAB_RAINBOW[k] || '#aaaaaa') : 'transparent',
-                    opacity: tab === k ? 1 : 0.55,
-                    fontWeight: tab === k ? 700 : 600,
+                    borderColor: tabHex,
+                    color: isActive ? (k === 'dashboard' ? '#1a1a2e' : '#ffffff') : tabHex,
+                    background: isActive ? tabHex : 'transparent',
+                    opacity: isActive ? 1 : 0.55,
+                    fontWeight: isActive ? 700 : 600,
                   }}
                   onClick={() => goTo(k)}
                 >
