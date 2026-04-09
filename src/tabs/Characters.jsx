@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { CHAR_FIELDS, highlight, SL, uid, hexToRgba, lerpColor } from '../constants'
+import FilterPopup from '../components/common/FilterPopup'
 
 const PRESET_LABELS = [
   { key: 'generic_male_no_wings',    label: 'Generic Male — No Wings' },
@@ -173,6 +174,27 @@ export default function Characters({ db }) {
             </button>
           ))}
         </div>
+        <FilterPopup
+          color="#e63946"
+          filters={[
+            { key: 'element', label: 'Element', options: [
+              { value: 'Water', label: '💧 Water' },
+              { value: 'Fire', label: '🔥 Fire' },
+              { value: 'Earth', label: '🌿 Earth' },
+              { value: 'Air', label: '💨 Air' },
+            ]},
+            { key: 'book', label: 'Book', options: [
+              { value: 'Pre-Series', label: 'Pre-Series' },
+              { value: 'Book 1', label: 'Book 1' },
+              { value: 'Book 2', label: 'Book 2' },
+              { value: 'Book 3', label: 'Book 3' },
+              { value: 'Book 4', label: 'Book 4' },
+              { value: 'Book 5', label: 'Book 5' },
+            ]},
+          ]}
+          values={filterValues}
+          onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
+        />
         <button className="btn btn-primary btn-sm" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 

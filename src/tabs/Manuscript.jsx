@@ -265,6 +265,7 @@ export default function Manuscript({ db }) {
 
   const [search, setSearch] = useState('')
   const [filterBook, setFilterBook] = useState('all')
+  const [editCovers, setEditCovers] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [editingChapter, setEditingChapter] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -314,6 +315,15 @@ export default function Manuscript({ db }) {
   return (
     <div>
       {/* Book shelf — portrait cards, image only on cover face */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+        <button onClick={() => setEditCovers(e => !e)}
+          style={{ fontSize: '0.77em', padding: '3px 12px', borderRadius: 6, cursor: 'pointer',
+            border: `1px solid ${editCovers ? '#aacc00' : 'var(--brd)'}`,
+            background: editCovers ? '#aacc0022' : 'none',
+            color: editCovers ? '#aacc00' : 'var(--dim)' }}>
+          {editCovers ? '✓ Done' : '✎ Edit covers'}
+        </button>
+      </div>
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
         {byBook.map(({ book, chapters: chs, words }) => {
           const meta = db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`] || {}
@@ -333,7 +343,41 @@ export default function Manuscript({ db }) {
                     </div>
                 }
               </div>
-              <div style={{ marginTop: 8, textAlign: 'center', width: '100%' }}>
+              {/* Edit controls — shown in edit mode */}
+              {editCovers && (
+                <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
+                  <label title="Upload cover image" style={{ cursor: 'pointer', fontSize: '1.08em', color: '#aacc00' }}>
+                    🖼
+                    <input type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={ev => {
+                        const file = ev.target.files?.[0]; if (!file) return
+                        const reader = new FileReader()
+                        reader.onload = e2 => {
+                          const key = `manuscript_book_${book.replace(/ /g,'_')}`
+                          const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                          db.saveSetting(key, JSON.stringify({ ...existing, cover: e2.target.result }))
+                        }
+                        reader.readAsDataURL(file)
+                      }} />
+                  </label>
+                  <input type="color" value={accent} title="Accent colour"
+                    style={{ width: 22, height: 22, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }}
+                    onChange={ev => {
+                      const key = `manuscript_book_${book.replace(/ /g,'_')}`
+                      const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                      db.saveSetting(key, JSON.stringify({ ...existing, accent: ev.target.value }))
+                    }} />
+                  {cover && (
+                    <button title="Remove cover" style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', padding: 0 }}
+                      onClick={() => {
+                        const key = `manuscript_book_${book.replace(/ /g,'_')}`
+                        const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                        db.saveSetting(key, JSON.stringify({ ...existing, cover: '' }))
+                      }}>✕</button>
+                  )}
+                </div>
+              )}
+              <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
                 <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.85em', color: accent, fontWeight: 700 }}>{book}</div>
                 <div style={{ fontSize: '0.77em', color: 'var(--dim)' }}>{chs.length} ch · {words.toLocaleString()} w</div>
                 <div style={{ display: 'flex', gap: 2, marginTop: 3, flexWrap: 'wrap', justifyContent: 'center' }}>

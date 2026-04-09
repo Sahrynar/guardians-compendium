@@ -293,13 +293,17 @@ export default function Wiki({ db, navSearch }) {
   const articles = db.db.wiki || []
   const [catFilter, setCatFilter] = useState('all')
   const [colSize, setColSize] = useState('M')
+  const [filterValues, setFilterValues] = useState({})
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
 
   const filtered = articles.filter(a => {
     const ms = !(navSearch||'') || JSON.stringify(a).toLowerCase().includes((navSearch||'').toLowerCase())
     const mc = catFilter === 'all' || a.category === catFilter
-    return ms && mc
+    // Extra popup filters
+    const selCats = filterValues['category'] || []
+    const matchPopupCat = selCats.length === 0 || selCats.includes(a.category)
+    return ms && mc && matchPopupCat
   })
 
   function handleSave(article) {
@@ -316,6 +320,12 @@ export default function Wiki({ db, navSearch }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#ff69b4' }}>📖 Wiki</div>
+        <FilterPopup
+          color="#ff69b4"
+          filters={[{ key: 'category', label: 'Category', options: WIKI_CATS.map(c => ({ value: c, label: c })) }]}
+          values={filterValues}
+          onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
+        />
         <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 

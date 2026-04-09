@@ -7,12 +7,20 @@ const SP_FIELDS = [
   { k: 'detail',     l: 'Notes',      t: 'ta' },
 ]
 
+const SP_FILTERS = [
+  { key: 'status', label: 'Status', options: [
+    { value: 'locked', label: 'Locked' },
+    { value: 'provisional', label: 'Provisional' },
+    { value: 'open', label: 'Open' },
+  ]},
+]
+
 export default function Spellings({ db, navSearch }) {
   return (
     <GenericListTab
       catKey="spellings" color="#ff69b4" icon="✎"
       label="Spellings" fields={SP_FIELDS} db={db}
-      navSearch={navSearch}
+      navSearch={navSearch} extraFilters={SP_FILTERS}
     />
   )
 }

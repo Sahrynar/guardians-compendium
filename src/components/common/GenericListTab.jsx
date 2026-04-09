@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import FilterPopup from './FilterPopup'
 import Modal from './Modal'
 import EntryForm from './EntryForm'
 import { SL, highlight } from '../../constants'
@@ -10,7 +11,7 @@ const SIZE_LABELS = ['XS', 'S', 'M', 'L', 'XL']
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
-  renderDetail, extraActions, navSearch
+  renderDetail, extraActions, navSearch, extraFilters
 }) {
   const entries = db.db[catKey] || []
   const [fB, setFB] = useState('all')
@@ -21,15 +22,26 @@ export default function GenericListTab({
   const [confirmId, setConfirmId] = useState(null)
   const [sortMode, setSortMode] = useState('alpha')
   const [colSize, setColSize] = useState('M')
+  const [filterValues, setFilterValues] = useState({})
 
   const search = navSearch || ''
+
+  function handleFilterChange(key, vals) {
+    setFilterValues(prev => ({ ...prev, [key]: vals }))
+  }
 
   const filtered = entries
     .filter(e => {
       const matchSearch = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
       const matchBook = fB === 'all' || (e.books || []).includes(fB)
       const matchStatus = fS === 'all' || e.status === fS
-      return matchSearch && matchBook && matchStatus
+      // Apply extra filters from FilterPopup
+      const matchExtra = !extraFilters || extraFilters.every(f => {
+        const selected = filterValues[f.key] || []
+        if (selected.length === 0) return true
+        return selected.includes(e[f.key])
+      })
+      return matchSearch && matchBook && matchStatus && matchExtra
     })
     .sort((a, b) => {
       if (sortMode === 'alpha') return (a.display_name || a.name || '').localeCompare(b.display_name || b.name || '')
@@ -100,6 +112,14 @@ export default function GenericListTab({
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
         </select>
+        {extraFilters && extraFilters.length > 0 && (
+          <FilterPopup
+            color={color}
+            filters={extraFilters}
+            values={filterValues}
+            onChange={handleFilterChange}
+          />
+        )}
         <button className="btn btn-primary btn-sm" style={{ background: color }} onClick={openAdd}>+ Add</button>
       </div>
 

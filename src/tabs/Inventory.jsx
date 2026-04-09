@@ -352,7 +352,7 @@ export default function Inventory({ db }) {
     ]
   }, [rawInventory, rawItems, rawWardrobe])
 
-  const chars = db.db.characters || []
+  const chars = [...(db.db.characters || [])].sort((a,b) => (a.display_name||a.name||'').localeCompare(b.display_name||b.name||''))
 
   // ── State ──
   const [search, setSearch] = useState('')
@@ -550,174 +550,16 @@ export default function Inventory({ db }) {
           </select>
         )}
 
-        {/* Column picker */}
-        <div style={{ position: 'relative' }}>
-          <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
-            onClick={() => setShowColPicker(p => !p)}
-            title="Column count">⊞ {columns} col</button>
-          {showColPicker && (
-            <div style={{ position: 'absolute', right: 0, top: 30, zIndex: 100,
-              background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 8,
-              padding: 10, display: 'flex', gap: 6 }}>
-              {[1,2,3,4,5,8].map(n => (
-                <button key={n} onClick={() => { saveColumns(n); setShowColPicker(false) }}
-                  style={{ width: 30, height: 30, borderRadius: 6, fontSize: '0.92em', fontWeight: 700,
-                    background: columns === n ? '#3a86ff' : 'var(--card)',
-                    color: columns === n ? '#000' : 'var(--tx)',
-                    border: `1px solid ${columns === n ? '#3a86ff' : 'var(--brd)'}`,
-                    cursor: 'pointer' }}>{n}</button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button className="btn btn-primary btn-sm" style={{ background: '#3a86ff', marginLeft: 'auto' }}
-          onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
-      </div>
-
-      {/* ── Stats bar ── */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10, fontSize: '0.77em', color: 'var(--mut)' }}>
-        <span>{filtered.length} of {allEntries.length} entries</span>
-        {CATEGORIES.filter(c => filtered.some(e => (e.category || 'Other') === c.id)).map(c => (
-          <span key={c.id} style={{ color: c.color }}>
-            {c.icon} {filtered.filter(e => (e.category || 'Other') === c.id).length} {c.id}
-          </span>
-        ))}
-      </div>
-
-      {/* ── Bubble view ── */}
-      {viewMode === 'bubble' && (
-        <div style={{ columns: columns, gap: 10, columnFill: 'balance' }}>
-          {holderOrder.length === 0 && (
-            <div className="empty"><div className="empty-icon">🎒</div><p>No inventory entries yet.</p></div>
-          )}
-          {holderOrder.map((holderId, idx) => {
-            const charObj = holderId === '__unassigned__' ? null : chars.find(c => c.id === holderId)
-            // Use stable hash of charId for default color, not position index
-            const stableIdx = holderId === '__unassigned__' ? 0 : Math.abs(holderId.split('').reduce((a,c) => a + c.charCodeAt(0), 0))
-            const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[stableIdx % DEFAULT_COLORS.length]
-            return (
-              <div key={holderId} style={{ breakInside: 'avoid', marginBottom: 10 }}>
-                <CharBubble
-                  char={holderId === '__unassigned__' ? '__unassigned__' : (charObj || { name: holderId })}
-                  entries={grouped[holderId] || []}
-                  idx={idx}
-                  chars={chars}
-                  search={search}
-                  columns={columns}
-                  dragging={dragIdx === idx}
-                  onColorChange={color => holderId !== '__unassigned__' && handleBubbleColor(holderId, color)}
-                  onDragStart={() => setDragIdx(idx)}
-                  onDragOver={() => setDragOverIdx(idx)}
-                  onDrop={() => handleDrop(dragIdx, dragOverIdx)}
-                  onOpenEntry={(entry, bColor) => setViewPopup({ entry, bubbleColor: bColor })}
-                />
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ── List view ── */}
-      {viewMode === 'list' && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 6 }}>
-          {sortedList.length === 0 && (
-            <div className="empty"><div className="empty-icon">🎒</div><p>No entries found.</p></div>
-          )}
-          {sortedList.map(e => {
-            const cat = CAT_MAP[e.category || 'Other']
-            const holderChar = chars.find(c => c.id === (e.character || e.holder))
-            const bubbleColor = holderChar?.bubble_color || '#3a86ff'
-            const tileColor = e.entry_color || bubbleColor
-            return (
-              <div key={e.id} className="entry-card"
-                style={{ '--card-color': tileColor, borderTop: `2px solid ${tileColor}` }}
-                onClick={() => setViewPopup(e)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div className="entry-title"
-                    dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
-                  <div style={{ fontSize: '0.69em', color: tileColor, flexShrink: 0, marginLeft: 6 }}>
-                    {cat?.icon} {e.category}
-                  </div>
-                </div>
-                <div className="entry-meta">
-                  {charName(e.character || e.holder) !== 'Unassigned' && (
-                    <span className="badge" style={{ color: tileColor }}>
-                      {charName(e.character || e.holder)}
-                    </span>
-                  )}
-                  {e.status && <span className={`badge badge-${e.status}`}>{SL[e.status]}</span>}
-                  {(e.books || []).map(b => <span key={b} className="badge badge-book">{b}</span>)}
-                </div>
-                {e.color_material && (
-                  <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 3 }}>{e.color_material}</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ── Outfit Snapshot view ── */}
-      {viewMode === 'outfit' && (
-        <OutfitSnapshot db={db} chars={chars} allEntries={allEntries} />
-      )}
-
-      {/* ── Popups ── */}
-      {viewPopup && (
-        <EntryPopup entry={viewPopup.entry || viewPopup} bubbleColor={viewPopup.bubbleColor} allEntries={allEntries} chars={chars} db={db}
-          onClose={() => setViewPopup(null)}
-          onEdit={e => { setEditing(e); setModalOpen(true) }}
-          onTransfer={id => setTransferId(id)}
-          setLightbox={setLightbox}
-          setPickerFor={setPickerFor}
-          uploadingImg={uploadingImg}
-          handleImageUpload={handleImageUpload} />
-      )}
-
-      <Lightbox src={lightbox} onClose={() => setLightbox(null)} />
-
-      <ImagePicker open={!!pickerFor} db={db} onClose={() => setPickerFor(null)}
-        onPick={url => {
-          const e = allEntries.find(x => x.id === pickerFor)
-          if (e) db.upsertEntry('inventory', { ...e, image: url })
-          setPickerFor(null)
-        }} />
-
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
-        title={`${editing?.id ? 'Edit' : 'Add'} Inventory Entry`} color="var(--ci)">
-        <EntryForm fields={INV_FIELDS} entry={editing || {}} onSave={handleSave}
-          onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--ci)" db={db} />
-      </Modal>
-
-      <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color="var(--ci)">
-        <div className="field"><label>Transfer To</label>
-          <select value={txForm.to} onChange={e => setTxForm(p => ({ ...p, to: e.target.value }))}>
-            <option value="">— Pick character —</option>
-            {chars.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </select>
-        </div>
-        <div className="field"><label>Note (optional)</label>
-          <input value={txForm.note} onChange={e => setTxForm(p => ({ ...p, note: e.target.value }))} />
-        </div>
-        <div className="field"><label>When</label>
-          <input value={txForm.when} onChange={e => setTxForm(p => ({ ...p, when: e.target.value }))}
-            placeholder="e.g. End of Book 1" />
-        </div>
-        <div className="modal-actions">
-          <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
-          <button className="btn btn-primary" style={{ background: '#3a86ff' }} onClick={doTransfer}>Transfer</button>
-        </div>
-      </Modal>
-
-      {confirmId && (
-        <div className="confirm-overlay open">
-          <div className="confirm-box">
-            <p>Delete <strong>{allEntries.find(e => e.id === confirmId)?.name}</strong>?</p>
-            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
-            <button className="btn btn-danger btn-sm"
-              onClick={() => { db.deleteEntry('inventory', confirmId); setConfirmId(null) }}>Delete</button>
-          </div>
+        {/* Column picker — XS=most cols, XL=1 col */}
+        <div style={{ display: 'flex', gap: 3 }}>
+          {[['XS',5],['S',4],['M',3],['L',2],['XL',1]].map(([l,n]) => (
+            <button key={l} onClick={() => saveColumns(n)}
+              style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8,
+                background: columns===n ? '#3a86ff' : 'none',
+                color: columns===n ? '#fff' : 'var(--dim)',
+                border: `1px solid ${columns===n ? '#3a86ff' : 'var(--brd)'}`,
+                cursor: 'pointer' }}>{l}</button>
+          ))}
         </div>
       )}
     </div>
