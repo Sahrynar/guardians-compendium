@@ -57,6 +57,7 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [histIdx, setHistIdx] = useState(-1)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
+  const [navSearch, setNavSearch] = useState('')
   const [headerImg, setHeaderImg] = useState(() => {
     try { return '' } catch { return '' }
   })
@@ -147,7 +148,7 @@ export default function App() {
     db.saveSetting('dashboard_header_image', '')
   }
 
-  const tabProps = { db, goTo, tab }
+  const tabProps = { db, goTo, tab, navSearch, setNavSearch }
 
   function renderTab() {
     if (db.loading) return (
@@ -249,6 +250,14 @@ export default function App() {
             <button className="nav-btn nav-btn-lg" onClick={() => goTo('dashboard')} title="Home">⌂</button>
             <button className="nav-btn nav-btn-lg" onClick={goFwd} title="Forward">→</button>
           </div>
+
+          {/* Tab search — searches current tab, dashboard searches all */}
+          <input
+            className="sx nav-search"
+            placeholder={tab === 'dashboard' ? 'Search everything…' : `Search ${tab === 'familytree' ? 'family tree' : tab === 'sessionlog' ? 'session log' : tab === 'eras' ? 'eras' : tab === 'map' ? 'maps' : tab}…`}
+            value={navSearch}
+            onChange={e => setNavSearch(e.target.value)}
+          />
 
           <div className="nav-btns">
             <span

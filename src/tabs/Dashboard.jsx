@@ -15,9 +15,8 @@ const RAINBOW = [
 ]
 const rc = (i) => RAINBOW[i % RAINBOW.length]
 
-export default function Dashboard({ db, goTo }) {
+export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
   const { db: data } = db
-  const [search, setSearch] = useState('')
   const [headerImg, setHeaderImg] = useState(() => {
     try { return db.settings?.dashboard_header_image || '' } catch { return '' }
   })
@@ -89,8 +88,8 @@ export default function Dashboard({ db, goTo }) {
 
   // Search results
   let searchHits = []
-  if (search.trim().length > 1) {
-    const q = search.trim().toLowerCase()
+  if ((navSearch || '').trim().length > 1) {
+    const q = (navSearch || '').trim().toLowerCase()
     Object.entries(data).forEach(([cat, entries]) => {
       if (!Array.isArray(entries) || !CATS[cat]) return
       entries.forEach(entry => {
@@ -121,17 +120,15 @@ export default function Dashboard({ db, goTo }) {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search results — input is in the nav bar */}
       <div style={{ marginBottom: 14 }}>
-        <input className="sx" style={{ width: '100%' }} placeholder="Search everything…"
-          value={search} onChange={e => setSearch(e.target.value)} />
         {searchHits.length > 0 && (
           <div style={{ marginTop: 6, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, maxHeight: 220, overflowY: 'auto' }}>
             <div style={{ fontSize: 10, color: 'var(--mut)', padding: '5px 10px', borderBottom: '1px solid var(--brd)' }}>
               {searchHits.length} result{searchHits.length !== 1 ? 's' : ''} — click to go to tab
             </div>
             {searchHits.slice(0, 30).map((h, i) => (
-              <div key={h.id || i} onClick={() => { goTo(h.cat); setSearch('') }}
+              <div key={h.id || i} onClick={() => { goTo(h.cat); setNavSearch && setNavSearch('') }}
                 style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 10px',
                   borderBottom: '1px solid var(--brd)', cursor: 'pointer',
                   background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}

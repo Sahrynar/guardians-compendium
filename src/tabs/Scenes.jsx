@@ -67,15 +67,15 @@ export default function Scenes({ db }) {
     <div>
       <div className="tbar">
         <input className="sx" placeholder="Search scenes…" value={search} onChange={e => setSearch(e.target.value)} />
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--csc)', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: '#38b000', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
       {/* Book filter */}
       <div className="tbar" style={{ paddingTop: 0 }}>
         <div className="filter-group">
-          <button className={`fp ${bookFilter==='all'?'active':''}`} style={{ color: 'var(--csc)' }} onClick={() => setBookFilter('all')}>All Books</button>
+          <button className={`fp ${bookFilter==='all'?'active':''}`} style={{ color: '#38b000' }} onClick={() => setBookFilter('all')}>All Books</button>
           {allBooks.map(b => (
-            <button key={b} className={`fp ${bookFilter===b?'active':''}`} style={{ color: 'var(--csc)' }} onClick={() => setBookFilter(bookFilter===b?'all':b)}>{b}</button>
+            <button key={b} className={`fp ${bookFilter===b?'active':''}`} style={{ color: '#38b000' }} onClick={() => setBookFilter(bookFilter===b?'all':b)}>{b}</button>
           ))}
         </div>
       </div>
@@ -104,20 +104,20 @@ export default function Scenes({ db }) {
                 reordered.forEach((sc, idx) => db.upsertEntry('scenes', { ...sc, sort_order: String(idx * 10) }))
               }}
             >
-              <div style={{ fontSize: 9, color: 'var(--csc)', fontWeight: 700 }}>
+              <div style={{ fontSize: '0.69em', color: '#38b000', fontWeight: 700 }}>
                 {s.chapter || ''}{s.chapter && s.book ? ' · ' : ''}{s.book || ''}
                 {s.scene_date_hc ? ` · ${s.scene_date_hc}` : ''}
                 {s.season ? ` · ${s.season}` : ''}
                 {s.time_of_day ? ` · ${s.time_of_day}` : ''}
               </div>
-              <div style={{ fontSize: 12, fontWeight: 600 }} dangerouslySetInnerHTML={{ __html: highlight(s.name||'', search) }} />
-              {loc && <div style={{ fontSize: 9, color: 'var(--mut)' }}>📍 {loc}</div>}
-              {s.characters_present && <div style={{ fontSize: 9, color: 'var(--mut)' }}>👤 {s.characters_present}</div>}
-              {s.items_present && <div style={{ fontSize: 9, color: 'var(--mut)' }}>⚔ {s.items_present}</div>}
-              {s.summary && <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 2 }}>{s.summary.slice(0,120)}{s.summary.length>120?'…':''}</div>}
-              {s.tension && <div style={{ fontSize: 9, color: 'var(--ccn)' }}>⚡ {s.tension}</div>}
+              <div style={{ fontSize: '0.92em', fontWeight: 600 }} dangerouslySetInnerHTML={{ __html: highlight(s.name||'', search) }} />
+              {loc && <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>📍 {loc}</div>}
+              {s.characters_present && <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>👤 {s.characters_present}</div>}
+              {s.items_present && <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>⚔ {s.items_present}</div>}
+              {s.summary && <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{s.summary.slice(0,120)}{s.summary.length>120?'…':''}</div>}
+              {s.tension && <div style={{ fontSize: '0.69em', color: 'var(--ccn)' }}>⚡ {s.tension}</div>}
               <div className="entry-actions" style={{ marginTop: 3 }}>
-                <button className="btn btn-sm btn-outline" style={{ color: 'var(--csc)', borderColor: 'var(--csc)' }} onClick={e => { e.stopPropagation(); setEditing(s); setModalOpen(true) }}>✎</button>
+                <button className="btn btn-sm btn-outline" style={{ color: '#38b000', borderColor: '#38b000' }} onClick={e => { e.stopPropagation(); setEditing(s); setModalOpen(true) }}>✎</button>
                 <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); setConfirmId(s.id) }}>✕</button>
               </div>
             </div>

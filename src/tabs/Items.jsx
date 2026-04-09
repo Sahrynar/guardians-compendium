@@ -50,7 +50,7 @@ export default function Items({ db }) {
     <div>
       <div className="tbar">
         <input className="sx" placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: '#7b2d8b' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
       <div className="cg">
@@ -64,7 +64,7 @@ export default function Items({ db }) {
             <div key={e.id} className="entry-card" style={{ '--card-color': 'var(--ci)', background: i%2===1?'rgba(255,255,255,.01)':undefined }} onClick={() => setExpanded(isOpen ? null : e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
-                {holder && <div style={{ fontSize: 10, color: 'var(--ci)' }}>{holder}</div>}
+                {holder && <div style={{ fontSize: '0.77em', color: '#7b2d8b' }}>{holder}</div>}
               </div>
               <div className="entry-meta">
                 {e.status && <span className={`badge badge-${e.status}`}>{SL[e.status]}</span>}
@@ -73,14 +73,14 @@ export default function Items({ db }) {
               {isOpen && (
                 <>
                   <div className="entry-detail">
-                    {e.origin && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Origin: </strong>{e.origin}</div>}
-                    {e.significance && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Significance: </strong>{e.significance}</div>}
-                    {e.shared_with && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Shared with: </strong>{holderName(e.shared_with)}</div>}
+                    {e.origin && <div style={{ marginBottom: 3 }}><strong style={{ color: '#7b2d8b', fontSize: '0.69em', textTransform: 'uppercase' }}>Origin: </strong>{e.origin}</div>}
+                    {e.significance && <div style={{ marginBottom: 3 }}><strong style={{ color: '#7b2d8b', fontSize: '0.69em', textTransform: 'uppercase' }}>Significance: </strong>{e.significance}</div>}
+                    {e.shared_with && <div style={{ marginBottom: 3 }}><strong style={{ color: '#7b2d8b', fontSize: '0.69em', textTransform: 'uppercase' }}>Shared with: </strong>{holderName(e.shared_with)}</div>}
                     {(e.transfers||[]).length > 0 && (
                       <details style={{ marginTop: 6 }} onClick={ev => ev.stopPropagation()}>
-                        <summary style={{ fontSize: 10, color: 'var(--ci)', cursor: 'pointer' }}>Transfer History ({e.transfers.length})</summary>
+                        <summary style={{ fontSize: '0.77em', color: '#7b2d8b', cursor: 'pointer' }}>Transfer History ({e.transfers.length})</summary>
                         {e.transfers.map((t, ti) => (
-                          <div key={ti} style={{ fontSize: 10, color: 'var(--dim)', padding: '2px 0' }}>
+                          <div key={ti} style={{ fontSize: '0.77em', color: 'var(--dim)', padding: '2px 0' }}>
                             {t.from || '?'} → {t.to || '?'}{t.note ? ` · ${t.note}` : ''}{t.when ? <span style={{ color: 'var(--mut)' }}> ({t.when})</span> : ''}
                           </div>
                         ))}
@@ -89,8 +89,8 @@ export default function Items({ db }) {
                   </div>
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
                   <div className="entry-actions">
-                    <button className="btn btn-sm btn-outline" style={{ color: 'var(--ci)', borderColor: 'var(--ci)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
-                    <button className="btn btn-sm btn-outline" style={{ color: 'var(--ci)', borderColor: 'var(--ci)' }} onClick={ev => { ev.stopPropagation(); setTransferId(e.id) }}>↔ Transfer</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: '#7b2d8b', borderColor: '#7b2d8b' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: '#7b2d8b', borderColor: '#7b2d8b' }} onClick={ev => { ev.stopPropagation(); setTransferId(e.id) }}>↔ Transfer</button>
                     <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}>✕</button>
                   </div>
                 </>
@@ -115,7 +115,7 @@ export default function Items({ db }) {
         <div className="field"><label>When (e.g. "End of Book 1")</label><input value={txForm.when} onChange={e => setTxForm(p => ({ ...p, when: e.target.value }))} /></div>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
-          <button className="btn btn-primary" style={{ background: 'var(--ci)' }} onClick={doTransfer}>Transfer</button>
+          <button className="btn btn-primary" style={{ background: '#7b2d8b' }} onClick={doTransfer}>Transfer</button>
         </div>
       </Modal>
 

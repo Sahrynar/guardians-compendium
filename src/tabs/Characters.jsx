@@ -60,41 +60,16 @@ function isDeadByBook(e, filterBook) {
   return diIdx <= fbIdx
 }
 
-export default function Characters({ db, goToWithSearch, crossLink, clearCrossLink }) {
+export default function Characters({ db }) {
   const chars = db.db.characters || []
   const [search, setSearch] = useState('')
-  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('char_cols') || '3'))
-
-  // Consume crossLink on mount (e.g. arriving from a scene click or dashboard)
-  useEffect(() => {
-    if (crossLink?.search) {
-      setSearch(crossLink.search)
-      // Prefer exact ID match, fall back to name match
-      if (crossLink.expandId) {
-        setExpanded(crossLink.expandId)
-      } else if (crossLink.expandName) {
-        const match = chars.find(c =>
-          (c.name || c.display_name || '').toLowerCase() === crossLink.expandName.toLowerCase()
-        )
-        if (match) setExpanded(match.id)
-      }
-      clearCrossLink?.()
-    }
-  }, [crossLink])
-
-  const [dividers, setDividers] = useState(() => db.getSetting?.('char_cols_div') !== 'off')
-  function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('char_cols_div', next ? 'on' : 'off') }
-  function saveColCount(n) { setColCount(n); db.saveSetting?.('char_cols', String(n)) }
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [portraitCharId, setPortraitCharId] = useState(null)
   const [lightboxSrc, setLightboxSrc] = useState(null)
-  const [filterDeceased, setFilterDeceased] = useState('all')
-  const [filterElement, setFilterElement] = useState('all')
-  const [filterBook, setFilterBook] = useState('all')
-  const [sortMode, setSortMode] = useState('alpha')
+  const [filterDeceased, setFilterDeceased] = useState('all') // 'all'|'alive'|'deceased'
 
   // filterDeceased can be 'all', 'alive', 'deceased', or a book name like 'Book 1'
   const filtered = chars.filter(e => {
@@ -104,34 +79,10 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
     } else if (filterDeceased === 'deceased') {
       if (isDeceased(e) !== true) return false
     }
-    if (filterElement !== 'all' && (e.element || '') !== filterElement) return false
-    if (filterBook !== 'all' && !(e.books || []).includes(filterBook) && (e.first_book || '') !== filterBook) return false
     return true
-  }).sort((a, b) => {
-    if (sortMode === 'alpha') return (a.display_name || a.name || '').localeCompare(b.display_name || b.name || '')
-    if (sortMode === 'zalpha') return (b.display_name || b.name || '').localeCompare(a.display_name || a.name || '')
-    if (sortMode === 'element') return (a.element || '').localeCompare(b.element || '')
-    if (sortMode === 'status') return (a.status || '').localeCompare(b.status || '')
-    if (sortMode === 'birthday') {
-      const pa = parseInt(a.birthday_lajen || '0') || 0
-      const pb = parseInt(b.birthday_lajen || '0') || 0
-      return pa - pb
-    }
-    if (sortMode === 'book') return (a.first_book || '').localeCompare(b.first_book || '')
-    if (sortMode === 'newest') return new Date(b.created || 0) - new Date(a.created || 0)
-    return 0
   })
 
   function handleSave(entry) {
-    // Duplicate detection — warn on new entries only
-    if (!editing?.id) {
-      const newName = (entry.name || '').toLowerCase().trim()
-      const dupe = chars.find(c =>
-        c.id !== entry.id &&
-        (c.name || '').toLowerCase().trim() === newName
-      )
-      if (dupe && !window.confirm(`A character named "${dupe.name}" already exists. Save anyway?`)) return
-    }
     if (!editing?.id && entry.birthday_lajen) {
       const existing = (db.db.timeline||[]).find(t => t.name === 'Birthday: ' + entry.name)
       if (!existing) {
@@ -208,55 +159,7 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
   return (
     <div>
       <div className="tbar">
-        <div style={{ display:'flex', gap:3, marginRight:'auto' }}>
-          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
-            <button key={l} onClick={() => saveColCount(n)}
-              style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
-                background: colCount===n ? 'var(--cc)' : 'none',
-                color: colCount===n ? '#000' : 'var(--dim)',
-                border: `1px solid ${colCount===n ? 'var(--cc)' : 'var(--brd)'}`,
-                cursor:'pointer' }}>{l}</button>
-          ))}
-        
-        <button onClick={toggleDividers}
-          style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8, marginLeft:8,
-            background: dividers ? 'rgba(255,255,255,.08)' : 'none',
-            color: dividers ? 'var(--tx)' : 'var(--mut)',
-            border:'1px solid var(--brd)', cursor:'pointer' }}>
-          {dividers ? '┃ on' : '┃ off'}
-        </button>
-        </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
-        <select value={sortMode} onChange={e => setSortMode(e.target.value)}
-          style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
-          <option value="alpha">A → Z</option>
-          <option value="zalpha">Z → A</option>
-          <option value="element">Element</option>
-          <option value="status">Status</option>
-          <option value="birthday">Birthday</option>
-          <option value="book">First Book</option>
-          <option value="newest">Newest</option>
-        </select>
-        {/* Element filter */}
-        <select value={filterElement} onChange={e => setFilterElement(e.target.value)}
-          style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
-          <option value="all">All Elements</option>
-          <option value="Water">💧 Water</option>
-          <option value="Fire">🔥 Fire</option>
-          <option value="Earth">🌿 Earth</option>
-          <option value="Air">💨 Air</option>
-        </select>
-        {/* Book filter */}
-        <select value={filterBook} onChange={e => setFilterBook(e.target.value)}
-          style={{ fontSize:'0.77em', padding:'3px 8px', borderRadius:6, border:'1px solid var(--brd)', background:'var(--sf)', color:'var(--dim)', cursor:'pointer' }}>
-          <option value="all">All Books</option>
-          <option value="Pre-Series">Pre-Series</option>
-          <option value="Book 1">Book 1</option>
-          <option value="Book 2">Book 2</option>
-          <option value="Book 3">Book 3</option>
-          <option value="Book 4">Book 4</option>
-          <option value="Book 5">Book 5</option>
-        </select>
         {/* Alive/Deceased filter */}
         <div style={{ display: 'flex', gap: 3 }}>
           {[['all','All'], ['alive','Alive'], ['deceased','†']].map(([v, l]) => (
@@ -270,13 +173,13 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
             </button>
           ))}
         </div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns: colCount > 1 ? `repeat(${colCount}, 1fr)` : '1fr', columnGap: 12, gap: 8, width: '100%' }}>
+      <div className="cg">
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
-            <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
+            <button className="btn btn-primary" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
           </div>
         )}
         {filtered.map((e, i) => {
@@ -288,7 +191,12 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
           const dead = isDeceased(e)
 
           return (
-            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--cc)', background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined, opacity: dead === true ? 0.8 : 1 }}
+            <div key={e.id} className="entry-card"
+              style={{
+                '--card-color': 'var(--cc)',
+                background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined,
+                opacity: dead === true ? 0.8 : 1,
+              }}
               onClick={() => setExpanded(isOpen?null:e.id)}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -313,7 +221,7 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
                               style={{ width: 100, height: 'auto', borderRadius: 'var(--r)', border: '1px solid var(--cc)', cursor: 'zoom-in' }}
                               onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.portrait_canvas) }}
                             />
-                            <div style={{ fontSize: '0.62em', color: 'var(--cc)', marginTop: 2, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Edit</div>
+                            <div style={{ fontSize: 8, color: '#e63946', marginTop: 2, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Edit</div>
                           </div>
                         ) : (
                           <div style={{ width: 80, height: 80, border: '1px dashed var(--brd)', borderRadius: 'var(--r)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--mut)', fontSize: '0.69em', cursor: 'pointer', gap: 2 }}
@@ -328,10 +236,10 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
                               onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.reference_image) }}
                             />
                             <div style={{ display: 'flex', gap: 4, marginTop: 2, justifyContent: 'center' }}>
-                              <label style={{ fontSize: '0.62em', color: 'var(--dim)', cursor: 'pointer' }}>📎
+                              <label style={{ fontSize: 8, color: 'var(--dim)', cursor: 'pointer' }}>📎
                                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={ev => { const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e2=>{db.upsertEntry('characters',{...e,reference_image:e2.target.result})};r.readAsDataURL(f) }} />
                               </label>
-                              <span style={{ fontSize: '0.62em', color: '#ff3355', cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); db.upsertEntry('characters',{...e,reference_image:null}) }}>✕</span>
+                              <span style={{ fontSize: 8, color: '#ff3355', cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); db.upsertEntry('characters',{...e,reference_image:null}) }}>✕</span>
                             </div>
                           </div>
                         ) : (
@@ -357,7 +265,7 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
                       return !skip.includes(f.k) && e[f.k]
                     }).map(f => (
                       <div key={f.k} style={{ marginBottom: 3 }}>
-                        <strong style={{ color: 'var(--cc)', fontSize: '0.69em', textTransform: 'uppercase' }}>{f.l}: </strong>
+                        <strong style={{ color: '#e63946', fontSize: '0.69em', textTransform: 'uppercase' }}>{f.l}: </strong>
                         {f.k === 'has_wings'
                           ? <span>{e[f.k]} {e[f.k] === 'Yes' && e.wing_color && e.wing_color !== '#888888' ? <span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:e.wing_color, border:'1px solid rgba(255,255,255,.3)', verticalAlign:'middle', marginLeft:3 }} /> : null}</span>
                           : String(e[f.k])
@@ -372,50 +280,6 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
                         † Deceased{diesIn(e) ? ` — ${diesIn(e)}` : ''}
                       </div>
                     )}
-
-                    {(() => {
-                      const myItems = (db.db.items||[]).filter(it =>
-                        it.holder === e.id ||
-                        (it.shared_with === e.id) ||
-                        (it.holder && typeof it.holder === 'string' &&
-                          it.holder.toLowerCase() === (e.name||'').toLowerCase())
-                      )
-                      if (!myItems.length) return null
-                      return (
-                        <div style={{ marginTop: 8 }} onClick={ev => ev.stopPropagation()}>
-                          <div style={{ fontSize: '0.77em', color: 'var(--ci)', fontWeight: 700,
-                            marginBottom: 6 }}>⚔ Items & Weapons</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {myItems.map(it => (
-                              <div key={it.id} style={{ background: 'var(--card)',
-                                border: '1px solid var(--brd)', borderRadius: 7,
-                                padding: 6, minWidth: 80, maxWidth: 120,
-                                cursor: 'pointer', position: 'relative' }}
-                                title={it.name}
-                                onClick={ev => { ev.stopPropagation() }}>
-                                {it.image && (
-                                  <img src={it.image} alt={it.name}
-                                    style={{ width: '100%', height: 50, objectFit: 'cover',
-                                      borderRadius: 4, marginBottom: 3, display: 'block' }}
-                                    onError={e => e.target.style.display='none'} />
-                                )}
-                                {(it.transfers||[]).length > 0 && (
-                                  <span style={{ position: 'absolute', top: 3, right: 3,
-                                    fontSize: '0.62em', color: 'var(--sp)', background: 'rgba(0,0,0,.5)',
-                                    padding: '1px 3px', borderRadius: 3 }}>↔</span>
-                                )}
-                                <div style={{ fontSize: '0.69em', fontWeight: 600,
-                                  color: 'var(--tx)', lineHeight: 1.2 }}>{it.name}</div>
-                                {it.item_type && (
-                                  <div style={{ fontSize: '0.62em', color: 'var(--ci)',
-                                    textTransform: 'uppercase' }}>{it.item_type}</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })()}
 
                     {(() => {
                       const myWR = (db.db.wardrobe||[]).filter(w => w.character === e.id)
@@ -434,16 +298,7 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
                       return (
                         <details style={{ marginTop: 4 }} onClick={ev => ev.stopPropagation()}>
                           <summary style={{ fontSize: '0.77em', color: 'var(--csc)', cursor: 'pointer' }}>Scenes ({mySc.length})</summary>
-                          {mySc.map(s => (
-                            <div key={s.id} style={{ fontSize: '0.77em', color: 'var(--dim)', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              {s.book && <span style={{ color: 'var(--csc)' }}>{s.book} </span>}
-                              <button
-                                onClick={ev => { ev.stopPropagation(); goToWithSearch?.('scenes', s.name) }}
-                                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', textAlign: 'left', textDecoration: 'underline', textDecorationColor: 'rgba(102,187,255,.4)' }}
-                                title="Jump to this scene"
-                              >{s.name}</button>
-                            </div>
-                          ))}
+                          {mySc.map(s => <div key={s.id} style={{ fontSize: '0.77em', color: 'var(--dim)', padding: '2px 0' }}>{s.book && <span style={{ color: 'var(--csc)' }}>{s.book} </span>}{s.name}</div>)}
                         </details>
                       )
                     })()}
@@ -451,15 +306,8 @@ export default function Characters({ db, goToWithSearch, crossLink, clearCrossLi
 
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
 
-                  {(e.updated_at || e.updated || e.created) && (
-                    <div className="entry-timestamp">
-                      {e.updated_at || e.updated
-                        ? `Edited ${new Date(e.updated_at || e.updated).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
-                        : `Added ${new Date(e.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                    </div>
-                  )}
                   <div className="entry-actions">
-                    <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: '#e63946', borderColor: '#e63946' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
                     <button className="btn btn-sm btn-outline" style={{ color: 'var(--cq)', borderColor: 'var(--cq)' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Portrait</button>
                     <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}>✕</button>
                   </div>
@@ -512,11 +360,11 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   const [gradAngle, setGradAngle] = useState(90)
   const [gradType, setGradType] = useState('linear')
   const [selectedStop, setSelectedStop] = useState(0)
-  const [savedGrads, setSavedGrads] = useState(() => { try { return JSON.parse(db.getSetting?.('char_gradients') || localStorage.getItem('gcomp_gradients') || '[]') } catch { return [] } })
-  const [recentColors, setRecentColors] = useState(() => { try { return JSON.parse(db.getSetting?.('char_recent_colors') || localStorage.getItem('gcomp_recent_colors') || '[]') } catch { return [] } })
+  const [savedGrads, setSavedGrads] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_gradients')||'[]') } catch { return [] } })
+  const [recentColors, setRecentColors] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_recent_colors')||'[]') } catch { return [] } })
   const [zoom, setZoom] = useState(1)
   const [tab, setTab] = useState('base')
-  const [presetSrcs, setPresetSrcs] = useState(() => { try { return JSON.parse(db.getSetting?.('char_preset_imgs') || localStorage.getItem('gcomp_preset_imgs') || '{}') } catch { return {} } })
+  const [presetSrcs, setPresetSrcs] = useState(() => { try { return JSON.parse(localStorage.getItem('gcomp_preset_imgs')||'{}') } catch { return {} } })
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return
@@ -551,7 +399,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   function addRecentColor(c) {
     setRecentColors(prev => {
       const next = [c, ...prev.filter(x => x !== c)].slice(0, 20)
-      db.saveSetting?.('char_recent_colors', JSON.stringify(next))
+      localStorage.setItem('gcomp_recent_colors', JSON.stringify(next))
       return next
     })
   }
@@ -657,7 +505,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
     r.onload = ev => {
       const updated = { ...presetSrcs, [key]: ev.target.result }
       setPresetSrcs(updated)
-      db.saveSetting?.('char_preset_imgs', JSON.stringify(updated))
+      localStorage.setItem('gcomp_preset_imgs', JSON.stringify(updated))
     }
     r.readAsDataURL(f)
   }
@@ -665,7 +513,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
   function saveGradient() {
     const name = prompt('Gradient name:'); if (!name) return
     const updated = [...savedGrads, { name, stops: gradStops, angle: gradAngle, type: gradType }]
-    setSavedGrads(updated); db.saveSetting?.('char_gradients', JSON.stringify(updated))
+    setSavedGrads(updated); localStorage.setItem('gcomp_gradients', JSON.stringify(updated))
   }
 
   if (!ch) return null
@@ -674,7 +522,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(3px)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '24px 10px', overflowY: 'auto' }}>
       <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', width: '100%', maxWidth: 640, padding: 18, position: 'relative' }}>
         <button style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'var(--dim)', fontSize: '1.38em', cursor: 'pointer' }} onClick={onClose}>✕</button>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', marginBottom: 12, color: 'var(--cc)' }}>🎨 Portrait — {ch.name}</h2>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', marginBottom: 12, color: '#e63946' }}>🎨 Portrait — {ch.name}</h2>
 
         <div style={{ display: 'flex', gap: 4, marginBottom: 12, borderBottom: '1px solid var(--brd)', paddingBottom: 8 }}>
           {[['base','Base Image'],['color','Color Tool'],['gradient','Gradient']].map(([k,l]) => (
@@ -693,18 +541,18 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
                     onClick={() => { if (src) { db.upsertEntry('characters',{...ch,portrait_base:key,portrait_custom:null,portrait_canvas:null}); loadBase(src) } }}>
                     {src
                       ? <img src={src} style={{ width:'100%', height:60, objectFit:'contain', filter:'invert(1) brightness(.7)' }} alt={label} />
-                      : <div style={{ height:60, display:'flex', alignItems:'center', justifyContent:'center', fontSize: '0.69em', color:'var(--mut)', flexDirection:'column', gap:2 }}>
+                      : <div style={{ height:60, display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, color:'var(--mut)', flexDirection:'column', gap:2 }}>
                           <span>No image</span>
-                          <label style={{ fontSize: '0.62em', color:'var(--cc)', cursor:'pointer' }}>Upload<input type="file" accept="image/*" style={{display:'none'}} onChange={e => uploadPreset(key, e)} /></label>
+                          <label style={{ fontSize:8, color:'var(--cc)', cursor:'pointer' }}>Upload<input type="file" accept="image/*" style={{display:'none'}} onChange={e => uploadPreset(key, e)} /></label>
                         </div>
                     }
-                    <div style={{ fontSize: '0.62em', color: sel?'var(--cc)':'var(--dim)', marginTop: 2 }}>{label}</div>
+                    <div style={{ fontSize: 8, color: sel?'var(--cc)':'var(--dim)', marginTop: 2 }}>{label}</div>
                   </div>
                 )
               })}
             </div>
             <div className="field"><label>Upload Custom Image</label>
-              <label style={{ display:'inline-block', padding:'6px 12px', background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--r)', cursor:'pointer', fontSize: '0.85em' }}>
+              <label style={{ display:'inline-block', padding:'6px 12px', background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--r)', cursor:'pointer', fontSize:11 }}>
                 📎 Choose Image
                 <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => {
                   const f=e.target.files[0]; if(!f) return
@@ -721,14 +569,14 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
               <button className="btn btn-sm btn-outline" onClick={undo}>↩ Undo</button>
               <button className="btn btn-sm btn-outline" onClick={reset}>↺ Reset</button>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Tol:</span>
+                <span style={{ fontSize:10, color:'var(--dim)' }}>Tol:</span>
                 <input type="range" min={4} max={80} value={tolerance} style={{ width:70 }} onChange={e => setTolerance(parseInt(e.target.value))} />
-                <span style={{ fontSize: '0.77em', color:'var(--cca)' }}>{tolerance}</span>
+                <span style={{ fontSize:10, color:'var(--cca)' }}>{tolerance}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Zoom:</span>
+                <span style={{ fontSize:10, color:'var(--dim)' }}>Zoom:</span>
                 <input type="range" min={1} max={4} step={0.25} value={zoom} style={{ width:60 }} onChange={e => setZoom(parseFloat(e.target.value))} />
-                <span style={{ fontSize: '0.77em', color:'var(--cca)' }}>{zoom}×</span>
+                <span style={{ fontSize:10, color:'var(--cca)' }}>{zoom}×</span>
               </div>
               <div style={{ display:'flex', gap:4 }}>
                 <button className={`fp ${fillMode==='flat'?'active':''}`} style={{ color:'var(--cc)' }} onClick={() => setFillMode('flat')}>Flat</button>
@@ -737,12 +585,12 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
             </div>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
               <input type="color" value={flatColor} onChange={e => setFlatColor(e.target.value)} style={{ width:36, height:30, padding:0, border:'1px solid var(--brd)', borderRadius:4, cursor:'pointer' }} />
-              <span style={{ fontSize: '0.85em', color:'var(--dim)' }}>Current color</span>
+              <span style={{ fontSize:11, color:'var(--dim)' }}>Current color</span>
               <div style={{ width:20, height:20, borderRadius:'50%', background:flatColor, border:'2px solid rgba(255,255,255,.2)' }} />
             </div>
             {recentColors.length > 0 && (
               <div style={{ marginBottom:8 }}>
-                <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Recent</div>
+                <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Recent</div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:3 }}>
                   {recentColors.map((c,i) => (
                     <div key={i} style={{ width:18, height:18, borderRadius:3, background:c, border:`2px solid ${c===flatColor?'white':'rgba(255,255,255,.15)'}`, cursor:'pointer' }} onClick={() => setFlatColor(c)} title={c} />
@@ -751,7 +599,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
               </div>
             )}
             <div style={{ marginBottom:8 }}>
-              <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Palette</div>
+              <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Palette</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(10,1fr)', gap:2 }}>
                 {PALETTE.map((c,i) => (
                   <div key={i} style={{ width:'100%', paddingBottom:'100%', position:'relative', cursor:'pointer' }} onClick={() => setFlatColor(c)}>
@@ -768,35 +616,35 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
 
         {tab === 'gradient' && (
           <div>
-            <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:8 }}>Set up gradient, then switch to Color Tool and click a region.</div>
+            <div style={{ fontSize:10, color:'var(--dim)', marginBottom:8 }}>Set up gradient, then switch to Color Tool and click a region.</div>
             <GradientBar stops={gradStops} setStops={setGradStops} selectedStop={selectedStop} setSelectedStop={setSelectedStop} />
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginTop:8 }}>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Stop color:</span>
+                <span style={{ fontSize:10, color:'var(--dim)' }}>Stop color:</span>
                 <input type="color" value={gradStops[selectedStop]?.color||'#c966ff'} onChange={e => setGradStops(prev => prev.map((s,i) => i===selectedStop?{...s,color:e.target.value}:s))} style={{ width:32, height:24, padding:0, border:'1px solid var(--brd)', borderRadius:4, cursor:'pointer' }} />
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Angle:</span>
+                <span style={{ fontSize:10, color:'var(--dim)' }}>Angle:</span>
                 <input type="number" value={gradAngle} min={0} max={360} style={{ width:50 }} onChange={e => setGradAngle(parseInt(e.target.value)||0)} />°
               </div>
-              <select style={{ padding:'3px 5px', borderRadius:4, border:'1px solid var(--brd)', background:'var(--card)', color:'var(--tx)', fontSize: '0.77em' }} value={gradType} onChange={e => setGradType(e.target.value)}>
+              <select style={{ padding:'3px 5px', borderRadius:4, border:'1px solid var(--brd)', background:'var(--card)', color:'var(--tx)', fontSize:10 }} value={gradType} onChange={e => setGradType(e.target.value)}>
                 <option value="linear">Linear</option>
                 <option value="radial">Radial</option>
               </select>
             </div>
             <div style={{ marginTop:12 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                <div style={{ fontSize: '0.69em', color:'var(--dim)', textTransform:'uppercase', letterSpacing:'.03em' }}>Saved Gradients</div>
+                <div style={{ fontSize:9, color:'var(--dim)', textTransform:'uppercase', letterSpacing:'.03em' }}>Saved Gradients</div>
                 <button className="btn btn-sm btn-outline" style={{ color:'var(--cca)', borderColor:'var(--cca)' }} onClick={saveGradient}>💾 Save Current</button>
               </div>
-              {!savedGrads.length && <div style={{ fontSize: '0.77em', color:'var(--mut)' }}>No saved gradients yet.</div>}
+              {!savedGrads.length && <div style={{ fontSize:10, color:'var(--mut)' }}>No saved gradients yet.</div>}
               {savedGrads.map((g,i) => {
                 const preview = `linear-gradient(90deg, ${[...g.stops].sort((a,b)=>a.pos-b.pos).map(s=>`${s.color} ${s.pos*100}%`).join(', ')})`
                 return (
                   <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                     <div style={{ flex:1, height:20, borderRadius:4, background:preview, border:'1px solid var(--brd)', cursor:'pointer' }} onClick={() => { setGradStops(g.stops); setGradAngle(g.angle); setGradType(g.type) }} />
-                    <span style={{ fontSize: '0.77em', color:'var(--dim)', minWidth:60 }}>{g.name}</span>
-                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize: '0.85em' }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); db.saveSetting?.('char_gradients',JSON.stringify(u)) }}>✕</button>
+                    <span style={{ fontSize:10, color:'var(--dim)', minWidth:60 }}>{g.name}</span>
+                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:11 }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); localStorage.setItem('gcomp_gradients',JSON.stringify(u)) }}>✕</button>
                   </div>
                 )
               })}
@@ -863,7 +711,7 @@ function GradientBar({ stops, setStops, selectedStop, setSelectedStop }) {
   }
   return (
     <div>
-      <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4 }}>Click bar to add stop · Drag to move · Right-click to remove</div>
+      <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4 }}>Click bar to add stop · Drag to move · Right-click to remove</div>
       <canvas ref={canvasRef} width={300} height={28} style={{ width:'100%', maxWidth:300, borderRadius:4, cursor:'crosshair', display:'block', border:'1px solid var(--brd)' }}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onContextMenu={onContextMenu} />
     </div>

@@ -1,5 +1,4 @@
 import GenericListTab from '../components/common/GenericListTab'
-import { TAB_RAINBOW } from '../constants'
 
 const Q_FIELDS = [
   { k: 'name',           l: 'Question',       t: 'text', r: true },
@@ -9,12 +8,12 @@ const Q_FIELDS = [
   { k: 'detail',         l: 'Detail',         t: 'ta' },
 ]
 
-export default function Questions({ db, rainbowOn, colDivider }) {
+export default function Questions({ db, navSearch }) {
   return (
     <GenericListTab
-      catKey="questions" color={TAB_RAINBOW.questions} icon="❓"
+      catKey="questions" color="#c77dff" icon="❓"
       label="Open Questions" fields={Q_FIELDS} db={db}
-      rainbowOn={rainbowOn} colDivider={colDivider}
+      navSearch={navSearch}
     />
   )
 }

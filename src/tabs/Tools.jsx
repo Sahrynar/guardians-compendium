@@ -8,7 +8,7 @@ const TOOLS = [
   { id: 'elapsed',   label: 'Time Elapsed',           emoji: '⏱',  color: 'var(--cq)'  },
   { id: 'age',       label: 'Character Age',          emoji: '🎂', color: 'var(--cc)'  },
   { id: 'units',     label: 'Unit Converter',         emoji: '📐', color: 'var(--csp)' },
-  { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
+  { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: '#3a86ff'  },
   { id: 'pronun',    label: 'Pronunciation Helper',   emoji: '🔊', color: 'var(--cwr)' },
   { id: 'backfill',  label: 'Birthday Backfill',      emoji: '🗓', color: 'var(--cfl)' },
 ]
@@ -313,10 +313,10 @@ function IxCitlatlTool() {
 
   return (
     <div className="tool-card" id="tool-ixcitlatl">
-      <h3 style={{ color: 'var(--cl)' }}>✦ Ix'Citlatl Name Converter</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <h3 style={{ color: '#3a86ff' }}>✦ Ix'Citlatl Name Converter</h3>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         Converts any name into its Ix'Citlatl equivalent across all 12 Mesoamerican language systems.
-        Female private names begin with <strong style={{ color: 'var(--cl)' }}>Ix</strong> (pronounced "eesh"),
+        Female private names begin with <strong style={{ color: '#3a86ff' }}>Ix</strong> (pronounced "eesh"),
         male with <strong style={{ color: 'var(--cca)' }}>Ah</strong>.
       </div>
 
@@ -335,7 +335,7 @@ function IxCitlatlTool() {
           </select>
         </div>
         <button className="btn btn-primary btn-sm"
-          style={{ background: 'var(--cl)', color: '#000', alignSelf: 'flex-end' }}
+          style={{ background: '#3a86ff', color: '#000', alignSelf: 'flex-end' }}
           onClick={convert}>Convert All</button>
       </div>
 
@@ -343,16 +343,16 @@ function IxCitlatlTool() {
         <div>
           {history.map(h => (
             <div key={h.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, color: 'var(--cca)', fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontSize: '0.77em', color: 'var(--cca)', fontWeight: 700, marginBottom: 6 }}>
                 {h.original} <span style={{ color: 'var(--dim)', fontWeight: 400 }}>({h.gender})</span>
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Language System</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Result</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Notes</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Language System</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Result</th>
+                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Notes</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -361,16 +361,16 @@ function IxCitlatlTool() {
                       <tr key={r.system} style={{ borderTop: '1px solid rgba(255,255,255,.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
                         <td style={{ padding: '5px 8px 5px 0', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{r.label}</td>
                         <td style={{ padding: '5px 8px 5px 0' }}>
-                          <span style={{ fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700,
+                          <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700,
                             color: h.gender === 'female' ? 'var(--cl)' : 'var(--cca)' }}>
                             {r.result}
                           </span>
                         </td>
-                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--mut)', fontSize: 9, fontStyle: 'italic' }}>{r.note}</td>
+                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--mut)', fontSize: '0.69em', fontStyle: 'italic' }}>{r.note}</td>
                         <td style={{ padding: '5px 0', whiteSpace: 'nowrap' }}>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 10, padding: '0 3px' }}
+                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
                             onClick={() => navigator.clipboard?.writeText(r.result)} title="Copy">📋</button>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 10, padding: '0 3px' }}
+                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
                             onClick={() => speak(r.result)} title="Hear pronunciation">🔊</button>
                         </td>
                       </tr>
@@ -380,7 +380,7 @@ function IxCitlatlTool() {
               </div>
             </div>
           ))}
-          <button style={{ fontSize: 9, color: 'var(--mut)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          <button style={{ fontSize: '0.69em', color: 'var(--mut)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             onClick={() => saveHistory([])}>Clear history</button>
         </div>
       )}
@@ -443,7 +443,7 @@ function PronunciationTool() {
   return (
     <div className="tool-card" id="tool-pronun">
       <h3 style={{ color: 'var(--cwr)' }}>🔊 Pronunciation Helper</h3>
-      <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         Generate and hear how any Lajen word should sound. Pick the language system it belongs to.
         Systems marked ⚠ have phonology not yet confirmed — pronunciation is approximate.
       </div>
@@ -469,7 +469,7 @@ function PronunciationTool() {
       </div>
 
       {!sys.confirmed && system !== 'manual' && (
-        <div style={{ fontSize: 10, color: 'var(--sp)', padding: '4px 8px', background: 'rgba(255,204,0,.07)', borderRadius: 4, marginBottom: 8, border: '1px solid rgba(255,204,0,.2)' }}>
+        <div style={{ fontSize: '0.77em', color: 'var(--sp)', padding: '4px 8px', background: 'rgba(255,204,0,.07)', borderRadius: 4, marginBottom: 8, border: '1px solid rgba(255,204,0,.2)' }}>
           ⚠ {sys.label} phonology not yet confirmed — output is placeholder only.
         </div>
       )}
@@ -485,15 +485,15 @@ function PronunciationTool() {
       {result && (
         <div style={{ padding: '10px 12px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', marginTop: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 10, color: 'var(--dim)' }}>{result.word} ({result.system})</span>
-            <span style={{ fontSize: 16, fontFamily: "'Cinzel',serif", color: 'var(--cwr)', fontWeight: 700 }}>{result.pronunciation}</span>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}
+            <span style={{ fontSize: '0.77em', color: 'var(--dim)' }}>{result.word} ({result.system})</span>
+            <span style={{ fontSize: '1.23em', fontFamily: "'Cinzel',serif", color: 'var(--cwr)', fontWeight: 700 }}>{result.pronunciation}</span>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.23em' }}
               onClick={() => speak(result.pronunciation)} title="Hear it">🔊</button>
-            <button style={{ background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer', fontSize: 9, padding: '2px 6px', borderRadius: 3 }}
+            <button style={{ background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.69em', padding: '2px 6px', borderRadius: 3 }}
               onClick={() => navigator.clipboard?.writeText(result.pronunciation)}>Copy</button>
           </div>
           {!result.autoGenerated && system !== 'manual' && (
-            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 5 }}>
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 5 }}>
               Pronunciation rules for this language are not yet confirmed. Consider switching to Manual to lock in the correct form.
             </div>
           )}
@@ -502,13 +502,13 @@ function PronunciationTool() {
 
       {/* Reference guide */}
       <details style={{ marginTop: 10 }}>
-        <summary style={{ fontSize: 10, color: 'var(--dim)', cursor: 'pointer', userSelect: 'none' }}>
+        <summary style={{ fontSize: '0.77em', color: 'var(--dim)', cursor: 'pointer', userSelect: 'none' }}>
           📖 Ix'Citlatl Sound Guide
         </summary>
-        <div style={{ marginTop: 6, padding: 8, background: 'var(--card)', borderRadius: 'var(--r)', fontSize: 10, lineHeight: 1.8 }}>
+        <div style={{ marginTop: 6, padding: 8, background: 'var(--card)', borderRadius: 'var(--r)', fontSize: '0.77em', lineHeight: 1.8 }}>
           {[["Ix'","eesh (prefix)"],["x","sh (as in 'shell')"],["tl","tl as one sound (like in 'Nahuatl')"],["tz","ts (as in 'bits')"],["hu","w"],["'","glottal stop (like 'uh-oh')"],["c (before a/o)","k"],["c (before e/i)","s"],["ll","long L"]].map(([sym,val]) => (
             <div key={sym} style={{ display: 'flex', gap: 8 }}>
-              <span style={{ color: 'var(--cl)', minWidth: 80, fontFamily: "'Cinzel',serif" }}>{sym}</span>
+              <span style={{ color: '#3a86ff', minWidth: 80, fontFamily: "'Cinzel',serif" }}>{sym}</span>
               <span style={{ color: 'var(--dim)' }}>{val}</span>
             </div>
           ))}

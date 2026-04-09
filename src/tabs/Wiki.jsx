@@ -45,7 +45,7 @@ function FlowchartRenderer({ content }) {
           const outgoing = edges.filter(e => e.from === id)
           return (
             <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--cc)', whiteSpace: 'nowrap' }}>
+              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: '#ff69b4', whiteSpace: 'nowrap' }}>
                 {nodes[id]}
               </div>
               {outgoing.map((e, i) => (
@@ -74,7 +74,7 @@ function TableRenderer({ content }) {
         <thead>
           <tr>
             {header.map((h, i) => (
-              <th key={i} style={{ padding: '6px 10px', background: 'rgba(201,102,255,.1)', border: '1px solid var(--brd)', color: 'var(--cc)', fontWeight: 600, textAlign: 'left' }}>{h}</th>
+              <th key={i} style={{ padding: '6px 10px', background: 'rgba(201,102,255,.1)', border: '1px solid var(--brd)', color: '#ff69b4', fontWeight: 600, textAlign: 'left' }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -102,7 +102,7 @@ function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
         <div style={{ display: 'flex', gap: 3 }}>
           <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveUp}>↑</button>
           <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: 10 }} onClick={onMoveDown}>↓</button>
-          <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: 10 }} onClick={onEdit}>✎</button>
+          <button className="btn btn-sm btn-outline" style={{ color: '#ff69b4', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: 10 }} onClick={onEdit}>✎</button>
           <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: 10 }} onClick={onDelete}>✕</button>
         </div>
       </div>
@@ -161,7 +161,7 @@ function BlockEditor({ block, onSave, onClose }) {
             <button
               key={ct.k}
               className={`fp ${type === ct.k ? 'active' : ''}`}
-              style={{ color: 'var(--cc)' }}
+              style={{ color: '#ff69b4' }}
               onClick={() => setType(ct.k)}
             >{ct.l}</button>
           ))}
@@ -197,7 +197,7 @@ function BlockEditor({ block, onSave, onClose }) {
 
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => onSave({ ...block, id: block?.id || uid(), type, content, caption })}>
+        <button className="btn btn-primary" style={{ background: '#ff69b4' }} onClick={() => onSave({ ...block, id: block?.id || uid(), type, content, caption })}>
           {block?.id ? 'Save' : 'Add Block'}
         </button>
       </div>
@@ -239,10 +239,10 @@ function ArticleEditor({ article, onSave, onCancel }) {
     <div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-outline" onClick={onCancel}>← Back</button>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: 'var(--cc)', flex: 1 }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: '#ff69b4', flex: 1 }}>
           {article?.id ? 'Editing Article' : 'New Article'}
         </div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
+        <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
           Save Article
         </button>
       </div>
@@ -259,7 +259,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
 
       {/* Blocks */}
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: 'var(--cc)', marginBottom: 8 }}>Content Blocks</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: '#ff69b4', marginBottom: 8 }}>Content Blocks</div>
         {!blocks.length && (
           <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: 11, border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
             No blocks yet. Add your first content block below.
@@ -277,7 +277,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
         ))}
         <button
           className="btn btn-outline"
-          style={{ width: '100%', borderStyle: 'dashed', color: 'var(--cc)', borderColor: 'var(--cc)', marginTop: 4 }}
+          style={{ width: '100%', borderStyle: 'dashed', color: '#ff69b4', borderColor: 'var(--cc)', marginTop: 4 }}
           onClick={() => setAddingBlock(true)}
         >+ Add Block</button>
       </div>
@@ -289,15 +289,15 @@ function ArticleEditor({ article, onSave, onCancel }) {
 }
 
 // ── Main Wiki Tab ───────────────────────────────────────────────
-export default function Wiki({ db }) {
+export default function Wiki({ db, navSearch }) {
   const articles = db.db.wiki || []
-  const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('all')
+  const [colSize, setColSize] = useState('M')
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
 
   const filtered = articles.filter(a => {
-    const ms = !search || JSON.stringify(a).toLowerCase().includes(search.toLowerCase())
+    const ms = !(navSearch||'') || JSON.stringify(a).toLowerCase().includes((navSearch||'').toLowerCase())
     const mc = catFilter === 'all' || a.category === catFilter
     return ms && mc
   })
@@ -315,19 +315,15 @@ export default function Wiki({ db }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cc)' }}>📖 Wiki</div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
-      </div>
-
-      <div className="tbar" style={{ padding: '0 0 8px' }}>
-        <input className="sx" placeholder="Search wiki…" value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#ff69b4' }}>📖 Wiki</div>
+        <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 
       {/* Category filter */}
       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 10 }}>
-        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: 'var(--cc)' }} onClick={() => setCatFilter('all')}>All</button>
+        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: '#ff69b4' }} onClick={() => setCatFilter('all')}>All</button>
         {WIKI_CATS.filter(c => articles.some(a => a.category === c)).map(c => (
-          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: 'var(--cc)' }} onClick={() => setCatFilter(c)}>{c}</button>
+          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: '#ff69b4' }} onClick={() => setCatFilter(c)}>{c}</button>
         ))}
       </div>
 
@@ -338,25 +334,25 @@ export default function Wiki({ db }) {
           <p style={{ fontSize: 11, color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
             The wiki is where long-form lore lives — world history, cosmology, power system deep-dives, cultures, languages, factions. Supports text, tables, flowcharts, diagrams, images, and callouts.
           </p>
-          <button className="btn btn-primary" style={{ background: 'var(--cc)' }} onClick={() => setEditing({})}>+ New Article</button>
+          <button className="btn btn-primary" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
         </div>
       )}
 
-      <div className="cg">
+      <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (
-          <div key={a.id} className="entry-card" style={{ '--card-color': 'var(--cc)' }}>
+          <div key={a.id} className="entry-card" style={{ '--card-color': '#ff69b4' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>
                 {a.summary && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
               </div>
-              <span className="badge" style={{ color: 'var(--cc)', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
+              <span className="badge" style={{ color: '#ff69b4', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
             </div>
             <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 4 }}>
               {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
             </div>
             <div className="entry-actions" style={{ marginTop: 6 }}>
-              <button className="btn btn-sm btn-outline" style={{ color: 'var(--cc)', borderColor: 'var(--cc)' }} onClick={() => setEditing(a)}>✎ Edit</button>
+              <button className="btn btn-sm btn-outline" style={{ color: '#ff69b4', borderColor: 'var(--cc)' }} onClick={() => setEditing(a)}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(a.id)}>✕</button>
             </div>
           </div>

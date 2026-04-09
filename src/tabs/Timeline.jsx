@@ -67,7 +67,7 @@ export default function Timeline({ db }) {
         <button className="btn btn-sm btn-outline" onClick={() => setShowVisual(v => !v)}>
           {showVisual ? 'Hide' : 'Show'} Track
         </button>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: '#0fb5a0' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
       {/* Era filter pills */}
@@ -107,8 +107,8 @@ export default function Timeline({ db }) {
                 <div key={e.id}>
                   <div className="timeline-dot" style={{ left: x-6, background: col }} onClick={() => setExpanded(exp => exp===e.id?null:e.id)} title={e.name} />
                   <div className="timeline-label" style={{ left: Math.max(0, Math.min(w-170, x-80)), top: i%2 ? 72 : 115, borderTop: `2px solid ${col}` }}>
-                    <div style={{ fontWeight: 700, fontSize: 10 }}>{e.name}</div>
-                    <div style={{ color: 'var(--dim)', fontSize: 9 }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.77em' }}>{e.name}</div>
+                    <div style={{ color: 'var(--dim)', fontSize: '0.69em' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
                   </div>
                 </div>
               )
@@ -121,7 +121,7 @@ export default function Timeline({ db }) {
       <div className="cg" style={{ marginTop: 10 }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
-            <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
+            <button className="btn btn-primary" style={{ background: '#0fb5a0' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
           </div>
         )}
         {sorted.map((e, i) => {
@@ -130,7 +130,7 @@ export default function Timeline({ db }) {
             <div key={e.id} className="entry-card" style={{ '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
-                <div style={{ fontSize: 10, color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
+                <div style={{ fontSize: '0.77em', color: '#0fb5a0' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
               </div>
               <div className="entry-meta">
                 {e.era && <span className="badge" style={{ color: 'var(--cca)', borderColor: 'rgba(255,170,51,.3)' }}>{e.era}</span>}
@@ -143,7 +143,7 @@ export default function Timeline({ db }) {
                   </div>
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
                   <div className="entry-actions">
-                    <button className="btn btn-sm btn-outline" style={{ color: 'var(--ct)', borderColor: 'var(--ct)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: '#0fb5a0', borderColor: '#0fb5a0' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
                     <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}>✕</button>
                   </div>
                 </>

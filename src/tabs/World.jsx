@@ -1,5 +1,4 @@
 import GenericListTab from '../components/common/GenericListTab'
-import { TAB_RAINBOW } from '../constants'
 
 const WORLD_FIELDS = [
   { k: 'name',     l: 'Topic',    t: 'text', r: true },
@@ -7,12 +6,12 @@ const WORLD_FIELDS = [
   { k: 'detail',   l: 'Detail',   t: 'ta' },
 ]
 
-export default function World({ db, rainbowOn, colDivider }) {
+export default function World({ db, navSearch }) {
   return (
     <GenericListTab
-      catKey="world" color={TAB_RAINBOW.world} icon="🌐"
+      catKey="world" color="#ff8c00" icon="🌐"
       label="World Entries" fields={WORLD_FIELDS} db={db}
-      rainbowOn={rainbowOn} colDivider={colDivider}
+      navSearch={navSearch}
     />
   )
 }

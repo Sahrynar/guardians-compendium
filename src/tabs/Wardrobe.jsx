@@ -50,7 +50,7 @@ export default function Wardrobe({ db }) {
     <div>
       <div className="tbar">
         <input className="sx" placeholder="Search wardrobe…" value={search} onChange={e => setSearch(e.target.value)} />
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cwr)', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: '#4361ee', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
       {!filtered.length && (
@@ -59,7 +59,7 @@ export default function Wardrobe({ db }) {
 
       {Object.entries(byChar).map(([cid, citems]) => (
         <div key={cid} className="wardrobe-card">
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: 'var(--cwr)', marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: '#4361ee', marginBottom: 6 }}>
             {charName(cid)}
           </div>
           {citems.map(it => {
@@ -81,12 +81,12 @@ export default function Wardrobe({ db }) {
             )
           })}
           {citems.filter(it => expanded === it.id).map(it => (
-            <div key={`detail-${it.id}`} style={{ marginTop: 8, padding: '8px', background: 'rgba(255,255,255,.02)', borderRadius: 'var(--r)', fontSize: 11, color: 'var(--dim)' }}>
+            <div key={`detail-${it.id}`} style={{ marginTop: 8, padding: '8px', background: 'rgba(255,255,255,.02)', borderRadius: 'var(--r)', fontSize: '0.85em', color: 'var(--dim)' }}>
               {it.description && <div style={{ marginBottom: 4 }}>{it.description}</div>}
-              {it.color_material && <div><strong style={{ color: 'var(--cwr)', fontSize: 9, textTransform: 'uppercase' }}>Material: </strong>{it.color_material}</div>}
+              {it.color_material && <div><strong style={{ color: '#4361ee', fontSize: '0.69em', textTransform: 'uppercase' }}>Material: </strong>{it.color_material}</div>}
               {it.notes && <div className="entry-notes" style={{ marginTop: 4 }}>{it.notes}</div>}
               <div className="entry-actions" style={{ marginTop: 4 }}>
-                <button className="btn btn-sm btn-outline" style={{ color: 'var(--cwr)', borderColor: 'var(--cwr)' }} onClick={() => { setEditing(it); setModalOpen(true) }}>✎ Edit</button>
+                <button className="btn btn-sm btn-outline" style={{ color: '#4361ee', borderColor: '#4361ee' }} onClick={() => { setEditing(it); setModalOpen(true) }}>✎ Edit</button>
                 <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(it.id)}>✕</button>
               </div>
             </div>

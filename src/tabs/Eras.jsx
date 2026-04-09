@@ -55,41 +55,41 @@ export default function Eras() {
   return (
     <div>
       <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17, color: 'var(--cca)' }}>⧖ Eras & Dating</div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>HC 320 = 1554 AD · 8.52 Lajen years = 1 Mnaerah year · All dates EXPLORATORY</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.31em', color: '#00b4d8' }}>⧖ Eras & Dating</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>HC 320 = 1554 AD · 8.52 Lajen years = 1 Mnaerah year · All dates EXPLORATORY</div>
       </div>
 
       {/* Era spans */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 16 }}>
         {ERA_SPANS.map(s => (
           <div key={s.name} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderTop: `3px solid ${s.col}`, borderRadius: 'var(--r)', padding: 10, textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: s.col }}>{s.name}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
-            <div style={{ fontSize: 11, color: 'var(--dim)' }}>{s.my}</div>
-            <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>{s.desc}</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: s.col }}>{s.name}</div>
+            <div style={{ fontSize: '1.38em', fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
+            <div style={{ fontSize: '0.85em', color: 'var(--dim)' }}>{s.my}</div>
+            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{s.desc}</div>
           </div>
         ))}
       </div>
 
       {/* Visual timeline */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cca)', marginBottom: 12 }}>Timeline</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: '#00b4d8', marginBottom: 12 }}>Timeline</div>
         <div style={{ position: 'relative', paddingLeft: 90 }}>
           {ERA_TIMELINE.map((e, i) => {
             const isLast = i === ERA_TIMELINE.length - 1
             return (
               <div key={i} style={{ display: 'flex', minHeight: i===0?48:56, position: 'relative' }}>
-                <div style={{ position: 'absolute', left: -90, width: 80, textAlign: 'right', paddingRight: 12, fontSize: 10 }}>
+                <div style={{ position: 'absolute', left: -90, width: 80, textAlign: 'right', paddingRight: 12, fontSize: '0.77em' }}>
                   <div style={{ fontWeight: 600 }}>{e.ly}</div>
-                  <div style={{ color: 'var(--mut)', fontSize: 9 }}>{e.my}</div>
+                  <div style={{ color: 'var(--mut)', fontSize: '0.69em' }}>{e.my}</div>
                 </div>
                 <div style={{ position: 'relative', width: 14, flexShrink: 0 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: e.col, position: 'absolute', top: 3, left: 2, zIndex: 1 }} />
                   {!isLast && <div style={{ position: 'absolute', left: 6, top: 13, bottom: 0, width: 2, background: e.col, opacity: .4 }} />}
                 </div>
                 <div style={{ padding: '0 0 12px 8px', flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: e.col }}>{e.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 1 }}>{e.desc}</div>
+                  <div style={{ fontSize: '0.92em', fontWeight: 600, color: e.col }}>{e.label}</div>
+                  <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 1 }}>{e.desc}</div>
                 </div>
               </div>
             )
@@ -99,17 +99,17 @@ export default function Eras() {
 
       {/* Conversion table */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cca)', marginBottom: 4 }}>Conversion Table</div>
-        <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 8 }}>Anchor: HC 320 = 1554 AD. Earth-history sections collapsed by default.</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: '#00b4d8', marginBottom: 4 }}>Conversion Table</div>
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Anchor: HC 320 = 1554 AD. Earth-history sections collapsed by default.</div>
         <div style={{ overflowX: 'auto' }}>
           {ERA_TABLE.map(cat => (
             <details key={cat.cat} open={lajenCore.has(cat.cat)} style={{ marginBottom: 4 }}>
               <summary
-                style={{ fontSize: 10, fontWeight: 700, color: 'var(--cca)', padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ fontSize: '0.77em', fontWeight: 700, color: '#00b4d8', padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
               >
-                {cat.cat} <span style={{ fontSize: 9, color: 'var(--mut)', fontWeight: 400, textTransform: 'none' }}>({cat.rows.length} entries)</span>
+                {cat.cat} <span style={{ fontSize: '0.69em', color: 'var(--mut)', fontWeight: 400, textTransform: 'none' }}>({cat.rows.length} entries)</span>
               </summary>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, marginBottom: 4 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em', marginBottom: 4 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--brd)' }}>
                     {['Mnaerah','Event','MY before 1554','HC Date','Lajen clock','Mnaerah clock'].map(h => (
@@ -125,7 +125,7 @@ export default function Eras() {
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--dim)' }}>{fmt(r.my)}</td>
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cc)', whiteSpace: 'nowrap' }}>{typeof r.hc==='number'&&r.hc<0?`HC ${fmt(r.hc)}`:`HC ${r.hc}`}</td>
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cl)', whiteSpace: 'nowrap' }}>{fmt(r.lc)} LY</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cca)', whiteSpace: 'nowrap' }}>{fmt(r.mc)} MY</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'right', color: '#00b4d8', whiteSpace: 'nowrap' }}>{fmt(r.mc)} MY</td>
                     </tr>
                   ))}
                 </tbody>

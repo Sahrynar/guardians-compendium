@@ -38,18 +38,18 @@ export default function Flags({ db }) {
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: 'var(--cfl)' }}>🚩 Flags & Review</div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: '#9d4edd' }}>🚩 Flags & Review</div>
+        <button className="btn btn-primary btn-sm" style={{ background: '#9d4edd', color: '#000' }} onClick={() => setModalOpen(true)}>+ Add Flag</button>
       </div>
 
       {/* Filter */}
       <div className="tbar" style={{ paddingTop: 0 }}>
         <div className="filter-group">
           {[['active','Active'],['resolved','Resolved'],['all','All']].map(([k,l]) => (
-            <button key={k} className={`fp ${filter===k?'active':''}`} style={{ color: 'var(--cfl)' }} onClick={() => setFilter(k)}>{l}</button>
+            <button key={k} className={`fp ${filter===k?'active':''}`} style={{ color: '#9d4edd' }} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
-        <span style={{ fontSize: 10, color: 'var(--mut)', marginLeft: 8 }}>
+        <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>
           {flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved
         </span>
       </div>
@@ -66,16 +66,16 @@ export default function Flags({ db }) {
         return (
           <div key={f.id} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
+              <div style={{ fontSize: '0.92em', fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>
                 {f.name}
               </div>
               <span className="flag-pri" style={{ background: `${pc}22`, color: pc, border: `1px solid ${pc}44` }}>
                 {f.priority || 'none'}
               </span>
             </div>
-            {f.detail && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
+            {f.detail && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 3 }}>{f.detail}</div>}
             {f.resolved && f.resolved_at && (
-              <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 3 }}>Resolved {new Date(f.resolved_at).toLocaleDateString()}</div>
             )}
             <div className="entry-actions" style={{ marginTop: 4 }}>
               {!f.resolved
@@ -102,7 +102,7 @@ export default function Flags({ db }) {
         </div>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setModalOpen(false)}>Cancel</button>
-          <button className="btn btn-primary" style={{ background: 'var(--cfl)', color: '#000' }} onClick={addFlag}>Add Flag</button>
+          <button className="btn btn-primary" style={{ background: '#9d4edd', color: '#000' }} onClick={addFlag}>Add Flag</button>
         </div>
       </Modal>
 

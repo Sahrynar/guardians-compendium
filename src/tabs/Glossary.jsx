@@ -54,7 +54,7 @@ export default function Glossary({ db, goTo, goToWiki }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: 'var(--cc)' }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: '#ff6b6b' }}>
           📚 Glossary
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -78,9 +78,9 @@ export default function Glossary({ db, goTo, goToWiki }) {
           {availableCats.map(c => (
             <button key={c} onClick={() => setFilterCat(c)}
               style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer',
-                background: filterCat === c ? 'var(--cc)' : 'none',
+                background: filterCat === c ? '#ff6b6b' : 'none',
                 color: filterCat === c ? '#000' : 'var(--dim)',
-                border: `1px solid ${filterCat === c ? 'var(--cc)' : 'var(--brd)'}` }}>
+                border: `1px solid ${filterCat === c ? '#ff6b6b' : 'var(--brd)'}` }}>
               {c === 'all' ? 'All' : c}
             </button>
           ))}
@@ -96,9 +96,9 @@ export default function Glossary({ db, goTo, goToWiki }) {
               disabled={!hasEntries}
               style={{ fontSize: '0.77em', padding: '2px 6px', borderRadius: 4, cursor: hasEntries ? 'pointer' : 'default',
                 fontFamily: "'Cinzel',serif", fontWeight: 600,
-                background: jumpLetter === l ? 'var(--cc)' : 'none',
-                color: jumpLetter === l ? '#000' : hasEntries ? 'var(--cc)' : 'var(--brd)',
-                border: `1px solid ${jumpLetter === l ? 'var(--cc)' : hasEntries ? 'rgba(201,102,255,.3)' : 'transparent'}` }}>
+                background: jumpLetter === l ? '#ff6b6b' : 'none',
+                color: jumpLetter === l ? '#000' : hasEntries ? '#ff6b6b' : 'var(--brd)',
+                border: `1px solid ${jumpLetter === l ? '#ff6b6b' : hasEntries ? 'rgba(201,102,255,.3)' : 'transparent'}` }}>
               {l}
             </button>
           )
@@ -114,7 +114,7 @@ export default function Glossary({ db, goTo, goToWiki }) {
             The Glossary pulls from Wiki entries in the Lore, Languages, Cosmology,
             Power System, Cultures, Religions, and Factions categories.
           </p>
-          <button className="btn btn-primary" style={{ background: 'var(--cc)', marginTop: 8 }}
+          <button className="btn btn-primary" style={{ background: '#ff6b6b', marginTop: 8 }}
             onClick={() => goToWiki ? goToWiki(entry) : goTo('wiki')}>
             → Go to Wiki
           </button>
@@ -133,7 +133,7 @@ export default function Glossary({ db, goTo, goToWiki }) {
         <div key={letter} style={{ marginBottom: 20 }}>
           {/* Letter header */}
           <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.54em', fontWeight: 700,
-            color: 'var(--cc)', borderBottom: '1px solid rgba(201,102,255,.2)',
+            color: '#ff6b6b', borderBottom: '1px solid rgba(201,102,255,.2)',
             paddingBottom: 4, marginBottom: 8, letterSpacing: '.1em' }}>
             {letter}
           </div>
@@ -148,7 +148,7 @@ export default function Glossary({ db, goTo, goToWiki }) {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em',
                     fontWeight: 700, color: 'var(--tx)' }}>{entry.title}</span>
-                  <span style={{ fontSize: '0.69em', color: 'var(--cc)', textTransform: 'uppercase',
+                  <span style={{ fontSize: '0.69em', color: '#ff6b6b', textTransform: 'uppercase',
                     letterSpacing: '.06em', opacity: 0.7 }}>{entry.category}</span>
                 </div>
                 {entry.summary && (
