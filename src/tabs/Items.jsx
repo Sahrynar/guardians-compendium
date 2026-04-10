@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, uid, SL } from '../constants'
+
+const ITEM_COLOR = '#7b2d8b'
+const SIZE_COLS_IT = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
+const SIZE_LABELS_IT = ['XS', 'S', 'M', 'L']
 
 const ITEM_FIELDS = [
   { k: 'name',        l: 'Name',            t: 'text', r: true },
@@ -11,14 +15,19 @@ const ITEM_FIELDS = [
   { k: 'significance',l: 'Significance',    t: 'ta' },
 ]
 
-export default function Items({ db }) {
+export default function Items({ db, navSearch }) {
   const items = db.db.items || []
   const [search, setSearch] = useState('')
+
+  // Sync top nav search
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [transferId, setTransferId] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+  const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_items') || 'M' } catch { return 'M' } })
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_items', sz) } catch {} }
   const [txForm, setTxForm] = useState({ to: '', note: '', when: '' })
 
   const filtered = items.filter(e =>
@@ -49,11 +58,16 @@ export default function Items({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
+          {SIZE_LABELS_IT.map(l => (
+            <button key={l} onClick={() => changeColSize(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colSize===l ? ITEM_COLOR : 'none', color: colSize===l ? '#fff' : 'var(--dim)', border: `1px solid ${colSize===l ? ITEM_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-primary btn-sm" style={{ background: '#7b2d8b' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <div className="cg">
+      <div style={{ display: 'grid', gridTemplateColumns: SIZE_COLS_IT[colSize] > 1 ? `repeat(${SIZE_COLS_IT[colSize]}, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">⚔</div><p>No items yet.</p></div>
         )}

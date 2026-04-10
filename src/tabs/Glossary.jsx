@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import FilterPopup from '../components/common/FilterPopup'
 
 // Categories that are glossary-relevant by default
 const GLOSSARY_CATS = ['Languages', 'Lore', 'Cosmology', 'Power System', 'Cultures', 'Religions', 'Factions', 'Geography']
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')
 
-export default function Glossary({ db, goTo, goToWiki }) {
-  const [search, setSearch] = useState('')
+export default function Glossary({ db, goTo, goToWiki, navSearch }) {
+  const [search, setSearch] = useState(navSearch || '')
   const [jumpLetter, setJumpLetter] = useState(null)
-  const [filterCat, setFilterCat] = useState('all')
+
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
+  const [filterValues, setFilterValues] = useState({})
 
   const articles = db.db.wiki || []
 
@@ -26,15 +29,16 @@ export default function Glossary({ db, goTo, goToWiki }) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    const selectedCats = filterValues['category'] || []
     return glossaryEntries.filter(a => {
-      const mc = filterCat === 'all' || a.category === filterCat
+      const mc = selectedCats.length === 0 || selectedCats.includes(a.category)
       const mq = !q || (a.title || '').toLowerCase().includes(q) || (a.summary || '').toLowerCase().includes(q)
       const ml = !jumpLetter || (jumpLetter === '#'
         ? !/^[a-z]/i.test(a.title || '')
         : (a.title || '').toUpperCase().startsWith(jumpLetter))
       return mc && mq && ml
     })
-  }, [glossaryEntries, search, filterCat, jumpLetter])
+  }, [glossaryEntries, search, filterValues, jumpLetter])
 
   // Group by first letter for dictionary display
   const grouped = useMemo(() => {
@@ -74,17 +78,16 @@ export default function Glossary({ db, goTo, goToWiki }) {
         <input className="sx" placeholder="Search terms…" value={search}
           onChange={e => { setSearch(e.target.value); setJumpLetter(null) }}
           style={{ flex: 1, minWidth: 180 }} />
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {availableCats.map(c => (
-            <button key={c} onClick={() => setFilterCat(c)}
-              style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer',
-                background: filterCat === c ? '#ff6b6b' : 'none',
-                color: filterCat === c ? '#000' : 'var(--dim)',
-                border: `1px solid ${filterCat === c ? '#ff6b6b' : 'var(--brd)'}` }}>
-              {c === 'all' ? 'All' : c}
-            </button>
-          ))}
-        </div>
+        <FilterPopup
+          color="#ff6b6b"
+          filters={[{
+            key: 'category',
+            label: 'Category',
+            options: availableCats.filter(c => c !== 'all').map(c => ({ value: c, label: c }))
+          }]}
+          values={filterValues}
+          onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
+        />
       </div>
 
       {/* Alpha jump bar */}

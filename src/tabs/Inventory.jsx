@@ -1,11 +1,9 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo } from 'react'
 import OutfitSnapshot from './OutfitSnapshot'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
-import Lightbox from '../components/common/Lightbox'
-import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
-import { highlight, uid, SL } from '../constants'
+import { highlight, SL } from '../constants'
 
 // ── Category config ───────────────────────────────────────────────
 const CATEGORIES = [
@@ -376,7 +374,6 @@ export default function Inventory({ db }) {
   const [pickerFor, setPickerFor] = useState(null)
   const [dragIdx, setDragIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
-  const [showColPicker, setShowColPicker] = useState(false)
 
   function saveColumns(n) {
     setColumns(n)
@@ -561,7 +558,178 @@ export default function Inventory({ db }) {
                 cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
-      )}
-    </div>
+      </div>
+
+      {/* ── Main content area ── */}
+      {viewMode === 'outfit' ? (
+      <OutfitSnapshot db={db} />
+    ) : viewMode === 'list' ? (
+      <div style={{ marginTop: 6 }}>
+        {!sortedList.length && (
+          <div className="empty"><div className="empty-icon">🎒</div><p>No items found.</p></div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`, gap: 6 }}>
+          {sortedList.map((entry, i) => {
+            const tileColor = entry.entry_color || '#3a86ff'
+            return (
+              <div key={entry.id} className="entry-card" style={{ '--card-color': tileColor }}
+                onClick={() => setViewPopup(entry)}>
+                <div className="entry-title" style={{ fontSize: '0.92em' }}>{entry.name || '(unnamed)'}</div>
+                <div style={{ fontSize: '0.77em', color: tileColor, marginTop: 2 }}>
+                  {charName(entry.character || entry.holder)}
+                </div>
+                {entry.category && <div className="badge" style={{ marginTop: 3, fontSize: '0.62em', color: 'var(--dim)', border: '1px solid var(--brd)', padding: '1px 5px', borderRadius: 6, display: 'inline-block' }}>{entry.category}</div>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    ) : (
+      /* Bubble view — grouped by character */
+      <div style={{ marginTop: 6 }}>
+        {holderOrder.length === 0 && (
+          <div className="empty">
+            <div className="empty-icon">🎒</div>
+            <p>No inventory yet.</p>
+            <button className="btn btn-primary" style={{ background: '#3a86ff' }}
+              onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Item</button>
+          </div>
+        )}
+        {holderOrder.map((holderId, hi) => {
+          const items = grouped[holderId] || []
+          if (!items.length) return null
+          const ch = chars.find(c => c.id === holderId)
+          const bubbleColor = ch?.bubble_color || '#3a86ff'
+          const holderName = holderId === '__unassigned__' ? 'Unassigned' : charName(holderId)
+          return (
+            <div key={holderId} style={{ marginBottom: 14,
+              border: `1px solid ${bubbleColor}44`, borderRadius: 'var(--rl)',
+              background: `${bubbleColor}08`, overflow: 'hidden' }}
+              draggable={holderId !== '__unassigned__'}
+              onDragStart={() => setDragIdx(hi)}
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(hi) }}
+              onDrop={() => handleDrop(dragIdx, hi)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 12px', background: `${bubbleColor}18`, borderBottom: `1px solid ${bubbleColor}33` }}>
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.92em', fontWeight: 700, color: bubbleColor }}>
+                  {ch?.reference_image && (
+                    <img src={ch.reference_image} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', marginRight: 6, verticalAlign: 'middle', border: `1px solid ${bubbleColor}` }} />
+                  )}
+                  {holderName}
+                </div>
+                <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`, gap: 6, padding: 8 }}>
+                {items.map(entry => {
+                  const tileColor = entry.entry_color || bubbleColor
+                  return (
+                    <div key={entry.id} className="entry-card" style={{ '--card-color': tileColor, cursor: 'pointer' }}
+                      onClick={() => setViewPopup(entry)}>
+                      {entry.image && (
+                        <img src={entry.image} alt="" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 4, marginBottom: 4 }} onError={e => { e.currentTarget.style.display = 'none' }} />
+                      )}
+                      <div className="entry-title" style={{ fontSize: '0.85em' }}>{entry.name || '(unnamed)'}</div>
+                      {entry.category && <div style={{ fontSize: '0.69em', color: tileColor, marginTop: 2 }}>{entry.category}</div>}
+                    </div>
+                  )
+                })}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 60,
+                  border: '1px dashed var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', opacity: 0.5 }}
+                  onClick={() => { setEditing(holderId === '__unassigned__' ? {} : { character: holderId }); setModalOpen(true) }}>
+                  <span style={{ fontSize: '1.38em', color: 'var(--mut)' }}>+</span>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )}
+
+    {/* ── Item view popup ── */}
+    {viewPopup && (
+      <div className="modal-overlay open" onClick={() => setViewPopup(null)}>
+        <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+          <button className="modal-close" onClick={() => setViewPopup(null)}>✕</button>
+          <div className="modal-title" style={{ color: viewPopup.entry_color || '#3a86ff' }}>
+            {viewPopup.name}
+          </div>
+          {viewPopup.image && (
+            <img src={viewPopup.image} alt="" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 6, marginBottom: 10, cursor: 'pointer' }}
+              onClick={() => setLightbox(viewPopup.image)} />
+          )}
+          <div className="entry-detail">
+            {viewPopup.category && <div><strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Category: </strong>{viewPopup.category}</div>}
+            {viewPopup.description && <div style={{ marginTop: 4 }}>{viewPopup.description}</div>}
+            {viewPopup.character && <div style={{ marginTop: 4 }}><strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Holder: </strong>{charName(viewPopup.character)}</div>}
+            {(viewPopup.transfers||[]).length > 0 && (
+              <div style={{ marginTop: 6 }}>
+                <strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Transfer History: </strong>
+                {viewPopup.transfers.map((t, ti) => (
+                  <div key={ti} style={{ fontSize: '0.77em', color: 'var(--dim)', paddingLeft: 8 }}>
+                    {t.from} → {t.to}{t.when ? ` (${t.when})` : ''}{t.note ? ` — ${t.note}` : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="modal-actions" style={{ marginTop: 12 }}>
+            <button className="btn btn-outline" onClick={() => { setViewPopup(null); setEditing(viewPopup); setModalOpen(true) }}>✎ Edit</button>
+            <button className="btn btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }}
+              onClick={() => { setConfirmId(viewPopup.id); setViewPopup(null) }}>✕ Delete</button>
+            <button className="btn btn-outline" onClick={() => setViewPopup(null)}>Close</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Lightbox */}
+    {lightbox && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        onClick={() => setLightbox(null)}>
+        <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 8 }} />
+      </div>
+    )}
+
+    {/* Add/Edit modal */}
+    <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
+      title={editing?.id ? 'Edit Item' : 'Add Item'} color="#3a86ff">
+      <EntryForm fields={INV_FIELDS} entry={editing || {}} db={db}
+        onSave={entry => { handleSave(entry) }}
+        onCancel={() => { setModalOpen(false); setEditing(null) }}
+        color="#3a86ff" label="Items" />
+    </Modal>
+
+    {/* Transfer modal */}
+    <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color="#3a86ff">
+      <div className="field"><label>Transfer To</label>
+        <select value={txForm.to} onChange={e => setTxForm(p => ({ ...p, to: e.target.value }))}>
+          <option value="">— Pick character —</option>
+          {chars.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+      </div>
+      <div className="field"><label>Note (optional)</label>
+        <input value={txForm.note} onChange={e => setTxForm(p => ({ ...p, note: e.target.value }))} />
+      </div>
+      <div className="field"><label>When</label>
+        <input value={txForm.when} onChange={e => setTxForm(p => ({ ...p, when: e.target.value }))} placeholder="e.g. End of Book 1" />
+      </div>
+      <div className="modal-actions">
+        <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
+        <button className="btn btn-primary" style={{ background: '#3a86ff' }} onClick={doTransfer}>Transfer</button>
+      </div>
+    </Modal>
+
+    {/* Confirm delete */}
+    {confirmId && (
+      <div className="confirm-overlay open">
+        <div className="confirm-box">
+          <p>Delete <strong>{allEntries.find(e => e.id === confirmId)?.name || 'this item'}</strong>?</p>
+          <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
+          <button className="btn btn-danger btn-sm" onClick={() => { db.deleteEntry('inventory', confirmId); setConfirmId(null) }}>Delete</button>
+        </div>
+      </div>
+    )}
+  </div>
   )
 }

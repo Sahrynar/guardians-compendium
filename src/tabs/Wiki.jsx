@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import Modal from '../components/common/Modal'
+import FilterPopup from '../components/common/FilterPopup'
 import { uid } from '../constants'
 
 const WIKI_CATS = [

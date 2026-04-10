@@ -1,7 +1,12 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { uid } from '../constants'
+import { parseSetting } from '../hooks/useDB'
 
 const BOOKS = ['Book 1', 'Book 2', 'Book 3']
+const MS_COLOR = '#aacc00'
+const MS_SIZE_LABELS = ['XS', 'S', 'M', 'L', 'XL']
+// XS = compact list, XL = full card with text preview
+const MS_SIZE_DETAIL = { XS: 0, S: 0, M: 60, L: 150, XL: 300 }
 const STATUSES = ['Draft', 'Revision', 'Polishing', 'Done']
 const STATUS_COLORS = { Draft: '#6b7280', Revision: '#f59e0b', Polishing: '#8b5cf6', Done: '#10b981' }
 
@@ -254,7 +259,7 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
 }
 
 // ── Main Manuscript tab ───────────────────────────────────────────
-export default function Manuscript({ db }) {
+export default function Manuscript({ db, navSearch }) {
   const chapters = (db.db.manuscript || []).sort((a, b) => {
     const bi = BOOKS.indexOf(a.book) - BOOKS.indexOf(b.book)
     if (bi !== 0) return bi
@@ -264,8 +269,13 @@ export default function Manuscript({ db }) {
   const scenes = db.db.scenes || []
 
   const [search, setSearch] = useState('')
+
+  // Sync top nav search
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [filterBook, setFilterBook] = useState('all')
   const [editCovers, setEditCovers] = useState(false)
+  const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_manuscript') || 'M' } catch { return 'M' } })
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_manuscript', sz) } catch {} }
   const [filterStatus, setFilterStatus] = useState('all')
   const [editingChapter, setEditingChapter] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -326,7 +336,7 @@ export default function Manuscript({ db }) {
       </div>
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
         {byBook.map(({ book, chapters: chs, words }) => {
-          const meta = db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`] || {}
+          const meta = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
           const cover = meta.cover || ''
           const accent = meta.accent || '#aacc00'
           return (
@@ -354,7 +364,7 @@ export default function Manuscript({ db }) {
                         const reader = new FileReader()
                         reader.onload = e2 => {
                           const key = `manuscript_book_${book.replace(/ /g,'_')}`
-                          const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                          const existing = parseSetting(db.settings?.[key])
                           db.saveSetting(key, JSON.stringify({ ...existing, cover: e2.target.result }))
                         }
                         reader.readAsDataURL(file)
@@ -364,14 +374,14 @@ export default function Manuscript({ db }) {
                     style={{ width: 22, height: 22, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }}
                     onChange={ev => {
                       const key = `manuscript_book_${book.replace(/ /g,'_')}`
-                      const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                      const existing = parseSetting(db.settings?.[key])
                       db.saveSetting(key, JSON.stringify({ ...existing, accent: ev.target.value }))
                     }} />
                   {cover && (
                     <button title="Remove cover" style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', padding: 0 }}
                       onClick={() => {
                         const key = `manuscript_book_${book.replace(/ /g,'_')}`
-                        const existing = db.settings?.[key] ? JSON.parse(db.settings[key]) : {}
+                        const existing = parseSetting(db.settings?.[key])
                         db.saveSetting(key, JSON.stringify({ ...existing, cover: '' }))
                       }}>✕</button>
                   )}
@@ -399,6 +409,11 @@ export default function Manuscript({ db }) {
 
       {/* Toolbar */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
+          {MS_SIZE_LABELS.map(l => (
+            <button key={l} onClick={() => changeColSize(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colSize===l ? MS_COLOR : 'none', color: colSize===l ? '#000' : 'var(--dim)', border: `1px solid ${colSize===l ? MS_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search chapters and text…" value={search}
           onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
         <select value={filterBook} onChange={e => setFilterBook(e.target.value)}

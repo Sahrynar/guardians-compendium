@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight } from '../constants'
+
+const WR_COLOR = '#4361ee'
+const SIZE_COLS_WR = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
+const SIZE_LABELS_WR = ['XS', 'S', 'M', 'L']
 
 const WR_FIELDS = [
   { k: 'name',           l: 'Item',           t: 'text', r: true },
@@ -11,13 +15,19 @@ const WR_FIELDS = [
   { k: 'color_material', l: 'Color/Material', t: 'text' },
 ]
 
-export default function Wardrobe({ db }) {
+export default function Wardrobe({ db, navSearch }) {
   const items = db.db.wardrobe || []
   const [search, setSearch] = useState('')
+
+  // Sync top nav search
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [expanded, setExpanded] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+  const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_wardrobe') || 'M' } catch { return 'M' } })
+
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_wardrobe', sz) } catch {} }
 
   const filtered = search
     ? items.filter(it => JSON.stringify(it).toLowerCase().includes(search.toLowerCase()))
@@ -49,6 +59,11 @@ export default function Wardrobe({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
+          {SIZE_LABELS_WR.map(l => (
+            <button key={l} onClick={() => changeColSize(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colSize===l ? WR_COLOR : 'none', color: colSize===l ? '#fff' : 'var(--dim)', border: `1px solid ${colSize===l ? WR_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search wardrobe…" value={search} onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-primary btn-sm" style={{ background: '#4361ee', color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
@@ -57,6 +72,7 @@ export default function Wardrobe({ db }) {
         <div className="empty"><div className="empty-icon">👗</div><p>No wardrobe items yet.</p></div>
       )}
 
+      <div style={{ display: 'grid', gridTemplateColumns: SIZE_COLS_WR[colSize] > 1 ? `repeat(${SIZE_COLS_WR[colSize]}, minmax(0,1fr))` : '1fr', gap: 8 }}>
       {Object.entries(byChar).map(([cid, citems]) => (
         <div key={cid} className="wardrobe-card">
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: '#4361ee', marginBottom: 6 }}>
@@ -93,6 +109,8 @@ export default function Wardrobe({ db }) {
           ))}
         </div>
       ))}
+
+      </div>
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Wardrobe Item`} color="var(--cwr)">
         <EntryForm fields={WR_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--cwr)" db={db} />

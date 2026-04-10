@@ -76,12 +76,12 @@ function emptySession(num) {
 function SessionCard({ session, idx, onEdit, onDelete, selected, onSelect }) {
   const [expanded, setExpanded] = useState(false)
   const color = rc(idx)
-  const tint = color + '14'
+  // dark card: border + header text carry spectrum color; bg stays dark
   const hasContent = SECTION_LABELS.some(({ k }) => session[k]?.trim())
 
   return (
     <div style={{
-      background: tint, border: `1.5px solid ${color}`,
+      background: 'var(--card)', border: `1.5px solid ${color}`,
       borderRadius: 10, marginBottom: 10, overflow: 'hidden',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', cursor: 'pointer' }}

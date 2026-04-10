@@ -68,16 +68,16 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         borderLeft: `2px solid ${color}`, minWidth: 0, overflow: 'hidden' }}
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--card)' : 'transparent'}>
-      <div style={{ fontSize: 11, color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: '0.85em', color: 'var(--tx)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {item.name}
       </div>
-      {item.detail && <div style={{ fontSize: 9, color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.detail}</div>}
-      {item.cat && <div style={{ fontSize: 9, color: color, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CATS[item.cat]?.i} {CATS[item.cat]?.l}</div>}
+      {item.detail && <div style={{ fontSize: '0.69em', color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.detail}</div>}
+      {item.cat && <div style={{ fontSize: '0.69em', color: color, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CATS[item.cat]?.i} {CATS[item.cat]?.l}</div>}
     </div>
   )
 
   const panelHead = (icon, label, color, count) => (
-    <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase',
+    <div style={{ fontSize: '0.77em', fontWeight: 700, color, textTransform: 'uppercase',
       letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       minWidth: 0, overflow: 'hidden' }}>
@@ -124,7 +124,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
       <div style={{ marginBottom: 14 }}>
         {searchHits.length > 0 && (
           <div style={{ marginTop: 6, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, maxHeight: 220, overflowY: 'auto' }}>
-            <div style={{ fontSize: 10, color: 'var(--mut)', padding: '5px 10px', borderBottom: '1px solid var(--brd)' }}>
+            <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '5px 10px', borderBottom: '1px solid var(--brd)' }}>
               {searchHits.length} result{searchHits.length !== 1 ? 's' : ''} — click to go to tab
             </div>
             {searchHits.slice(0, 30).map((h, i) => (
@@ -134,12 +134,12 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
                   background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
                 onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)'}>
-                <span style={{ fontSize: 12 }}>{h.name}</span>
-                <span style={{ fontSize: 10, color: TAB_RAINBOW[h.cat] || 'var(--mut)' }}>{CATS[h.cat]?.i} {CATS[h.cat]?.l}</span>
+                <span style={{ fontSize: '0.92em' }}>{h.name}</span>
+                <span style={{ fontSize: '0.77em', color: TAB_RAINBOW[h.cat] || 'var(--mut)' }}>{CATS[h.cat]?.i} {CATS[h.cat]?.l}</span>
               </div>
             ))}
             {searchHits.length > 30 && (
-              <div style={{ fontSize: 10, color: 'var(--mut)', padding: '5px 10px' }}>…and {searchHits.length - 30} more.</div>
+              <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '5px 10px' }}>…and {searchHits.length - 30} more.</div>
             )}
           </div>
         )}
@@ -164,8 +164,8 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
                 onClick={() => goTo(k)}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}>
-                <span style={{ fontSize: 11, color: 'var(--tx)' }}>{c.i} {c.l}</span>
-                <span style={{ fontSize: 12, fontFamily: "'Cinzel',serif", color }}>{count}</span>
+                <span style={{ fontSize: '0.85em', color: 'var(--tx)' }}>{c.i} {c.l}</span>
+                <span style={{ fontSize: '0.92em', fontFamily: "'Cinzel',serif", color }}>{count}</span>
               </div>
             )
           })}
@@ -175,7 +175,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
           {recent.length === 0
-            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
+            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
             : recent.slice(0, 14).map((r, i) => panelRow(
                 { ...r, detail: null },
                 i, TAB_RAINBOW[r.cat] || 'var(--cc)',
@@ -188,7 +188,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('?', 'Questions', 'var(--cq)', (data.questions || []).filter(q => q.status === 'open').length)}
           {questions.length === 0
-            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
+            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
             : questions.map((q, i) => panelRow(
                 { ...q, detail: q.detail },
                 i, 'var(--cq)',
@@ -201,7 +201,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
           {flags.length === 0
-            ? <div style={{ fontSize: 11, color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
+            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
             : flags.map((f, i) => panelRow(
                 { ...f, detail: f.detail },
                 i, 'var(--cfl)',

@@ -613,7 +613,7 @@ export default function FamilyTree({ db }) {
                       stroke={c} strokeWidth={isUnk ? 2.5 : 1.5} fill="none" opacity={isUnk ? 1 : 0.75}
                       strokeDasharray={isUnk ? '6,4' : undefined}
                       markerEnd={`url(#a-${sid})`} />
-                    <text x={mx} y={my-5} textAnchor="middle" fontSize={8} fill={c} opacity={isUnk?1:0.85} style={{ pointerEvents:'none' }}>{line.label || line.type}</text>
+                    <text x={mx} y={my-5} textAnchor="middle" fontSize="0.62em" fill={c} opacity={isUnk?1:0.85} style={{ pointerEvents:'none' }}>{line.label || line.type}</text>
                   </g>
                 )
               })}

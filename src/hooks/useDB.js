@@ -5,16 +5,16 @@ const LS_KEY = 'gcomp3'
 const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
-  'calendar_entries','flags','maps','wiki','notes','family_tree','images','manuscript'
+  'calendar_entries','flags','maps','wiki','notes','family_tree',
+  'images','manuscript','inventory','eras','journal',
+  'journal_captures','journal_tags'
 ]
 
-// ── Local storage helpers ──────────────────────────────────────
 function lsLoad() {
   try {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return makeEmpty()
     const parsed = JSON.parse(raw)
-    // Ensure all categories exist
     const db = makeEmpty()
     CATEGORIES.forEach(k => { if (parsed[k]) db[k] = parsed[k] })
     return db
@@ -31,14 +31,13 @@ function makeEmpty() {
   return db
 }
 
-// ── Supabase sync ──────────────────────────────────────────────
 async function sbLoad() {
   if (!hasSupabase) return null
   const { data, error } = await supabase.from('entries').select('*')
   if (error) { console.error('Supabase load error:', error); return null }
   const db = makeEmpty()
   data.forEach(row => {
-    if (db[row.category]) db[row.category].push({ id: row.id, ...row.data })
+    if (db[row.category] !== undefined) db[row.category].push({ id: row.id, ...row.data })
   })
   return db
 }
@@ -63,6 +62,8 @@ async function sbLoadSettings() {
   const { data, error } = await supabase.from('settings').select('*')
   if (error) return null
   const s = {}
+  // Normalise: Supabase jsonb returns already-parsed objects; localStorage stores JSON strings.
+  // Store everything as the raw value — parseSetting() handles both.
   data.forEach(row => { s[row.key] = row.value })
   return s
 }
@@ -72,27 +73,29 @@ async function sbSaveSetting(key, value) {
   await supabase.from('settings').upsert({ key, value })
 }
 
-// ── Main hook ──────────────────────────────────────────────────
+// Safe setting parser — handles both jsonb objects and legacy JSON strings
+export function parseSetting(val) {
+  if (val === null || val === undefined) return {}
+  if (typeof val === 'object') return val
+  try { return JSON.parse(val) } catch { return {} }
+}
+
 export function useDB() {
   const [db, setDbState] = useState(makeEmpty)
   const [settings, setSettingsState] = useState({})
   const [loading, setLoading] = useState(true)
-  const [syncStatus, setSyncStatus] = useState('local') // 'local' | 'synced' | 'syncing' | 'error'
-  const pendingRef = useRef(new Map()) // id → timeout for debounced saves
+  const [syncStatus, setSyncStatus] = useState('local')
+  const pendingRef = useRef(new Map())
 
-  // Load on mount
   useEffect(() => {
     async function init() {
       setLoading(true)
-      // Always load localStorage first (instant)
       const local = lsLoad()
       setDbState(local)
-      // Then try Supabase
       if (hasSupabase) {
         setSyncStatus('syncing')
         const remote = await sbLoad()
         if (remote) {
-          // Merge: remote wins for any id that exists in both
           const merged = mergeDB(local, remote)
           setDbState(merged)
           lsSave(merged)
@@ -100,7 +103,6 @@ export function useDB() {
         } else {
           setSyncStatus('error')
         }
-        // Load settings
         const remoteSettings = await sbLoadSettings()
         if (remoteSettings) setSettingsState(remoteSettings)
       }
@@ -109,7 +111,6 @@ export function useDB() {
     init()
   }, [])
 
-  // ── DB operations ──────────────────────────────────────────
   const save = useCallback((newDb) => {
     setDbState(newDb)
     lsSave(newDb)
@@ -124,7 +125,6 @@ export function useDB() {
       lsSave(next)
       return next
     })
-    // Debounced Supabase sync
     if (hasSupabase) {
       const key = entry.id
       if (pendingRef.current.has(key)) clearTimeout(pendingRef.current.get(key))
@@ -154,7 +154,12 @@ export function useDB() {
     } catch {}
   }, [])
 
-  // ── Import/Export ──────────────────────────────────────────
+  const getSetting = useCallback((key, fallback = null) => {
+    const val = settings[key]
+    if (val === undefined || val === null) return fallback
+    return val
+  }, [settings])
+
   const exportJSON = useCallback(() => {
     const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
@@ -169,7 +174,6 @@ export function useDB() {
       r.onload = ev => {
         try {
           const parsed = JSON.parse(ev.target.result)
-          // MERGE — never overwrite. Add new entries by ID only.
           setDbState(prev => {
             const next = { ...prev }
             CATEGORIES.forEach(k => {
@@ -177,7 +181,6 @@ export function useDB() {
               const existingIds = new Set((prev[k] || []).map(e => e.id).filter(Boolean))
               const newEntries = parsed[k].filter(e => e.id && !existingIds.has(e.id))
               next[k] = [...(prev[k] || []), ...newEntries]
-              // Sync new entries to Supabase
               if (hasSupabase) newEntries.forEach(entry => sbUpsert(k, entry))
             })
             lsSave(next)
@@ -190,7 +193,6 @@ export function useDB() {
     })
   }, [])
 
-  // ── Aster import ───────────────────────────────────────────
   const importAster = useCallback((file) => {
     return new Promise((resolve, reject) => {
       const r = new FileReader()
@@ -202,7 +204,7 @@ export function useDB() {
           setDbState(prev => {
             const next = { ...prev }
             if (p.characters) p.characters.forEach(ch => {
-              const entry = { id: uid(), name: ch.name || '', aliases: (ch.aliases||[]).join(', '),
+              const entry = { id: uid(), name: ch.name||'', aliases: (ch.aliases||[]).join(', '),
                 birthday: ch.birthYear||'', age_b1: ch.ageNotes||'', notes: ch.notes||'',
                 status: ch.status==='locked'?'locked':'provisional', books: [], relationships: [] }
               next.characters = [...next.characters, entry]; count++
@@ -228,20 +230,19 @@ export function useDB() {
     })
   }, [])
 
-  // ── Aster export ───────────────────────────────────────────
   const exportAster = useCallback(() => {
     const asterData = {
       characters: db.characters.map(ch => ({
         name: ch.name, aliases: ch.aliases ? ch.aliases.split(',').map(s=>s.trim()) : [],
-        birthYear: ch.birthday || '', ageNotes: ch.age_b1 || '',
-        notes: ch.notes || '', status: ch.status || 'provisional'
+        birthYear: ch.birthday||'', ageNotes: ch.age_b1||'',
+        notes: ch.notes||'', status: ch.status||'provisional'
       })),
       events: db.timeline.map(ev => ({
-        title: ev.name, displayYear: ev.date_hc || '', sortKey: parseFloat(ev.sort_order)||0,
-        category: ev.era || '', notes: ev.detail || '', status: ev.status || 'provisional'
+        title: ev.name, displayYear: ev.date_hc||'', sortKey: parseFloat(ev.sort_order)||0,
+        category: ev.era||'', notes: ev.detail||'', status: ev.status||'provisional'
       })),
       places: db.locations.map(loc => ({
-        name: loc.name, type: loc.loc_type || '', notes: loc.description || ''
+        name: loc.name, type: loc.loc_type||'', notes: loc.description||''
       }))
     }
     const blob = new Blob([JSON.stringify(asterData, null, 2)], { type: 'application/json' })
@@ -253,19 +254,17 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting,
+    upsertEntry, deleteEntry, save, saveSetting, getSetting,
     exportJSON, importJSON, importAster, exportAster,
     hasSupabase, CATEGORIES
   }
 }
 
-// ── Merge helper ───────────────────────────────────────────────
 function mergeDB(local, remote) {
   const merged = makeEmpty()
   CATEGORIES.forEach(cat => {
     const localMap = new Map((local[cat]||[]).map(e => [e.id, e]))
     const remoteMap = new Map((remote[cat]||[]).map(e => [e.id, e]))
-    // Remote wins on conflicts
     const all = new Map([...localMap, ...remoteMap])
     merged[cat] = Array.from(all.values())
   })

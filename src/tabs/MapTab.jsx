@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import { uid } from '../constants'
 
@@ -13,7 +13,19 @@ export default function MapTab({ db, navSearch }) {
   const [confirmId, setConfirmId] = useState(null)
   const [imgHeights, setImgHeights] = useState({}) // per-map height override
   const [dragOver, setDragOver] = useState(null)
-  const [order, setOrder] = useState(null) // null = use maps order
+
+  // Load saved order from db settings
+  useEffect(() => {
+    if (!db.loading && db.settings?.maps_order && order === null) {
+      try { setOrder(JSON.parse(db.settings.maps_order)) } catch {}
+    }
+  }, [db.loading])
+  const [order, setOrder] = useState(() => {
+    try {
+      const saved = localStorage.getItem('maps_order_local')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
 
   const search = (navSearch || '').toLowerCase()
 
@@ -53,6 +65,8 @@ export default function MapTab({ db, navSearch }) {
     const [moved] = next.splice(dragIdx.current, 1)
     next.splice(idx, 0, moved)
     setOrder(next)
+    // Persist order
+    if (db.saveSetting) db.saveSetting('maps_order', JSON.stringify(next))
     dragIdx.current = null
     setDragOver(null)
   }

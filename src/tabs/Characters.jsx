@@ -61,10 +61,14 @@ function isDeadByBook(e, filterBook) {
   return diIdx <= fbIdx
 }
 
-export default function Characters({ db }) {
+export default function Characters({ db, goTo, tab, navSearch }) {
   const chars = db.db.characters || []
   const [search, setSearch] = useState('')
+
+  // Sync top nav search bar into local search
+  useEffect(() => { if (navSearch !== undefined) setSearch(navSearch || '') }, [navSearch])
   const [expanded, setExpanded] = useState(null)
+  const [filterValues, setFilterValues] = useState({})
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)

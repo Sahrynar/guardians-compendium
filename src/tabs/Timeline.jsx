@@ -1,7 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, SL, uid } from '../constants'
+
+const TL_COLOR = '#0fb5a0'
+// XS = many small cols, XL = 1 full-width large col
+const TL_SIZE_COLS = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
+// XL also shows more detail in expanded state (label vs full detail)
+const TL_SIZE_LABELS = ['XS', 'S', 'M', 'L', 'XL']
 
 const TL_FIELDS = [
   { k: 'name',          l: 'Event',          t: 'text', r: true },
@@ -23,15 +29,21 @@ const ERA_BANDS = {
 }
 const DOT_COLS = ['var(--ct)','var(--cc)','var(--ccn)','var(--cl)','var(--ci)','var(--cw)','var(--cq)']
 
-export default function Timeline({ db }) {
+export default function Timeline({ db, navSearch }) {
   const events = db.db.timeline || []
   const [search, setSearch] = useState('')
+
+  // Sync top nav search
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [filterEra, setFilterEra] = useState('all')
   const [expanded, setExpanded] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [showVisual, setShowVisual] = useState(true)
+  const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_timeline') || 'M' } catch { return 'M' } })
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_timeline', sz) } catch {} }
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const trackRef = useRef()
 
   const sorted = [...events]
@@ -63,6 +75,11 @@ export default function Timeline({ db }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
+          {TL_SIZE_LABELS.map(l => (
+            <button key={l} onClick={() => changeColSize(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colSize===l ? TL_COLOR : 'none', color: colSize===l ? '#000' : 'var(--dim)', border: `1px solid ${colSize===l ? TL_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search events…" value={search} onChange={e => setSearch(e.target.value)} />
         <button className="btn btn-sm btn-outline" onClick={() => setShowVisual(v => !v)}>
           {showVisual ? 'Hide' : 'Show'} Track
@@ -93,7 +110,7 @@ export default function Timeline({ db }) {
               const x2 = Math.max(...xs) + 20
               return (
                 <div key={era} style={{ position: 'absolute', left: x1, width: x2-x1, top: 20, height: 140, background: bg, borderRadius: 6, pointerEvents: 'none' }}>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,.25)', padding: '2px 4px', pointerEvents: 'none' }}>{era}</div>
+                  <div style={{ fontSize: '0.62em', color: 'rgba(255,255,255,.25)', padding: '2px 4px', pointerEvents: 'none' }}>{era}</div>
                 </div>
               )
             })}
@@ -118,7 +135,7 @@ export default function Timeline({ db }) {
       )}
 
       {/* List */}
-      <div className="cg" style={{ marginTop: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: TL_SIZE_COLS[colSize] > 1 ? `repeat(${TL_SIZE_COLS[colSize]}, minmax(0,1fr))` : '1fr', gap: 6, marginTop: 10 }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: '#0fb5a0' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
@@ -127,7 +144,7 @@ export default function Timeline({ db }) {
         {sorted.map((e, i) => {
           const isOpen = expanded === e.id
           return (
-            <div key={e.id} className="entry-card" style={{ '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
+            <div key={e.id} className="entry-card" style={{ '--card-color': 'var(--ct)' }} onClick={() => colSize !== 'XL' && setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
                 <div style={{ fontSize: '0.77em', color: '#0fb5a0' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
@@ -136,7 +153,7 @@ export default function Timeline({ db }) {
                 {e.era && <span className="badge" style={{ color: 'var(--cca)', borderColor: 'rgba(255,170,51,.3)' }}>{e.era}</span>}
                 {e.status && <span className={`badge badge-${e.status}`}>{SL[e.status]}</span>}
               </div>
-              {isOpen && (
+              {(isOpen || colSize === 'XL') && (
                 <>
                   <div className="entry-detail">
                     {e.detail && <div>{e.detail}</div>}
