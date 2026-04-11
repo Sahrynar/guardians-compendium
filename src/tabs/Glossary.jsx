@@ -125,7 +125,7 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
             Power System, Cultures, Religions, and Factions categories.
           </p>
           <button className="btn btn-primary" style={{ background: '#ff6b6b', marginTop: 8 }}
-            onClick={() => goToWiki ? goToWiki(entry) : goTo('wiki')}>
+            onClick={() => goTo('wiki')}>
             → Go to Wiki
           </button>
         </div>

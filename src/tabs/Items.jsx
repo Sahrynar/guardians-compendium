@@ -152,7 +152,7 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
 
 // ── Full item popup ───────────────────────────────────────────────
 function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLightbox, setPickerForItem, uploadingImg, handleImageUpload, color }) {
-  const tc = color || tc
+  const tc = color || 'var(--ci)'
   function holderName(id) {
     if (!id) return 'Unassigned'
     const ch = chars.find(c => c.id === id)

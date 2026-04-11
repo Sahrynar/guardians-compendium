@@ -1,6 +1,6 @@
 const TAB_COLOR = '#9d4edd' // Session Log - Purple
 
-import { useState, useEffect, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { uid, CATS } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
@@ -655,7 +655,7 @@ const DEFAULT_FEATURES = [
   { id: 'tab_spellings', name: 'Spellings', type: 'Tab', status: 'active', notes: 'Canonical spelling reference.' },
   { id: 'tab_notes', name: 'Notes', type: 'Tab', status: 'active', notes: 'Structured lore notes with click-to-view popup.' },
   { id: 'tab_journal', name: 'Journal', type: 'Tab', status: 'active', notes: 'Quick Capture (left) + Stickies board (right). Pastel sticky notes, drag, pin, filters.' },
-  { id: 'tab_tools', name: 'Tools', type: 'Tab', status: 'active', notes: 'Date converter, Ix'Citlatl names, Pronunciation & Translation helper.' },
+  { id: 'tab_tools', name: 'Tools', type: 'Tab', status: 'active', notes: "Date converter, Ix'Citlatl names, Pronunciation & Translation helper." },
   { id: 'tab_sessionlog', name: 'Session Log', type: 'Tab', status: 'active', notes: 'Per-session working minutes. Sub-tabs: Sessions, Activity Log, Feature Log.' },
   { id: 'feat_quickcap', name: 'Quick Capture (Ctrl+Q)', type: 'Feature', status: 'active', notes: 'Floating ✦ button bottom-right. Ctrl+Q shortcut. Dumps to journal_captures.' },
   { id: 'feat_ctrlk', name: 'Global Search (Ctrl+K)', type: 'Feature', status: 'active', notes: 'Ctrl+K opens search across all tabs.' },

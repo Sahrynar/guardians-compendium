@@ -128,9 +128,9 @@ export default function CalendarTab({ db }) {
                 <div style={{ fontSize: 8, color: 'var(--cc)', marginTop: 2 }}>📝 {dayEntries.length} note{dayEntries.length > 1 ? 's' : ''}</div>
               )}
 
-              {!birthdays.length && !events.length && !dayEntries.length && !isExp && (
-                {!expandAll && <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>}
-              )}
+              {!birthdays.length && !events.length && !dayEntries.length && !isExp && !expandAll && (
+  <div style={{ fontSize: 8, color: 'var(--mut)', fontStyle: 'italic' }}>Click to expand</div>
+)}
 
               {/* Expanded day grid */}
               {isExp && (

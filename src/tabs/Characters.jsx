@@ -575,11 +575,11 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
         {tab === 'base' && (
           <div>
             <div className="field"><label>Preset Images</label></div>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},1fr)', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},1fr)`, gap: 6, marginBottom: 12 }}>
               {presetLabels.map(({ key, label }) => {
                 const src = presetSrcs[key]; const sel = ch.portrait_base === key
                 return (
-                  <div key={key} style={{ border: `2px solid ${sel?'var(--cc)':'var(--brd)'}`, borderRadius: 'var(--r)', padding: 4, background: sel?'rgba(201,102,255,.1)':'var(--card)', textAlign: 'center', cursor: 'pointer' }}
+                  <div key={key} style={{ border: `2px solid ${sel?"var(--cc)":"var(--brd)"}`, borderRadius: 'var(--r)', padding: 4, background: sel?'rgba(201,102,255,.1)':'var(--card)', textAlign: 'center', cursor: 'pointer' }}
                     onClick={() => { if (src) { db.upsertEntry('characters',{...ch,portrait_base:key,portrait_custom:null,portrait_canvas:null}); loadBase(src) } }}>
                     {src
                       ? <img src={src} style={{ width:'100%', height:60, objectFit:'contain', filter:'invert(1) brightness(.7)' }} alt={label} />
