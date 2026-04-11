@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback, useRef } from 'react'
 import OutfitSnapshot from './OutfitSnapshot'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
+import Lightbox from '../components/common/Lightbox'
+import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
-import { highlight, SL } from '../constants'
+import { highlight, uid, SL } from '../constants'
 
 // ── Category config ───────────────────────────────────────────────
 const CATEGORIES = [
@@ -61,7 +63,7 @@ function ColorPicker({ value, onChange, onClose }) {
       background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 10,
       padding: 10, width: 170, boxShadow: '0 4px 20px rgba(0,0,0,.6)' }}
       onClick={e => e.stopPropagation()}>
-      <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Colour</div>
+      <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Colour</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, marginBottom: 8 }}>
         {PRESET_COLORS.map(c => (
           <button key={c} onClick={() => { onChange(c); onClose() }}
@@ -73,7 +75,7 @@ function ColorPicker({ value, onChange, onClose }) {
       <input type="color" value={value || '#1a4a6b'} onChange={e => onChange(e.target.value)}
         style={{ width: '100%', height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', background: 'none' }} />
       <button onClick={onClose}
-        style={{ marginTop: 6, width: '100%', fontSize: '0.77em', padding: '3px 0',
+        style={{ marginTop: 6, width: '100%', fontSize: 10, padding: '3px 0',
           background: 'none', border: '1px solid var(--brd)', borderRadius: 6,
           color: 'var(--mut)', cursor: 'pointer' }}>Done</button>
     </div>
@@ -83,9 +85,9 @@ function ColorPicker({ value, onChange, onClose }) {
 // ── Compact entry tile ────────────────────────────────────────────
 function EntryTile({ entry, bubbleColor, onOpen, search }) {
   const cat = CAT_MAP[entry.category]
-  const tileColor = entry.entry_color || bubbleColor || '#3a86ff'
+  const tileColor = entry.entry_color || bubbleColor || 'var(--ci)'
   return (
-    <div onClick={() => onOpen(entry)}
+    <div onClick={() => onOpen(entry, tileColor)}
       style={{ background: 'var(--card)', border: `1px solid ${tileColor}44`,
         borderTop: `3px solid ${tileColor}`,
         borderRadius: 8, padding: '8px 10px', cursor: 'pointer', transition: '.12s',
@@ -98,19 +100,19 @@ function EntryTile({ entry, bubbleColor, onOpen, search }) {
           onError={e => e.target.style.display = 'none'} />
       )}
       {(entry.transfers || []).length > 0 && (
-        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: '0.69em',
+        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 9,
           background: 'rgba(255,170,51,.2)', color: 'var(--sp)',
           border: '1px solid rgba(255,170,51,.3)', borderRadius: 4, padding: '1px 4px' }}>↔</span>
       )}
-      <div style={{ fontSize: '0.85em', fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
+      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
         dangerouslySetInnerHTML={{ __html: highlight(entry.name || '', search) }} />
       {cat && (
-        <div style={{ fontSize: '0.69em', color: tileColor, textTransform: 'uppercase', letterSpacing: '.03em' }}>
+        <div style={{ fontSize: 9, color: tileColor, textTransform: 'uppercase', letterSpacing: '.03em' }}>
           {cat.icon} {entry.category}
         </div>
       )}
       {entry.color_material && (
-        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{entry.color_material}</div>
+        <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2 }}>{entry.color_material}</div>
       )}
       {entry.status && (
         <div style={{ marginTop: 3 }}>
@@ -156,9 +158,9 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
               border: `2px solid ${bubbleColor}` }}
             onError={e => e.target.style.display = 'none'} />
         )}
-        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: '0.92em',
+        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: 12,
           fontWeight: 700, color: bubbleColor }}>{name}</div>
-        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
+        <div style={{ fontSize: 10, color: 'var(--mut)' }}>
           {entries.length} item{entries.length !== 1 ? 's' : ''}
         </div>
         {/* Color dot */}
@@ -178,14 +180,14 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
 
       {/* Entries grouped by category */}
       {entries.length === 0 ? (
-        <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
+        <div style={{ fontSize: 10, color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
       ) : (
         catOrder.map(catId => {
           const cat = CAT_MAP[catId]
           const catEntries = byCategory[catId]
           return (
             <div key={catId} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: '0.69em', fontWeight: 700, textTransform: 'uppercase',
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '.06em', color: cat?.color || 'var(--dim)',
                 marginBottom: 5 }}>
                 {cat?.icon} {catId}
@@ -195,7 +197,7 @@ function CharBubble({ char, entries, idx, chars, search, onOpenEntry,
                 gap: 5 }}>
                 {catEntries.map(e => (
                   <EntryTile key={e.id} entry={e} bubbleColor={bubbleColor}
-                    onOpen={onOpenEntry} search={search} />
+                    onOpen={(entry, color) => onOpenEntry(entry, color || bubbleColor)} search={search} />
                 ))}
               </div>
             </div>
@@ -215,7 +217,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
     return ch ? ch.name : id
   }
   const cat = CAT_MAP[entry.category]
-  const tileColor = entry.entry_color || bubbleColor || '#3a86ff'
+  const tileColor = entry.entry_color || bubbleColor || 'var(--ci)'
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.85)',
@@ -229,11 +231,11 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tileColor }}>{entry.name}</div>
-            {cat && <div style={{ fontSize: '0.77em', color: cat.color, marginTop: 2 }}>{cat.icon} {entry.category}</div>}
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tileColor }}>{entry.name}</div>
+            {cat && <div style={{ fontSize: 10, color: cat.color, marginTop: 2 }}>{cat.icon} {entry.category}</div>}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none',
-            cursor: 'pointer', fontSize: '1.38em', color: 'var(--mut)', marginLeft: 10 }}>✕</button>
+            cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
 
         {/* Image */}
@@ -248,19 +250,19 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
             <div style={{ width: '100%', height: 50, border: '1px dashed var(--brd)',
               borderRadius: 8, background: 'var(--card)', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              color: 'var(--mut)', fontSize: '0.85em' }}>No image</div>
+              color: 'var(--mut)', fontSize: 11 }}>No image</div>
           )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: '0.77em' }}>
+            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: 10 }}>
               {uploadingImg === entry.id ? 'Uploading…' : '⬆ Upload'}
               <input type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => { const f = e.target.files[0]; if (f) handleImageUpload(entry.id, f); e.target.value = '' }} />
             </label>
-            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: 10 }}
               onClick={() => { onClose(); setPickerFor(entry.id) }}>🖼 Browse Library</button>
             {entry.image && (
               <button className="btn btn-sm btn-outline"
-                style={{ fontSize: '0.77em', color: '#ff3355', borderColor: '#ff335544' }}
+                style={{ fontSize: 10, color: '#ff3355', borderColor: '#ff335544' }}
                 onClick={() => {
                   const it = allEntries.find(x => x.id === entry.id)
                   if (it) db.upsertEntry('inventory', { ...it, image: null })
@@ -277,31 +279,31 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
           ['Books', (entry.books || []).join(', ')],
         ].filter(([, v]) => v).map(([label, val]) => (
           <div key={label} style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor,
+            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor,
               textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
-            <div style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{val}</div>
+            <div style={{ fontSize: 12, color: 'var(--tx)' }}>{val}</div>
           </div>
         ))}
 
         {entry.description && (
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div>
-            <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{entry.description}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Description</div>
+            <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{entry.description}</div>
           </div>
         )}
         {entry.significance && (
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div>
-            <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{entry.significance}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: tileColor, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div>
+            <div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{entry.significance}</div>
           </div>
         )}
 
         {(entry.transfers || []).length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)' }}>
-            <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--sp)',
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--sp)',
               textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>↔ Transfer History</div>
             {entry.transfers.map((t, i) => (
-              <div key={i} style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 3 }}>
+              <div key={i} style={{ fontSize: 11, color: 'var(--dim)', marginBottom: 3 }}>
                 {t.from || '?'} → {t.to || '?'}
                 {t.note ? ` · ${t.note}` : ''}
                 {t.when ? <span style={{ color: 'var(--mut)' }}> ({t.when})</span> : ''}
@@ -312,7 +314,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 
         {entry.notes && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)',
-            fontSize: '0.85em', color: 'var(--dim)', lineHeight: 1.6 }}>{entry.notes}</div>
+            fontSize: 11, color: 'var(--dim)', lineHeight: 1.6 }}>{entry.notes}</div>
         )}
 
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
@@ -350,7 +352,7 @@ export default function Inventory({ db }) {
     ]
   }, [rawInventory, rawItems, rawWardrobe])
 
-  const chars = [...(db.db.characters || [])].sort((a,b) => (a.display_name||a.name||'').localeCompare(b.display_name||b.name||''))
+  const chars = db.db.characters || []
 
   // ── State ──
   const [search, setSearch] = useState('')
@@ -374,6 +376,7 @@ export default function Inventory({ db }) {
   const [pickerFor, setPickerFor] = useState(null)
   const [dragIdx, setDragIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [showColPicker, setShowColPicker] = useState(false)
 
   function saveColumns(n) {
     setColumns(n)
@@ -504,7 +507,7 @@ export default function Inventory({ db }) {
 
         {/* Category filter */}
         <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
+          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All categories</option>
           {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.id}</option>)}
@@ -512,7 +515,7 @@ export default function Inventory({ db }) {
 
         {/* Character filter */}
         <select value={filterChar} onChange={e => { setFilterChar(e.target.value); setFilterChars(new Set()) }}
-          style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
+          style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
             border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All characters</option>
           {usedChars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -521,7 +524,7 @@ export default function Inventory({ db }) {
         {/* Group filter */}
         {allGroups.length > 0 && (
           <select value={filterGroup} onChange={e => setFilterGroup(e.target.value)}
-            style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
+            style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
               border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
             <option value="all">All groups</option>
             {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
@@ -532,14 +535,14 @@ export default function Inventory({ db }) {
         <div style={{ display: 'flex', gap: 3 }}>
           {[['bubble','🫧 Bubbles'],['list','☰ List'],['outfit','👗 Outfits']].map(([v,l]) => (
             <button key={v} className={`btn btn-sm btn-outline ${viewMode===v?'active':''}`}
-              style={{ fontSize: '0.77em' }} onClick={() => setViewMode(v)}>{l}</button>
+              style={{ fontSize: 10 }} onClick={() => setViewMode(v)}>{l}</button>
           ))}
         </div>
 
         {/* List sort (only in list mode) */}
         {viewMode === 'list' && (
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
+            style={{ fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
               border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
             <option value="holder">Sort: By Holder</option>
             <option value="name">Sort: A → Z</option>
@@ -547,189 +550,177 @@ export default function Inventory({ db }) {
           </select>
         )}
 
-        {/* Column picker — XS=most cols, XL=1 col */}
-        <div style={{ display: 'flex', gap: 3 }}>
-          {[['XS',5],['S',4],['M',3],['L',2],['XL',1]].map(([l,n]) => (
-            <button key={l} onClick={() => saveColumns(n)}
-              style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8,
-                background: columns===n ? '#3a86ff' : 'none',
-                color: columns===n ? '#fff' : 'var(--dim)',
-                border: `1px solid ${columns===n ? '#3a86ff' : 'var(--brd)'}`,
-                cursor: 'pointer' }}>{l}</button>
-          ))}
+        {/* Column picker */}
+        <div style={{ position: 'relative' }}>
+          <button className="btn btn-sm btn-outline" style={{ fontSize: 10 }}
+            onClick={() => setShowColPicker(p => !p)}
+            title="Column count">⊞ {columns} col</button>
+          {showColPicker && (
+            <div style={{ position: 'absolute', right: 0, top: 30, zIndex: 100,
+              background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 8,
+              padding: 10, display: 'flex', gap: 6 }}>
+              {[1,2,3,4,5,8].map(n => (
+                <button key={n} onClick={() => { saveColumns(n); setShowColPicker(false) }}
+                  style={{ width: 30, height: 30, borderRadius: 6, fontSize: 12, fontWeight: 700,
+                    background: columns === n ? 'var(--ci)' : 'var(--card)',
+                    color: columns === n ? '#000' : 'var(--tx)',
+                    border: `1px solid ${columns === n ? 'var(--ci)' : 'var(--brd)'}`,
+                    cursor: 'pointer' }}>{n}</button>
+              ))}
+            </div>
+          )}
         </div>
+
+        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)', marginLeft: 'auto' }}
+          onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      {/* ── Main content area ── */}
-      {viewMode === 'outfit' ? (
-      <OutfitSnapshot db={db} />
-    ) : viewMode === 'list' ? (
-      <div style={{ marginTop: 6 }}>
-        {!sortedList.length && (
-          <div className="empty"><div className="empty-icon">🎒</div><p>No items found.</p></div>
-        )}
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`, gap: 6 }}>
-          {sortedList.map((entry, i) => {
-            const tileColor = entry.entry_color || '#3a86ff'
+      {/* ── Stats bar ── */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10, fontSize: 10, color: 'var(--mut)' }}>
+        <span>{filtered.length} of {allEntries.length} entries</span>
+        {CATEGORIES.filter(c => filtered.some(e => (e.category || 'Other') === c.id)).map(c => (
+          <span key={c.id} style={{ color: c.color }}>
+            {c.icon} {filtered.filter(e => (e.category || 'Other') === c.id).length} {c.id}
+          </span>
+        ))}
+      </div>
+
+      {/* ── Bubble view ── */}
+      {viewMode === 'bubble' && (
+        <div style={{ columns: columns, gap: 10, columnFill: 'balance' }}>
+          {holderOrder.length === 0 && (
+            <div className="empty"><div className="empty-icon">🎒</div><p>No inventory entries yet.</p></div>
+          )}
+          {holderOrder.map((holderId, idx) => {
+            const charObj = holderId === '__unassigned__' ? null : chars.find(c => c.id === holderId)
+            // Use stable hash of charId for default color, not position index
+            const stableIdx = holderId === '__unassigned__' ? 0 : Math.abs(holderId.split('').reduce((a,c) => a + c.charCodeAt(0), 0))
+            const bubbleColor = charObj?.bubble_color || DEFAULT_COLORS[stableIdx % DEFAULT_COLORS.length]
             return (
-              <div key={entry.id} className="entry-card" style={{ '--card-color': tileColor }}
-                onClick={() => setViewPopup(entry)}>
-                <div className="entry-title" style={{ fontSize: '0.92em' }}>{entry.name || '(unnamed)'}</div>
-                <div style={{ fontSize: '0.77em', color: tileColor, marginTop: 2 }}>
-                  {charName(entry.character || entry.holder)}
-                </div>
-                {entry.category && <div className="badge" style={{ marginTop: 3, fontSize: '0.62em', color: 'var(--dim)', border: '1px solid var(--brd)', padding: '1px 5px', borderRadius: 6, display: 'inline-block' }}>{entry.category}</div>}
+              <div key={holderId} style={{ breakInside: 'avoid', marginBottom: 10 }}>
+                <CharBubble
+                  char={holderId === '__unassigned__' ? '__unassigned__' : (charObj || { name: holderId })}
+                  entries={grouped[holderId] || []}
+                  idx={idx}
+                  chars={chars}
+                  search={search}
+                  columns={columns}
+                  dragging={dragIdx === idx}
+                  onColorChange={color => holderId !== '__unassigned__' && handleBubbleColor(holderId, color)}
+                  onDragStart={() => setDragIdx(idx)}
+                  onDragOver={() => setDragOverIdx(idx)}
+                  onDrop={() => handleDrop(dragIdx, dragOverIdx)}
+                  onOpenEntry={(entry, bColor) => setViewPopup({ entry, bubbleColor: bColor })}
+                />
               </div>
             )
           })}
         </div>
-      </div>
-    ) : (
-      /* Bubble view — grouped by character */
-      <div style={{ marginTop: 6 }}>
-        {holderOrder.length === 0 && (
-          <div className="empty">
-            <div className="empty-icon">🎒</div>
-            <p>No inventory yet.</p>
-            <button className="btn btn-primary" style={{ background: '#3a86ff' }}
-              onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Item</button>
-          </div>
-        )}
-        {holderOrder.map((holderId, hi) => {
-          const items = grouped[holderId] || []
-          if (!items.length) return null
-          const ch = chars.find(c => c.id === holderId)
-          const bubbleColor = ch?.bubble_color || '#3a86ff'
-          const holderName = holderId === '__unassigned__' ? 'Unassigned' : charName(holderId)
-          return (
-            <div key={holderId} style={{ marginBottom: 14,
-              border: `1px solid ${bubbleColor}44`, borderRadius: 'var(--rl)',
-              background: `${bubbleColor}08`, overflow: 'hidden' }}
-              draggable={holderId !== '__unassigned__'}
-              onDragStart={() => setDragIdx(hi)}
-              onDragOver={e => { e.preventDefault(); setDragOverIdx(hi) }}
-              onDrop={() => handleDrop(dragIdx, hi)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '8px 12px', background: `${bubbleColor}18`, borderBottom: `1px solid ${bubbleColor}33` }}>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.92em', fontWeight: 700, color: bubbleColor }}>
-                  {ch?.reference_image && (
-                    <img src={ch.reference_image} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', marginRight: 6, verticalAlign: 'middle', border: `1px solid ${bubbleColor}` }} />
-                  )}
-                  {holderName}
-                </div>
-                <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`, gap: 6, padding: 8 }}>
-                {items.map(entry => {
-                  const tileColor = entry.entry_color || bubbleColor
-                  return (
-                    <div key={entry.id} className="entry-card" style={{ '--card-color': tileColor, cursor: 'pointer' }}
-                      onClick={() => setViewPopup(entry)}>
-                      {entry.image && (
-                        <img src={entry.image} alt="" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 4, marginBottom: 4 }} onError={e => { e.currentTarget.style.display = 'none' }} />
-                      )}
-                      <div className="entry-title" style={{ fontSize: '0.85em' }}>{entry.name || '(unnamed)'}</div>
-                      {entry.category && <div style={{ fontSize: '0.69em', color: tileColor, marginTop: 2 }}>{entry.category}</div>}
-                    </div>
-                  )
-                })}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 60,
-                  border: '1px dashed var(--brd)', borderRadius: 'var(--r)', cursor: 'pointer', opacity: 0.5 }}
-                  onClick={() => { setEditing(holderId === '__unassigned__' ? {} : { character: holderId }); setModalOpen(true) }}>
-                  <span style={{ fontSize: '1.38em', color: 'var(--mut)' }}>+</span>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    )}
+      )}
 
-    {/* ── Item view popup ── */}
-    {viewPopup && (
-      <div className="modal-overlay open" onClick={() => setViewPopup(null)}>
-        <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
-          <button className="modal-close" onClick={() => setViewPopup(null)}>✕</button>
-          <div className="modal-title" style={{ color: viewPopup.entry_color || '#3a86ff' }}>
-            {viewPopup.name}
-          </div>
-          {viewPopup.image && (
-            <img src={viewPopup.image} alt="" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 6, marginBottom: 10, cursor: 'pointer' }}
-              onClick={() => setLightbox(viewPopup.image)} />
+      {/* ── List view ── */}
+      {viewMode === 'list' && (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 6 }}>
+          {sortedList.length === 0 && (
+            <div className="empty"><div className="empty-icon">🎒</div><p>No entries found.</p></div>
           )}
-          <div className="entry-detail">
-            {viewPopup.category && <div><strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Category: </strong>{viewPopup.category}</div>}
-            {viewPopup.description && <div style={{ marginTop: 4 }}>{viewPopup.description}</div>}
-            {viewPopup.character && <div style={{ marginTop: 4 }}><strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Holder: </strong>{charName(viewPopup.character)}</div>}
-            {(viewPopup.transfers||[]).length > 0 && (
-              <div style={{ marginTop: 6 }}>
-                <strong style={{ fontSize: '0.69em', textTransform: 'uppercase', color: '#3a86ff' }}>Transfer History: </strong>
-                {viewPopup.transfers.map((t, ti) => (
-                  <div key={ti} style={{ fontSize: '0.77em', color: 'var(--dim)', paddingLeft: 8 }}>
-                    {t.from} → {t.to}{t.when ? ` (${t.when})` : ''}{t.note ? ` — ${t.note}` : ''}
+          {sortedList.map(e => {
+            const cat = CAT_MAP[e.category || 'Other']
+            const holderChar = chars.find(c => c.id === (e.character || e.holder))
+            const stableIdx = chars.indexOf(holderChar)
+            const bubbleColor = holderChar?.bubble_color || holderChar?.clothing_color || DEFAULT_COLORS[Math.max(0,stableIdx) % DEFAULT_COLORS.length]
+            const tileColor = e.entry_color || bubbleColor
+            return (
+              <div key={e.id} className="entry-card"
+                style={{ '--card-color': tileColor, borderTop: `2px solid ${tileColor}` }}
+                onClick={() => setViewPopup({ entry: e, bubbleColor })}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div className="entry-title"
+                    dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
+                  <div style={{ fontSize: 9, color: tileColor, flexShrink: 0, marginLeft: 6 }}>
+                    {cat?.icon} {e.category}
                   </div>
-                ))}
+                </div>
+                <div className="entry-meta">
+                  {charName(e.character || e.holder) !== 'Unassigned' && (
+                    <span className="badge" style={{ color: tileColor }}>
+                      {charName(e.character || e.holder)}
+                    </span>
+                  )}
+                  {e.status && <span className={`badge badge-${e.status}`}>{SL[e.status]}</span>}
+                  {(e.books || []).map(b => <span key={b} className="badge badge-book">{b}</span>)}
+                </div>
+                {e.color_material && (
+                  <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 3 }}>{e.color_material}</div>
+                )}
               </div>
-            )}
-          </div>
-          <div className="modal-actions" style={{ marginTop: 12 }}>
-            <button className="btn btn-outline" onClick={() => { setViewPopup(null); setEditing(viewPopup); setModalOpen(true) }}>✎ Edit</button>
-            <button className="btn btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }}
-              onClick={() => { setConfirmId(viewPopup.id); setViewPopup(null) }}>✕ Delete</button>
-            <button className="btn btn-outline" onClick={() => setViewPopup(null)}>Close</button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Outfit Snapshot view ── */}
+      {viewMode === 'outfit' && (
+        <OutfitSnapshot db={db} chars={chars} allEntries={allEntries} />
+      )}
+
+      {/* ── Popups ── */}
+      {viewPopup && (
+        <EntryPopup entry={viewPopup.entry || viewPopup} bubbleColor={viewPopup.bubbleColor} allEntries={allEntries} chars={chars} db={db}
+          onClose={() => setViewPopup(null)}
+          onEdit={e => { setEditing(e); setModalOpen(true) }}
+          onTransfer={id => setTransferId(id)}
+          setLightbox={setLightbox}
+          setPickerFor={setPickerFor}
+          uploadingImg={uploadingImg}
+          handleImageUpload={handleImageUpload} />
+      )}
+
+      <Lightbox src={lightbox} onClose={() => setLightbox(null)} />
+
+      <ImagePicker open={!!pickerFor} db={db} onClose={() => setPickerFor(null)}
+        onPick={url => {
+          const e = allEntries.find(x => x.id === pickerFor)
+          if (e) db.upsertEntry('inventory', { ...e, image: url })
+          setPickerFor(null)
+        }} />
+
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
+        title={`${editing?.id ? 'Edit' : 'Add'} Inventory Entry`} color="var(--ci)">
+        <EntryForm fields={INV_FIELDS} entry={editing || {}} onSave={handleSave}
+          onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--ci)" db={db} />
+      </Modal>
+
+      <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color="var(--ci)">
+        <div className="field"><label>Transfer To</label>
+          <select value={txForm.to} onChange={e => setTxForm(p => ({ ...p, to: e.target.value }))}>
+            <option value="">— Pick character —</option>
+            {chars.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>Note (optional)</label>
+          <input value={txForm.note} onChange={e => setTxForm(p => ({ ...p, note: e.target.value }))} />
+        </div>
+        <div className="field"><label>When</label>
+          <input value={txForm.when} onChange={e => setTxForm(p => ({ ...p, when: e.target.value }))}
+            placeholder="e.g. End of Book 1" />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
+          <button className="btn btn-primary" style={{ background: 'var(--ci)' }} onClick={doTransfer}>Transfer</button>
+        </div>
+      </Modal>
+
+      {confirmId && (
+        <div className="confirm-overlay open">
+          <div className="confirm-box">
+            <p>Delete <strong>{allEntries.find(e => e.id === confirmId)?.name}</strong>?</p>
+            <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
+            <button className="btn btn-danger btn-sm"
+              onClick={() => { db.deleteEntry('inventory', confirmId); setConfirmId(null) }}>Delete</button>
           </div>
         </div>
-      </div>
-    )}
-
-    {/* Lightbox */}
-    {lightbox && (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        onClick={() => setLightbox(null)}>
-        <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 8 }} />
-      </div>
-    )}
-
-    {/* Add/Edit modal */}
-    <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
-      title={editing?.id ? 'Edit Item' : 'Add Item'} color="#3a86ff">
-      <EntryForm fields={INV_FIELDS} entry={editing || {}} db={db}
-        onSave={entry => { handleSave(entry) }}
-        onCancel={() => { setModalOpen(false); setEditing(null) }}
-        color="#3a86ff" label="Items" />
-    </Modal>
-
-    {/* Transfer modal */}
-    <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color="#3a86ff">
-      <div className="field"><label>Transfer To</label>
-        <select value={txForm.to} onChange={e => setTxForm(p => ({ ...p, to: e.target.value }))}>
-          <option value="">— Pick character —</option>
-          {chars.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-        </select>
-      </div>
-      <div className="field"><label>Note (optional)</label>
-        <input value={txForm.note} onChange={e => setTxForm(p => ({ ...p, note: e.target.value }))} />
-      </div>
-      <div className="field"><label>When</label>
-        <input value={txForm.when} onChange={e => setTxForm(p => ({ ...p, when: e.target.value }))} placeholder="e.g. End of Book 1" />
-      </div>
-      <div className="modal-actions">
-        <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
-        <button className="btn btn-primary" style={{ background: '#3a86ff' }} onClick={doTransfer}>Transfer</button>
-      </div>
-    </Modal>
-
-    {/* Confirm delete */}
-    {confirmId && (
-      <div className="confirm-overlay open">
-        <div className="confirm-box">
-          <p>Delete <strong>{allEntries.find(e => e.id === confirmId)?.name || 'this item'}</strong>?</p>
-          <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
-          <button className="btn btn-danger btn-sm" onClick={() => { db.deleteEntry('inventory', confirmId); setConfirmId(null) }}>Delete</button>
-        </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   )
 }

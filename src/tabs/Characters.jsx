@@ -1,3 +1,5 @@
+const SIZE_COLS_CHARS = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
+
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
@@ -69,6 +71,11 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   useEffect(() => { if (navSearch !== undefined) setSearch(navSearch || '') }, [navSearch])
   const [expanded, setExpanded] = useState(null)
   const [filterValues, setFilterValues] = useState({})
+  const [colSize, setColSize] = useState(() => {
+    try { return localStorage.getItem('colsize_characters') || 'M' } catch { return 'M' }
+  })
+  const cols = SIZE_COLS_CHARS[colSize] || 2
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_characters', sz) } catch {} }
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
@@ -164,6 +171,15 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   return (
     <div>
       <div className="tbar">
+        <div style={{ display: 'flex', gap: 3 }}>
+          {['XS','S','M','L','XL'].map(sz => (
+            <button key={sz} onClick={() => changeColSize(sz)}
+              style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
+                background: colSize === sz ? '#e63946' : 'none',
+                color: colSize === sz ? '#fff' : 'var(--dim)',
+                border: `1px solid ${colSize === sz ? '#e63946' : 'var(--brd)'}` }}>{sz}</button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
         {/* Alive/Deceased filter */}
         <div style={{ display: 'flex', gap: 3 }}>
@@ -559,7 +575,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
         {tab === 'base' && (
           <div>
             <div className="field"><label>Preset Images</label></div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},1fr)', gap: 6, marginBottom: 12 }}>
               {presetLabels.map(({ key, label }) => {
                 const src = presetSrcs[key]; const sel = ch.portrait_base === key
                 return (

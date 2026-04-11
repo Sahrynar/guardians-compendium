@@ -91,6 +91,8 @@ export default function App() {
   useEffect(() => {
     function onKey(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'q') { e.preventDefault(); setQuickCapOpen(o => !o) }
+      if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i > 0 ? TAB_ORDER[i-1] : t }) }
+      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i < TAB_ORDER.length-1 ? TAB_ORDER[i+1] : t }) }
       if (e.key === 'Escape' && quickCapOpen) setQuickCapOpen(false)
     }
     window.addEventListener('keydown', onKey)
@@ -129,6 +131,21 @@ export default function App() {
   const goFwd = useCallback(() => {
     if (histIdx < history.length - 1) { setHistIdx(prev => prev + 1); setTab(history[histIdx + 1]); setNavSearch('') }
   }, [history, histIdx])
+
+
+  const crossLink = useCallback((tabName, entryId) => {
+    goTo(tabName)
+    if (entryId) {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('gcomp_expand', { detail: { id: entryId } }))
+      }, 150)
+    }
+  }, [goTo])
+
+  const goToWithSearch = useCallback((tabName, searchTerm) => {
+    setNavSearch(searchTerm || '')
+    goTo(tabName)
+  }, [goTo])
 
   const adjFont = useCallback((d) => {
     setFontSize(prev => {
@@ -176,7 +193,7 @@ export default function App() {
     setQuickCapOpen(false)
   }
 
-  const tabProps = { db, goTo, tab, navSearch, setNavSearch }
+  const tabProps = { db, goTo, goToWithSearch, crossLink, tab, navSearch, setNavSearch }
 
   function renderTab() {
     if (db.loading) return (

@@ -273,6 +273,8 @@ export default function Manuscript({ db, navSearch }) {
   // Sync top nav search
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [filterBook, setFilterBook] = useState('all')
+  const [tocBook, setTocBook] = useState(null) // null = shelf, 'Book 1' etc = TOC view
+  const [coverLightbox, setCoverLightbox] = useState(null) // cover image for lightbox
   const [editCovers, setEditCovers] = useState(false)
   const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_manuscript') || 'M' } catch { return 'M' } })
   function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_manuscript', sz) } catch {} }
@@ -345,7 +347,16 @@ export default function Manuscript({ db, navSearch }) {
                 width: 150, height: 220, borderRadius: '4px 8px 8px 4px', overflow: 'hidden',
                 border: `3px solid ${accent}`, background: cover ? 'transparent' : accent + '22',
                 boxShadow: '4px 6px 18px rgba(0,0,0,.55)', cursor: 'pointer',
-              }} onClick={() => setFilterBook(filterBook === book ? 'all' : book)}>
+              }} onClick={() => {
+                    const meta2 = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
+                    const cover2 = meta2?.cover || ''
+                    if (cover2) {
+                      setCoverLightbox({ book, cover: cover2 })
+                    } else {
+                      setTocBook(book)
+                      setFilterBook(book)
+                    }
+                  }}>
                 {cover
                   ? <img src={cover} alt={book} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

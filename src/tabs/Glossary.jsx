@@ -1,3 +1,5 @@
+const SIZE_COLS_GLOSS = { XS: 3, S: 2, M: 1, L: 1, XL: 1 }
+
 import { useState, useMemo, useEffect } from 'react'
 import FilterPopup from '../components/common/FilterPopup'
 
@@ -8,6 +10,11 @@ const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')
 
 export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const [search, setSearch] = useState(navSearch || '')
+  const [colSize, setColSize] = useState(() => {
+    try { return localStorage.getItem('colsize_glossary') || 'M' } catch { return 'M' }
+  })
+  const cols = SIZE_COLS_GLOSS[colSize] || 1
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_glossary', sz) } catch {} }
   const [jumpLetter, setJumpLetter] = useState(null)
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])

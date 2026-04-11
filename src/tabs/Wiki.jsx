@@ -1,3 +1,5 @@
+const SIZE_COLS_WIKI = { XS: 4, S: 3, M: 2, L: 2, XL: 1 }
+
 import { useState, useRef } from 'react'
 import Modal from '../components/common/Modal'
 import FilterPopup from '../components/common/FilterPopup'
@@ -293,7 +295,10 @@ function ArticleEditor({ article, onSave, onCancel }) {
 export default function Wiki({ db, navSearch }) {
   const articles = db.db.wiki || []
   const [catFilter, setCatFilter] = useState('all')
-  const [colSize, setColSize] = useState('M')
+  const [colSize, setColSize] = useState(() => {
+    try { return localStorage.getItem('colsize_wiki') || 'M' } catch { return 'M' }
+  })
+  function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_wiki', sz) } catch {} }
   const [filterValues, setFilterValues] = useState({})
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
@@ -320,6 +325,15 @@ export default function Wiki({ db, navSearch }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {['XS','S','M','L','XL'].map(sz => (
+            <button key={sz} onClick={() => changeColSize(sz)}
+              style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
+                background: colSize === sz ? '#ff69b4' : 'none',
+                color: colSize === sz ? '#000' : 'var(--dim)',
+                border: `1px solid ${colSize === sz ? '#ff69b4' : 'var(--brd)'}` }}>{sz}</button>
+          ))}
+        </div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#ff69b4' }}>📖 Wiki</div>
         <FilterPopup
           color="#ff69b4"
@@ -349,7 +363,7 @@ export default function Wiki({ db, navSearch }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] }, minmax(0,1fr))` : '1fr', gap: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (
           <div key={a.id} className="entry-card" style={{ '--card-color': '#ff69b4' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
