@@ -392,6 +392,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
 // PORTRAIT TOOL
 // ══════════════════════════════════════════════════════
 function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
+  const cols = 3 // preset image grid columns
   const ch = (db.db.characters||[]).find(c => c.id === charId)
   const canvasRef = useRef()
   const [fillMode, setFillMode] = useState('flat')

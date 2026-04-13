@@ -193,7 +193,9 @@ export default function App() {
     setQuickCapOpen(false)
   }
 
-  const tabProps = { db, goTo, goToWithSearch, crossLink, tab, navSearch, setNavSearch }
+  const clearCrossLink = useCallback(() => {}, [])
+
+  const tabProps = { db, goTo, goToWithSearch, crossLink, clearCrossLink, tab, navSearch, setNavSearch }
 
   function renderTab() {
     if (db.loading) return (

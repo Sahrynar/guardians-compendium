@@ -146,7 +146,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
       </div>
 
       {/* ── Main body: left nav + 3 panels ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '160px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, fit-content(170px)) minmax(0,0.75fr) minmax(0,1fr) minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
 
         {/* Left nav — thin, rainbow list */}
         <div>

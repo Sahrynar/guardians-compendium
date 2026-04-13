@@ -99,11 +99,11 @@ export const TAB_RAINBOW = {
   flags:        '#9d4edd', // 15 Purple
   questions:    '#c77dff', // 16 Magenta
   canon:        '#ff48c4', // 17 Hot Pink
-  spellings:    '#ff69b4', // cycles: Pink
-  notes:        '#ff6b6b', // cycles: Coral
-  journal:      '#38b000', // cycles: Green (distinct from adjacent)
-  tools:        '#3a86ff', // cycles: Blue
-  sessionlog:   '#9d4edd', // cycles: Purple
+  spellings:    '#ff69b4', // cycles: index 18 % 18 = 0 → Pink
+  notes:        '#ff6b6b', // cycles: index 19 % 18 = 1 → Coral
+  journal:      '#e63946', // cycles: index 20 % 18 = 2 → Red
+  tools:        '#f4442e', // cycles: index 21 % 18 = 3 → Red-Orange
+  sessionlog:   '#ff8c00', // cycles: index 22 % 18 = 4 → Orange
 }
 
 // ── Category config ─────────────────────────────────────────────

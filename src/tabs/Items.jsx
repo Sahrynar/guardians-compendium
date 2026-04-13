@@ -63,7 +63,7 @@ function ItemTile({ item, onOpen, search }) {
 }
 
 // ── Character bubble ──────────────────────────────────────────────
-function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver, onDrop, dragging, search, onOpenItem }) {
+function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver, onDrop, dragging, search, onOpenItem, cols }) {
   const name = char === '__unassigned__' ? 'Unassigned' : (char.name || 'Unknown')
   const bubbleColor = color || '#1a4a6b'
   const [showPicker, setShowPicker] = useState(false)
@@ -379,6 +379,7 @@ export default function Items({ db }) {
                 onDragOver={() => setDragOverIdx(idx)}
                 onDrop={() => handleDrop(dragIdx, dragOverIdx)}
                 onOpenItem={item => setViewPopup({ item, color: bubbleColor })}
+                cols={cols}
               />
             )
           })}
