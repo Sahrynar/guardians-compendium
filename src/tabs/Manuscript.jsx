@@ -272,6 +272,17 @@ export default function Manuscript({ db, navSearch }) {
 
   // Sync top nav search
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
+
+  // Escape key: close lightbox
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        if (coverLightbox) setCoverLightbox(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [coverLightbox])
   const [filterBook, setFilterBook] = useState('all')
   const [tocBook, setTocBook] = useState(null) // null = shelf, 'Book 1' etc = TOC view
   const [coverLightbox, setCoverLightbox] = useState(null) // cover image for lightbox
@@ -351,7 +362,7 @@ export default function Manuscript({ db, navSearch }) {
                     const meta2 = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
                     const cover2 = meta2?.cover || ''
                     if (cover2) {
-                      setCoverLightbox({ book, cover: cover2 })
+                      setCoverLightbox({ book, cover: cover2 })  // lightbox → then TOC on close
                     } else {
                       setTocBook(book)
                       setFilterBook(book)
@@ -466,6 +477,23 @@ export default function Manuscript({ db, navSearch }) {
         </div>
       )}
 
+      {/* ── TOC view (single book) ── */}
+      {tocBook && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--brd)' }}>
+            <button onClick={() => { setTocBook(null); setFilterBook('all') }}
+              style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 6,
+                background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>
+              ← Back to Shelf
+            </button>
+            <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: MS_COLOR, fontWeight: 700 }}>{tocBook}</div>
+            <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 'auto' }}>
+              {chapters.filter(c => c.book === tocBook).length} chapters · {chapters.filter(c => c.book === tocBook).reduce((s, c) => s + (c.word_count || wordCount(c.text || '')), 0).toLocaleString()} words
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chapter list */}
       {filtered.length === 0 && (
         <div className="empty">
@@ -479,7 +507,7 @@ export default function Manuscript({ db, navSearch }) {
         </div>
       )}
 
-      {BOOKS.filter(b => filterBook === 'all' || b === filterBook).map(book => {
+      {BOOKS.filter(b => tocBook ? b === tocBook : (filterBook === 'all' || b === filterBook)).map(book => {
         const bookChapters = filtered.filter(ch => ch.book === book)
         if (!bookChapters.length) return null
         return (
@@ -541,6 +569,38 @@ export default function Manuscript({ db, navSearch }) {
           </div>
         )
       })}
+
+      {/* ── Cover lightbox overlay ── */}
+      {coverLightbox && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 500,
+          background: 'rgba(0,0,0,.92)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+        }} onClick={() => {
+          // Close lightbox and enter TOC for this book
+          const book = coverLightbox.book
+          setCoverLightbox(null)
+          setTocBook(book)
+          setFilterBook(book)
+        }}>
+          <div style={{ position: 'relative', maxWidth: '40vw', maxHeight: '80vh' }}>
+            <img src={coverLightbox.cover} alt={coverLightbox.book}
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain',
+                borderRadius: 8, boxShadow: '0 8px 48px rgba(0,0,0,.8)',
+                border: '2px solid rgba(255,255,255,.15)' }} />
+            <div style={{ position: 'absolute', bottom: -40, left: 0, right: 0,
+              textAlign: 'center', color: 'rgba(255,255,255,.5)', fontSize: '0.85em' }}>
+              Click to open · Esc to close
+            </div>
+            <button onClick={e => { e.stopPropagation(); setCoverLightbox(null) }}
+              style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28,
+                borderRadius: '50%', background: 'rgba(0,0,0,.7)', border: '1px solid rgba(255,255,255,.2)',
+                color: 'rgba(255,255,255,.7)', fontSize: '1em', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          </div>
+        </div>
+      )}
 
       {/* Chapter editor */}
       {editingChapter && (

@@ -16,8 +16,10 @@ const SPECTRUM = [
   { bg: '#5A3ACC1a', border: '#5A3ACC', text: '#b090f0' }, // indigo
   { bg: '#8A3ACC1a', border: '#8A3ACC', text: '#c890f0' }, // violet
 ]
-function spectrumCol(sessionNumber) {
-  const idx = ((sessionNumber || 1) - 1) % SPECTRUM.length
+function spectrumCol(sessionNumber, listIdx) {
+  // Use session_number if valid (>0), otherwise fall back to list position
+  const n = (sessionNumber && sessionNumber > 0) ? sessionNumber : (listIdx + 1)
+  const idx = (n - 1) % SPECTRUM.length
   return SPECTRUM[idx]
 }
 
@@ -103,9 +105,9 @@ function emptySession(num) {
 }
 
 // ── Session card (view mode) ───────────────────────────────────
-function SessionCard({ session, onEdit, onDelete, selected, onSelect, fontSize = 12 }) {
+function SessionCard({ session, listIdx = 0, onEdit, onDelete, selected, onSelect, fontSize = 12 }) {
   const [expanded, setExpanded] = useState(false)
-  const col = spectrumCol(session.session_number)
+  const col = spectrumCol(session.session_number, listIdx)
   const hasContent = SECTION_LABELS.some(({ k }) => session[k] && session[k].trim())
 
   return (
@@ -643,8 +645,8 @@ export default function SessionLog({ db, goTo, navSearch }) {
             {sessions.length === 0 ? 'No sessions yet. Add your first one!' : 'No sessions match this filter.'}
           </div>
         ) : (
-          filtered.map(s => (
-            <SessionCard key={s.id} session={s}
+          filtered.map((s, si) => (
+            <SessionCard key={s.id} session={s} listIdx={si}
               onEdit={s => { setEditing(s); setAdding(false) }}
               onDelete={deleteSession}
               selected={selected.has(s.id)}
