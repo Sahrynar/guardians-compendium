@@ -128,8 +128,8 @@ export const CATS = {
   questions:   { l: 'Questions',    i: '❓', c: 'var(--cq)' },
   canon:       { l: 'Canon',        i: '✦',  c: 'var(--ccn)' },
   spellings:   { l: 'Spellings',    i: '✎',  c: 'var(--csp)' },
-  notes:       { l: 'Notes',        i: '📝', c: 'var(--cw)' },
-  journal:     { l: 'Journal',      i: '📓', c: 'var(--cc)' },
+  notes:       { l: 'Journal',      i: '📓', c: 'var(--cw)' },
+  journal:     { l: 'Notes',        i: '📝', c: 'var(--cc)' },
   tools:       { l: 'Tools',        i: '🔧', c: 'var(--ctl)' },
   sessionlog:  { l: 'Session Log',  i: '📋', c: 'var(--ct)' },
 }

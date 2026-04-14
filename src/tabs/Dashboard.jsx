@@ -102,7 +102,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
   }
 
   return (
-    <div>
+    <div style={{ width: '100%', minWidth: 0 }}>
       {/* Stats — centred */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
         {[
@@ -146,10 +146,10 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
       </div>
 
       {/* ── Main body: left nav + 3 panels ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, fit-content(170px)) minmax(0,0.75fr) minmax(0,1fr) minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', width: '100%', minWidth: 0 }}>
 
         {/* Left nav — thin, rainbow list */}
-        <div>
+        <div style={{ flexShrink: 0, width: 160, minWidth: 0 }}>
           {TAB_LIST.map((k, i) => {
             const c = CATS[k]
             if (!c) return null
@@ -172,7 +172,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Recent */}
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
           {recent.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
@@ -185,7 +185,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Questions */}
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {panelHead('?', 'Questions', 'var(--cq)', (data.questions || []).filter(q => q.status === 'open').length)}
           {questions.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
@@ -198,7 +198,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Flags */}
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
           {flags.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
