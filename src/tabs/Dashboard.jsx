@@ -172,7 +172,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Recent */}
-        <div style={{ flex: '1 1 auto', minWidth: 140, overflow: 'hidden' }}>
+        <div style={{ flex: '1 1 0', minWidth: 120, maxWidth: 'calc(33.33% - 8px)', overflow: 'hidden' }}>
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
           {recent.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
@@ -185,7 +185,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Questions */}
-        <div style={{ flex: '2 1 auto', minWidth: 140, overflow: 'hidden' }}>
+        <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
           {panelHead('?', 'Questions', 'var(--cq)', (data.questions || []).filter(q => q.status === 'open').length)}
           {questions.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No open questions</div>
@@ -198,7 +198,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
         </div>
 
         {/* Flags */}
-        <div style={{ flex: '2 1 auto', minWidth: 140, overflow: 'hidden' }}>
+        <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', 'var(--cfl)', fl)}
           {flags.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>

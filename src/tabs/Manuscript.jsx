@@ -273,16 +273,6 @@ export default function Manuscript({ db, navSearch }) {
   // Sync top nav search
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
-  // Escape key: close lightbox
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape') {
-        if (coverLightbox) setCoverLightbox(null)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [coverLightbox])
   const [filterBook, setFilterBook] = useState('all')
   const [tocBook, setTocBook] = useState(null) // null = shelf, 'Book 1' etc = TOC view
   const [coverLightbox, setCoverLightbox] = useState(null) // cover image for lightbox
@@ -294,6 +284,15 @@ export default function Manuscript({ db, navSearch }) {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [addingChapter, setAddingChapter] = useState(false)
   const [newForm, setNewForm] = useState({ book: 'Book 1', chapter_num: '', title: '' })
+
+  // Escape key: close lightbox — must be after all useState declarations
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape' && coverLightbox) setCoverLightbox(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [coverLightbox])
 
   const filtered = chapters.filter(ch => {
     const mb = filterBook === 'all' || ch.book === filterBook

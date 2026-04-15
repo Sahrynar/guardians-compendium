@@ -534,8 +534,12 @@ export default function Inventory({ db }) {
         {/* View toggle */}
         <div style={{ display: 'flex', gap: 3 }}>
           {[['bubble','🫧 Bubbles'],['list','☰ List'],['outfit','👗 Outfits']].map(([v,l]) => (
-            <button key={v} className={`btn btn-sm btn-outline ${viewMode===v?'active':''}`}
-              style={{ fontSize: 10 }} onClick={() => setViewMode(v)}>{l}</button>
+            <button key={v} onClick={() => setViewMode(v)}
+              style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
+                fontWeight: viewMode === v ? 700 : 400,
+                background: viewMode === v ? 'var(--ci)' : 'none',
+                color: viewMode === v ? '#000' : 'var(--dim)',
+                border: `2px solid ${viewMode === v ? 'var(--ci)' : 'var(--brd)'}` }}>{l}</button>
           ))}
         </div>
 

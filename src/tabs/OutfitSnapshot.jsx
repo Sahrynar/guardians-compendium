@@ -141,7 +141,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
         <label>Character</label>
         <select value={selectedChar} onChange={e => { setSelectedChar(e.target.value); setSlots({}) }}>
           <option value="">— Pick character —</option>
-          {chars.map(c => <option key={c.id} value={c.id}>{c.display_name || c.name}</option>)}
+          {[...chars].sort((a,b) => (a.display_name||a.name||'').localeCompare(b.display_name||b.name||'')).map(c => <option key={c.id} value={c.id}>{c.display_name || c.name}</option>)}
         </select>
       </div>
 

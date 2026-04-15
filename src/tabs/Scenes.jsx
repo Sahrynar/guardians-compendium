@@ -274,7 +274,7 @@ export default function Scenes({ db, navSearch }) {
                         const prevScene = ci > 0 ? row[ci-1] : prevRowLast
 
                         return (
-                          <div key={scene.id} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                          <div key={scene.id} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, maxWidth: `calc(${(100/cpr).toFixed(1)}% - 3px)` }}>
                             {/* Arrow between scenes */}
                             {ci > 0 && (
                               <div style={{
@@ -339,14 +339,14 @@ export default function Scenes({ db, navSearch }) {
                           </div>
                         )
                       })}
+                      {/* Ghost cards — inside scene row div, row in scope */}
+                      {Array.from({ length: Math.max(0, cpr - row.length) }).map((_, gi) => (
+                        <div key={`ghost-${gi}`} style={{ flex: 1, minWidth: 0, maxWidth: `calc(${(100/cpr).toFixed(1)}% - 3px)`, visibility: 'hidden' }} />
+                      ))}
                     </div>
                   </div>
                 )
               })}
-              {/* Ghost cards to fill incomplete row */}
-              {Array.from({ length: cpr - row.length }).map((_, gi) => (
-                <div key={`ghost-${gi}`} style={{ flex: 1, minWidth: 0, maxWidth: `calc(${(100/cpr).toFixed(1)}% - 3px)`, visibility: 'hidden' }} />
-              ))}
             </div>
 
             {/* Gap between chapter groups */}

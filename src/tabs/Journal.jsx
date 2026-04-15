@@ -91,6 +91,15 @@ function StickyBoard({ captures, tags, onDelete, onEdit, onReorder }) {
   const [filterColor, setFilterColor] = useState('all')
   const [todayOnly, setTodayOnly] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [controlsOpen, setControlsOpen] = useState(new Set()) // cards with controls expanded
+  function toggleControls(id) {
+    setControlsOpen(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
   const [editText, setEditText] = useState('')
   const [dragSource, setDragSource] = useState(null)
   const [presetName, setPresetName] = useState('')
@@ -241,7 +250,7 @@ function StickyBoard({ captures, tags, onDelete, onEdit, onReorder }) {
           const tilt = stickyTilt(c.id)
           const isEditing = editId === c.id
           const size = c.size || 'normal'
-          const width = size === 'small' ? 140 : size === 'large' ? 260 : 190
+          const width = size === 'small' ? 140 : size === 'large' ? 260 : size === 'xl' ? 340 : 190
           // Use custom colors if set, otherwise use preset
           const bgColor = c.customBg || sc.bg
           const textColor = c.customText || sc.text
@@ -256,7 +265,7 @@ function StickyBoard({ captures, tags, onDelete, onEdit, onReorder }) {
               onDrop={() => handleDrop(c)}
               style={{
                 width,
-                minHeight: size === 'small' ? 100 : size === 'large' ? 180 : 140,
+                minHeight: size === 'small' ? 100 : size === 'large' ? 180 : size === 'xl' ? 240 : 140,
                 background: bgColor,
                 border: `1px solid ${c.customBorder || sc.border}`,
                 borderRadius: 4,
@@ -300,62 +309,61 @@ function StickyBoard({ captures, tags, onDelete, onEdit, onReorder }) {
                     {c.created ? new Date(c.created).toLocaleString() : ''}
                   </div>
 
-                  {/* Action row */}
-                  <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Color picker */}
-                    <select value={c.color || 'yellow'} onChange={e => onEdit({ ...c, color: e.target.value })}
-                      title="Preset color"
-                      style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 80 }}>
-                      {STICKY_COLORS.map(sc2 => <option key={sc2.id} value={sc2.id}>{sc2.label}</option>)}
-                    </select>
-
-                    {/* Custom bg color */}
-                    <input type="color" value={c.customBg || sc.bg} title="Custom background"
-                      onChange={e => onEdit({ ...c, customBg: e.target.value })}
-                      style={{ width: 18, height: 18, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer', background: 'none' }} />
-
-                    {/* Custom text color */}
-                    <input type="color" value={c.customText || sc.text} title="Custom text color"
-                      onChange={e => onEdit({ ...c, customText: e.target.value })}
-                      style={{ width: 18, height: 18, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer', background: 'none' }} />
-
-                    {/* Font size */}
-                    <select value={c.fontSize || '0.92em'} onChange={e => onEdit({ ...c, fontSize: e.target.value })}
-                      title="Font size"
-                      style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 58 }}>
-                      <option value="0.69em">XS</option>
-                      <option value="0.77em">S</option>
-                      <option value="0.92em">M</option>
-                      <option value="1.08em">L</option>
-                      <option value="1.23em">XL</option>
-                    </select>
-
-                    {/* Size */}
-                    <select value={c.size || 'normal'} onChange={e => onEdit({ ...c, size: e.target.value })}
-                      title="Card size"
-                      style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 60 }}>
-                      <option value="small">Small</option>
-                      <option value="normal">Normal</option>
-                      <option value="large">Large</option>
-                    </select>
-
-                    {/* Tag */}
-                    <select value={c.tag || 'unsorted'} onChange={e => onEdit({ ...c, tag: e.target.value })}
-                      title="Tag"
-                      style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, flex: 1, minWidth: 60 }}>
-                      {tags.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                    </select>
-                  </div>
-
-                  {/* Bottom actions */}
-                  <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                    <button onClick={() => startEdit(c)} title="Edit"
-                      style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: 'none', color: textColor, cursor: 'pointer' }}>✎</button>
+                  {/* Compact action row — always visible */}
+                  <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
+                    <button onClick={() => { toggleControls(c.id); if (editId === c.id) setEditId(null) }}
+                      title={controlsOpen.has(c.id) ? 'Hide controls' : 'Edit / style'}
+                      style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4,
+                        border: `1px solid ${sc.border}`,
+                        background: controlsOpen.has(c.id) ? sc.border : 'none',
+                        color: controlsOpen.has(c.id) ? '#fff' : textColor, cursor: 'pointer' }}>✎</button>
                     <button onClick={() => onEdit({ ...c, pinned: !c.pinned })} title={c.pinned ? 'Unpin' : 'Pin'}
                       style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: c.pinned ? sc.border : 'none', color: c.pinned ? '#fff' : textColor, cursor: 'pointer' }}>📌</button>
                     <button onClick={() => onDelete(c.id)} title="Delete"
                       style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(255,0,0,.3)', background: 'none', color: '#cc0000', cursor: 'pointer' }}>✕</button>
                   </div>
+
+                  {/* Expanded controls — shown when ✎ is active */}
+                  {controlsOpen.has(c.id) && (
+                    <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap', alignItems: 'center',
+                      padding: '6px', background: 'rgba(0,0,0,.08)', borderRadius: 4 }}>
+                      <select value={c.color || 'yellow'} onChange={e => onEdit({ ...c, color: e.target.value })}
+                        title="Preset color"
+                        style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 80 }}>
+                        {STICKY_COLORS.map(sc2 => <option key={sc2.id} value={sc2.id}>{sc2.label}</option>)}
+                      </select>
+                      <input type="color" value={c.customBg || sc.bg} title="Custom background"
+                        onChange={e => onEdit({ ...c, customBg: e.target.value })}
+                        style={{ width: 18, height: 18, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }} />
+                      <input type="color" value={c.customText || sc.text} title="Custom text color"
+                        onChange={e => onEdit({ ...c, customText: e.target.value })}
+                        style={{ width: 18, height: 18, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }} />
+                      <select value={c.fontSize || '0.92em'} onChange={e => onEdit({ ...c, fontSize: e.target.value })}
+                        title="Font size"
+                        style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 52 }}>
+                        <option value="0.69em">XS</option>
+                        <option value="0.77em">S</option>
+                        <option value="0.92em">M</option>
+                        <option value="1.08em">L</option>
+                        <option value="1.23em">XL</option>
+                      </select>
+                      <select value={c.size || 'normal'} onChange={e => onEdit({ ...c, size: e.target.value })}
+                        title="Card size"
+                        style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, maxWidth: 60 }}>
+                        <option value="small">Small</option>
+                        <option value="normal">Normal</option>
+                        <option value="large">Large</option>
+                        <option value="xl">XL</option>
+                      </select>
+                      <select value={c.tag || 'unsorted'} onChange={e => onEdit({ ...c, tag: e.target.value })}
+                        title="Tag"
+                        style={{ fontSize: '0.62em', padding: '1px 3px', background: 'rgba(255,255,255,.5)', border: `1px solid ${sc.border}`, borderRadius: 4, color: textColor, flex: 1, minWidth: 60 }}>
+                        {tags.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                      </select>
+                      <button onClick={() => startEdit(c)} title="Edit text"
+                        style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: 'none', color: textColor, cursor: 'pointer' }}>✎ text</button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -473,7 +481,7 @@ export default function Journal({ db, navSearch }) {
     <div>
       {/* Header */}
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: JOURNAL_COLOR }}>📓 Journal</div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: JOURNAL_COLOR }}>📝 Notes</div>
         {isMobile && (
           <div style={{ display: 'flex', gap: 4 }}>
             <button className="btn btn-sm" style={{ background: mobileZone === 'capture' ? JOURNAL_COLOR : 'none', color: mobileZone === 'capture' ? '#000' : 'var(--dim)', border: `1px solid ${JOURNAL_COLOR}` }} onClick={() => setMobileZone('capture')}>Capture</button>
