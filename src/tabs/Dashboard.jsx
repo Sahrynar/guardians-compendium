@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { CATS } from '../constants'
+import { CATS, TAB_RAINBOW } from '../constants'
 
 const TAB_LIST = [
   'wiki','glossary','characters','familytree','world','locations','map',

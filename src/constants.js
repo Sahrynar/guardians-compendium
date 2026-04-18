@@ -104,7 +104,7 @@ export const CATS = {
 export const RAINBOW = ['#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040','#ffaa33','#ffcc00','#aacc44','#44bb44','#00ccaa','#00ddff','#44aaff','#3388ff','#6655ff','#8844ff','#aa44ff','#cc44ff','#ff44cc']
 
 export const TAB_RAINBOW = {
-  dashboard:    '#ff69b4',
+  dashboard:    '#ffffff',
   wiki:         '#ff6b6b',
   glossary:     '#ff4433',
   characters:   '#ff5533',
