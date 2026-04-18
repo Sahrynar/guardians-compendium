@@ -69,7 +69,7 @@ function mergeImport(existing, incoming) {
   return result
 }
 
-export default function IOBar({ db, backup }) {
+export default function IOBar({ db, backup, onImport }) {
   const importRef = useRef()
   const asterRef = useRef()
   const [msg, setMsg] = useState('')
@@ -104,6 +104,12 @@ export default function IOBar({ db, backup }) {
   async function handleImport(e) {
     const file = e.target.files[0]
     if (!file) return
+    // If parent provides onImport (conflict resolution UI), use it
+    if (onImport) {
+      e.target.value = ''
+      await onImport(file)
+      return
+    }
     const reader = new FileReader()
     reader.onload = async ev => {
       try {
