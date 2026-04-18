@@ -340,18 +340,6 @@ export default function IOBar({ db, backup, onImport }) {
           </button>
         )}
 
-        <button
-          className="btn btn-sm btn-outline"
-          style={{ color: '#ff3355', borderColor: '#ff335544' }}
-          onClick={() => {
-            if (confirm('Clear all data? This cannot be undone.')) {
-              // selective clear modal — pending
-            }
-          }}
-        >
-          🗑 Clear
-        </button>
-
         <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 4 }}>
           <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
           {db.hasSupabase ? 'Cloud sync on' : 'Local only'}

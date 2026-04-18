@@ -83,8 +83,7 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
   return (
     <div style={{
       background: 'var(--card)',
-      border: `1.5px solid ${col}44`,
-      borderLeft: `3px solid ${col}`,
+      border: `1.5px solid ${col}`,
       borderRadius: 10,
       marginBottom: 10,
       overflow: 'hidden',
@@ -323,7 +322,7 @@ export default function SessionLog({ db }) {
   const [selected, setSelected] = useState(new Set())
   const [msg, setMsg] = useState('')
   const [search, setSearch] = useState('')
-  const [subTab, setSubTab] = useState('sessions') // 'sessions' | 'activity'
+  const [subTab, setSubTab] = useState('sessions')
 
   function flash(text, ms = 3000) { setMsg(text); setTimeout(() => setMsg(''), ms) }
 
@@ -409,27 +408,17 @@ export default function SessionLog({ db }) {
         📋 Session Log
       </div>
 
-      {/* Sub-tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
-        {[['sessions', '📋 Sessions'], ['activity', '⟲ Activity & Features']].map(([k, l]) => (
-          <button key={k} onClick={() => setSubTab(k)}
-            style={{ fontSize: 11, padding: '5px 14px', borderRadius: 8, cursor: 'pointer',
-              border: subTab === k ? `1.5px solid ${tabColor}` : '1px solid var(--brd)',
-              background: subTab === k ? `${tabColor}22` : 'none',
-              color: subTab === k ? tabColor : 'var(--dim)',
-              fontWeight: subTab === k ? 700 : 400 }}>
-            {l}
-          </button>
-        ))}
-      </div>
-
       {/* Flash */}
       {msg && (
         <div style={{ fontSize: 12, color: 'var(--sl)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>{msg}</div>
       )}
 
-      {subTab === 'sessions' && (
-        <>
+      {/* Side-by-side layout: Sessions (60%) | Activity (40%) */}
+      <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+
+        {/* Left panel — Sessions */}
+        <div style={{ flex: '0 0 60%', minWidth: 0, paddingRight: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📋 Sessions</div>
           {/* Toolbar */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sessions…"
@@ -474,15 +463,20 @@ export default function SessionLog({ db }) {
           <div style={{ fontSize: 11, color: 'var(--dim)', textAlign: 'center', marginTop: 12 }}>
             {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Cloud sync on' : 'Local only'}
           </div>
-        </>
-      )}
+        </div>
 
-      {subTab === 'activity' && (
-        <ActivityLog
-          activityLog={db?.activityLog || []}
-          undoActivityRecord={db?.undoActivityRecord}
-        />
-      )}
+        {/* Divider */}
+        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', flexShrink: 0 }} />
+
+        {/* Right panel — Activity & Features */}
+        <div style={{ flex: '0 0 40%', minWidth: 0, paddingLeft: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>⟲ Activity & Features</div>
+          <ActivityLog
+            activityLog={db?.activityLog || []}
+            undoActivityRecord={db?.undoActivityRecord}
+          />
+        </div>
+      </div>
     </div>
   )
 }
