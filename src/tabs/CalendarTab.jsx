@@ -234,7 +234,6 @@ export default function CalendarTab({ db }) {
   const chars = db.db.characters || []
 
   function toggleMonth(mi) {
-    if (expandAll) return // in expand-all mode, individual clicks do nothing
     setOpenMonths(prev => {
       const next = new Set(prev)
       if (next.has(mi)) next.delete(mi)
@@ -245,7 +244,7 @@ export default function CalendarTab({ db }) {
 
   function toggleExpandAll() {
     setExpandAll(v => !v)
-    setOpenMonths(new Set()) // clear individual selections when toggling all
+    setOpenMonths(new Set()) // clear individual selections when toggling expand-all off
   }
 
   function getEntriesForDay(mi, day) {

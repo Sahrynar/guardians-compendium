@@ -60,6 +60,8 @@ export default function App() {
   const [headerImg, setHeaderImg] = useState('')
   const [quickCapOpen, setQuickCapOpen] = useState(false)
   const [quickCapText, setQuickCapText] = useState('')
+  const [conflictQueue, setConflictQueue] = useState([])
+  const [importSummary, setImportSummary] = useState(null)
   const tabBarRef = useRef(null)
   const headerImgRef = useRef(null)
   const quickCapRef = useRef(null)
@@ -191,6 +193,27 @@ export default function App() {
     })
     setQuickCapText('')
     setQuickCapOpen(false)
+  }
+
+  const handleImportWithConflicts = useCallback(async (file) => {
+    try {
+      const result = await db.importJSON(file)
+      if (result.conflicts && result.conflicts.length > 0) {
+        setConflictQueue(result.conflicts)
+        setImportSummary({ added: result.added, resolved: 0, total: result.conflicts.length })
+      } else {
+        setImportSummary({ added: result.added, resolved: 0, total: 0, done: true })
+      }
+    } catch (err) { setImportSummary({ error: err.message, done: true }) }
+  }, [db])
+
+  function resolveNext(choice) {
+    if (!conflictQueue.length) return
+    const [current, ...rest] = conflictQueue
+    db.resolveConflict(current.category, current.incoming, choice)
+    setImportSummary(prev => ({ ...prev, resolved: (prev?.resolved || 0) + 1 }))
+    if (rest.length === 0) { setConflictQueue([]); setImportSummary(prev => ({ ...prev, done: true })) }
+    else setConflictQueue(rest)
   }
 
   const clearCrossLink = useCallback(() => {}, [])
@@ -371,7 +394,104 @@ export default function App() {
         </div>
       )}
 
-      <IOBar db={db} backup={backup} />
+      <IOBar db={db} backup={backup} onImport={handleImportWithConflicts} />
+
+      {/* Floating undo indicator — 5 min window */}
+      {db.lastUndoable && (
+        <button onClick={() => db.undoAction(db.lastUndoable)}
+          style={{ position:'fixed', bottom:108, right:68, zIndex:122,
+            padding:'5px 12px', borderRadius:20,
+            background:'rgba(17,17,20,.95)', border:'1px solid #ffaa33',
+            color:'#ffaa33', fontSize:'0.77em', cursor:'pointer',
+            boxShadow:'0 2px 12px rgba(0,0,0,.5)' }}>
+          ⟲ Undo last
+        </button>
+      )}
+
+      {/* Toast notification — 12s */}
+      {db.toast && (
+        <div style={{ position:'fixed', bottom:108, left:'50%', transform:'translateX(-50%)',
+          background:'rgba(17,17,20,.97)', border:'1px solid var(--brd)', borderRadius:10,
+          padding:'10px 16px', display:'flex', alignItems:'center', gap:12,
+          zIndex:300, boxShadow:'0 4px 24px rgba(0,0,0,.6)', minWidth:260, maxWidth:420 }}>
+          <span style={{ fontSize:'0.85em', color:'var(--tx)', flex:1 }}>{db.toast.message}</span>
+          <button onClick={() => db.undoAction(db.toast)}
+            style={{ padding:'4px 12px', borderRadius:6, border:'1px solid #9d4edd',
+              background:'none', color:'#9d4edd', fontSize:'0.85em', cursor:'pointer', fontWeight:700, whiteSpace:'nowrap' }}>
+            ⟲ Undo
+          </button>
+          <button onClick={db.dismissToast}
+            style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize:'1.08em', padding:'0 2px' }}>
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Import conflict resolver */}
+      {conflictQueue.length > 0 && (
+        <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,.85)',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+          <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:480, width:'100%' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>⚠ Import Conflict</div>
+            <div style={{ fontSize:'0.77em', color:'var(--dim)', marginBottom:14 }}>
+              {conflictQueue.length} conflict{conflictQueue.length !== 1 ? 's' : ''} remaining
+              {importSummary && ` · ${importSummary.added} entries already added`}
+            </div>
+            <div style={{ fontSize:'0.85em', color:'var(--tx)', marginBottom:8 }}>
+              Category: <span style={{ color:'var(--cc)' }}>{conflictQueue[0].category}</span>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:14 }}>
+              <div style={{ background:'var(--card)', borderRadius:8, padding:10, border:'1px solid #ff444433' }}>
+                <div style={{ fontSize:'0.69em', color:'#ff8888', fontWeight:700, textTransform:'uppercase', marginBottom:6 }}>Existing</div>
+                {Object.entries(conflictQueue[0].existing || {}).slice(0,8).map(([k,v]) => (
+                  <div key={k} style={{ fontSize:'0.69em', marginBottom:2 }}>
+                    <span style={{ color:'var(--dim)' }}>{k}: </span>
+                    <span style={{ color:'var(--tx)' }}>{String(v||'').slice(0,60)}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background:'var(--card)', borderRadius:8, padding:10, border:'1px solid #44bb4433' }}>
+                <div style={{ fontSize:'0.69em', color:'#88ff88', fontWeight:700, textTransform:'uppercase', marginBottom:6 }}>Incoming</div>
+                {Object.entries(conflictQueue[0].incoming || {}).slice(0,8).map(([k,v]) => (
+                  <div key={k} style={{ fontSize:'0.69em', marginBottom:2 }}>
+                    <span style={{ color:'var(--dim)' }}>{k}: </span>
+                    <span style={{ color:'var(--tx)' }}>{String(v||'').slice(0,60)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+              <button onClick={() => resolveNext('keep_existing')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #ff888844', background:'none', color:'#ff8888', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep existing — ignore incoming</button>
+              <button onClick={() => resolveNext('use_incoming')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #88ff8844', background:'none', color:'#88ff88', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Use incoming — replace existing</button>
+              <button onClick={() => resolveNext('keep_both')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid var(--brd)', background:'none', color:'var(--dim)', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep both — save as new entry</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import summary */}
+      {importSummary?.done && conflictQueue.length === 0 && (
+        <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,.7)',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+          <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:360, width:'100%', textAlign:'center' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:importSummary.error?'#ff4444':'#44bb44', marginBottom:10 }}>
+              {importSummary.error ? '✗ Import Failed' : '✓ Import Complete'}
+            </div>
+            {importSummary.error
+              ? <p style={{ fontSize:'0.85em', color:'var(--dim)', marginBottom:14 }}>{importSummary.error}</p>
+              : <div style={{ fontSize:'0.85em', color:'var(--dim)', marginBottom:14, lineHeight:1.7 }}>
+                  <div>{importSummary.added} new entr{importSummary.added!==1?'ies':'y'} added</div>
+                  {importSummary.total > 0 && <div>{importSummary.resolved} conflict{importSummary.resolved!==1?'s':''} resolved</div>}
+                  <div style={{ marginTop:6, fontSize:'0.77em', color:'var(--mut)' }}>All actions logged in Activity Log</div>
+                </div>
+            }
+            <button onClick={() => setImportSummary(null)}
+              style={{ padding:'7px 22px', borderRadius:7, background:'var(--cc)', border:'none', color:'#000', fontWeight:700, cursor:'pointer', fontSize:'0.85em' }}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

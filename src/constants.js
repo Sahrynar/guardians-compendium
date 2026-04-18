@@ -103,7 +103,32 @@ export const CATS = {
 
 export const RAINBOW = ['#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040','#ffaa33','#ffcc00','#aacc44','#44bb44','#00ccaa','#00ddff','#44aaff','#3388ff','#6655ff','#8844ff','#aa44ff','#cc44ff','#ff44cc']
 
-export const TAB_RAINBOW = RAINBOW
+export const TAB_RAINBOW = {
+  dashboard:    '#ff69b4',
+  wiki:         '#ff6b6b',
+  glossary:     '#ff4433',
+  characters:   '#ff5533',
+  familytree:   '#ff7040',
+  world:        '#ffaa33',
+  locations:    '#ffcc00',
+  map:          '#aacc44',
+  manuscript:   '#44bb44',
+  scenes:       '#00ccaa',
+  timeline:     '#00ddff',
+  eras:         '#44aaff',
+  calendar:     '#44aaff',
+  inventory:    '#3388ff',
+  wardrobe:     '#6655ff',
+  items:        '#8844ff',
+  flags:        '#aa44ff',
+  questions:    '#cc44ff',
+  canon:        '#ff44cc',
+  spellings:    '#ff69b4',
+  notes:        '#ff6b6b',
+  journal:      '#ff4433',
+  tools:        '#ff5533',
+  sessionlog:   '#ff44cc',
+}
 
 // ── CSS variable map — kept for backward compatibility ─────────
 // Some older tab files reference these; they still work via globals.css

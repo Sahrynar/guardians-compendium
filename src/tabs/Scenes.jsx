@@ -87,9 +87,12 @@ export default function Scenes({ db, navSearch }) {
     const groups = [] // [{ book, chapter, chapterIdx, scenes: [...] }]
     let chIdx = 0
     let prevKey = null
+    let prevBook = null
 
     sorted.forEach(scene => {
       const key = `${scene.book || ''}:${scene.chapter || ''}`
+      // Reset chapter color index at the start of each book so Book 1/2/3 all start at Pink
+      if (scene.book !== prevBook) { chIdx = 0; prevBook = scene.book }
       if (key !== prevKey) {
         groups.push({ book: scene.book, chapter: scene.chapter, chapterIdx: chIdx, scenes: [] })
         chIdx++

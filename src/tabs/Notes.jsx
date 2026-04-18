@@ -122,7 +122,7 @@ export default function Notes({ db, navSearch }) {
           <div className="confirm-box">
             <p>Delete this note?</p>
             <button className="btn btn-outline btn-sm" onClick={() => setConfirmId(null)}>Cancel</button>{' '}
-            <button className="btn btn-danger btn-sm" onClick={() => { db.deleteEntry('notes', confirmId); setConfirmId(null) }}>Delete</button>
+            <button className="btn btn-danger btn-sm" onClick={() => { db.deleteEntry('notes', confirmId); setConfirmId(null); setViewNote(null) }}>Delete</button>
           </div>
         </div>
       )}
