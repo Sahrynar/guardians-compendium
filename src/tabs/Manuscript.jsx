@@ -12,16 +12,28 @@ const STATUS_COLORS = { Draft: '#6b7280', Revision: '#f59e0b', Polishing: '#8b5c
 
 // ── Light formatting helpers ──────────────────────────────────────
 function toHTML(text) {
-  // Convert markdown-lite formatting to HTML
-  return text
-    .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/_(.*?)_/g, '<em>$1</em>')
-    .replace(/^---$/gm, '<hr>')
-    .replace(/^\*\*\*$/gm, '<p style="text-align:center">* * *</p>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^/, '<p>').replace(/$/, '</p>')
+  if (!text) return ''
+  // Normalize line endings
+  let t = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  // Scene break *** on its own line
+  t = t.replace(/^[ \t]*\*{3}[ \t]*$/gm, '\n<p style="text-align:center;letter-spacing:.3em">* * *</p>\n')
+  // HR ---
+  t = t.replace(/^[ \t]*---[ \t]*$/gm, '<hr>')
+  // Inline formatting
+  t = t.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+  t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  t = t.replace(/\*(.*?)\*/g, '<em>$1</em>')
+  t = t.replace(/_(.*?)_/g, '<em>$1</em>')
+  // Split into paragraphs on blank lines (1 or more)
+  const paras = t.split(/\n{2,}/)
+  return paras.map(p => {
+    const trimmed = p.trim()
+    if (!trimmed) return ''
+    // Already an HTML block (scene break, hr)
+    if (trimmed.startsWith('<')) return trimmed
+    // Single newlines within a paragraph become line breaks
+    return '<p>' + trimmed.replace(/\n/g, '<br>') + '</p>'
+  }).filter(Boolean).join('\n')
 }
 
 function toSubstack(text) {
@@ -352,9 +364,9 @@ export default function Manuscript({ db, navSearch }) {
           const cover = meta.cover || ''
           const accent = meta.accent || '#aacc00'
           return (
-            <div key={book} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 150 }}>
+            <div key={book} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 200 }}>
               <div style={{
-                width: 150, height: 220, borderRadius: '4px 8px 8px 4px', overflow: 'hidden',
+                width: 200, height: 300, borderRadius: '4px 10px 10px 4px', overflow: 'hidden',
                 border: `3px solid ${accent}`, background: cover ? 'transparent' : accent + '22',
                 boxShadow: '4px 6px 18px rgba(0,0,0,.55)', cursor: 'pointer',
               }} onClick={() => {
@@ -409,12 +421,12 @@ export default function Manuscript({ db, navSearch }) {
                 </div>
               )}
               <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.85em', color: accent, fontWeight: 700 }}>{book}</div>
-                <div style={{ fontSize: '0.77em', color: 'var(--dim)' }}>{chs.length} ch · {words.toLocaleString()} w</div>
-                <div style={{ display: 'flex', gap: 2, marginTop: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {STATUSES.map(s => { const n = chs.filter(c => c.status === s).length; if (!n) return null
-                    return <span key={s} style={{ fontSize: '0.62em', padding: '1px 4px', borderRadius: 3,
-                      background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{s} {n}</span>
+                <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: accent, fontWeight: 700 }}>{book}</div>
+                <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{chs.length} chapters · {words.toLocaleString()} words</div>
+                <div style={{ display: 'flex', gap: 2, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {STATUSES.map(s => { const n = chs.filter(ch2 => ch2.status === s).length; if (!n) return null
+                    return <span key={s} style={{ fontSize: '0.62em', padding: '1px 5px', borderRadius: 3,
+                      background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{n} {s}</span>
                   })}
                 </div>
               </div>
@@ -480,7 +492,7 @@ export default function Manuscript({ db, navSearch }) {
       {tocBook && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--brd)' }}>
-            <button onClick={() => { setTocBook(null); setFilterBook('all') }}
+            <button onClick={() => { setTocBook(null); setFilterBook('all'); setCoverLightbox(null) }}
               style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 6,
                 background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>
               ← Back to Shelf
@@ -506,7 +518,7 @@ export default function Manuscript({ db, navSearch }) {
         </div>
       )}
 
-      {BOOKS.filter(b => tocBook ? b === tocBook : (filterBook === 'all' || b === filterBook)).map(book => {
+      {tocBook && BOOKS.filter(b => b === tocBook).map(book => {
         const bookChapters = filtered.filter(ch => ch.book === book)
         if (!bookChapters.length) return null
         return (
@@ -534,6 +546,14 @@ export default function Manuscript({ db, navSearch }) {
                     <div style={{ fontSize: '0.92em', fontWeight: 600, color: 'var(--tx)' }}>
                       {ch.title || <span style={{ color: 'var(--mut)', fontStyle: 'italic' }}>Untitled</span>}
                     </div>
+                    {MS_SIZE_DETAIL[colSize] > 0 && ch.text && (
+                      <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginTop: 3,
+                        fontStyle: 'italic', lineHeight: 1.4,
+                        display: '-webkit-box', WebkitLineClamp: colSize === 'L' ? 3 : colSize === 'XL' ? 6 : 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {ch.text.slice(0, MS_SIZE_DETAIL[colSize])}…
+                      </div>
+                    )}
                     {detectedCharsInCh.length > 0 && (
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
                         {detectedCharsInCh.slice(0, 8).map(c => (
@@ -577,20 +597,24 @@ export default function Manuscript({ db, navSearch }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
         }} onClick={() => {
-          // Close lightbox and enter TOC for this book
-          const book = coverLightbox.book
+          // Click outside image = back to shelf
           setCoverLightbox(null)
-          setTocBook(book)
-          setFilterBook(book)
         }}>
           <div style={{ position: 'relative', maxWidth: '40vw', maxHeight: '80vh' }}>
             <img src={coverLightbox.cover} alt={coverLightbox.book}
               style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain',
                 borderRadius: 8, boxShadow: '0 8px 48px rgba(0,0,0,.8)',
-                border: '2px solid rgba(255,255,255,.15)' }} />
+                border: '2px solid rgba(255,255,255,.15)', cursor: 'pointer' }}
+              onClick={e => {
+                e.stopPropagation()
+                const book = coverLightbox.book
+                setCoverLightbox(null)
+                setTocBook(book)
+                setFilterBook(book)
+              }} />
             <div style={{ position: 'absolute', bottom: -40, left: 0, right: 0,
               textAlign: 'center', color: 'rgba(255,255,255,.5)', fontSize: '0.85em' }}>
-              Click to open · Esc to close
+              Click image to open book · Click outside or ✕ to close
             </div>
             <button onClick={e => { e.stopPropagation(); setCoverLightbox(null) }}
               style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28,

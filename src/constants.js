@@ -104,30 +104,30 @@ export const CATS = {
 export const RAINBOW = ['#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040','#ffaa33','#ffcc00','#aacc44','#44bb44','#00ccaa','#00ddff','#44aaff','#3388ff','#6655ff','#8844ff','#aa44ff','#cc44ff','#ff44cc']
 
 export const TAB_RAINBOW = {
-  dashboard:    '#ffffff',
-  wiki:         '#ff6b6b',
-  glossary:     '#ff4433',
-  characters:   '#ff5533',
-  familytree:   '#ff7040',
-  world:        '#ffaa33',
-  locations:    '#ffcc00',
-  map:          '#aacc44',
-  manuscript:   '#44bb44',
-  scenes:       '#00ccaa',
-  timeline:     '#00ddff',
-  eras:         '#44aaff',
-  calendar:     '#44aaff',
-  inventory:    '#3388ff',
-  wardrobe:     '#6655ff',
-  items:        '#8844ff',
-  flags:        '#aa44ff',
-  questions:    '#cc44ff',
-  canon:        '#ff44cc',
-  spellings:    '#ff69b4',
-  notes:        '#ff6b6b',
-  journal:      '#ff4433',
-  tools:        '#ff5533',
-  sessionlog:   '#ff44cc',
+  dashboard:     '#ffffff',  // white — neutral
+  wiki:          '#ff69b4',  // RAINBOW[0] Pink
+  glossary:      '#ff6b6b',  // RAINBOW[1] Coral
+  characters:    '#ff4433',  // RAINBOW[2] Red
+  familytree:    '#ff5533',  // RAINBOW[3] Red-Orange
+  world:         '#ff7040',  // RAINBOW[4] Orange
+  locations:     '#ffaa33',  // RAINBOW[5] Amber
+  map:           '#ffcc00',  // RAINBOW[6] Yellow
+  manuscript:    '#aacc44',  // RAINBOW[7] Yellow-Green
+  scenes:        '#44bb44',  // RAINBOW[8] Green
+  timeline:      '#00ccaa',  // RAINBOW[9] Teal
+  eras:          '#00ddff',  // RAINBOW[10] Cyan
+  calendar:      '#44aaff',  // RAINBOW[11] Sky Blue
+  inventory:     '#3388ff',  // RAINBOW[12] Blue
+  wardrobe:      '#6655ff',  // RAINBOW[13] Indigo
+  items:         '#8844ff',  // RAINBOW[14] Violet
+  flags:         '#aa44ff',  // RAINBOW[15] Purple
+  questions:     '#cc44ff',  // RAINBOW[16] Magenta
+  canon:         '#ff44cc',  // RAINBOW[17] Hot Pink
+  spellings:     '#ff69b4',  // RAINBOW[0] cycles back to Pink
+  notes:         '#ff6b6b',  // RAINBOW[1] Coral
+  journal:       '#ff4433',  // RAINBOW[2] Red
+  tools:         '#ff5533',  // RAINBOW[3] Red-Orange
+  sessionlog:    '#ff7040',  // RAINBOW[4] Orange
 }
 
 // ── CSS variable map — kept for backward compatibility ─────────
