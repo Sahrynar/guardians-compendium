@@ -12,4 +12,13 @@ create table if not exists settings (
   value jsonb
 );
 
+create table if not exists feature_registry (
+  id text primary key,
+  name text not null,
+  tab text not null,
+  session integer not null,
+  status text not null default 'active',
+  created_at timestamptz default now()
+);
+
 create index if not exists entries_category_idx on entries(category);
