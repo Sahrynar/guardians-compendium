@@ -15,7 +15,7 @@ const RAINBOW = [
 ]
 const rc = (i) => RAINBOW[i % RAINBOW.length]
 
-export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
+export default function Dashboard({ db, goTo, crossLink, navSearch, setNavSearch }) {
   const { db: data } = db
   const [headerImg, setHeaderImg] = useState(() => {
     try { return db.settings?.dashboard_header_image || '' } catch { return '' }
@@ -149,7 +149,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
       <div style={{ display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', width: '100%', minWidth: 0 }}>
 
         {/* Left nav — thin, rainbow list */}
-        <div style={{ flexShrink: 0, width: 160, minWidth: 0 }}>
+        <div style={{ flexShrink: 0, width: 160, minWidth: 0, borderRight: '2px solid var(--brd)', paddingRight: 10, marginRight: 2 }}>
           {TAB_LIST.map((k, i) => {
             const c = CATS[k]
             if (!c) return null
@@ -179,7 +179,7 @@ export default function Dashboard({ db, goTo, navSearch, setNavSearch }) {
             : recent.slice(0, 14).map((r, i) => panelRow(
                 { ...r, detail: null },
                 i, TAB_RAINBOW[r.cat] || 'var(--cc)',
-                () => goTo(r.cat)
+                () => crossLink(r.cat, r.id)
               ))
           }
         </div>
