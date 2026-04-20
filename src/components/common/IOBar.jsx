@@ -139,20 +139,6 @@ export default function IOBar({ db, backup, onImport }) {
           added += Math.max(0, newLen - exLen)
         })
 
-        // session_log goes to its own Supabase table, matched by session_number
-        if (incoming.session_log && Array.isArray(incoming.session_log)) {
-          for (const session of incoming.session_log) {
-            if (!session.id) continue
-            if (hasSupabase) {
-              // Upsert by session_number if it exists, otherwise by id
-              await supabase.from('session_log').upsert(session, {
-                onConflict: session.session_number != null ? 'session_number' : 'id'
-              })
-            }
-            added++
-          }
-        }
-
         // Write merged data back via upsert for each category
         const upsertPromises = []
         Object.keys(merged).forEach(k => {
