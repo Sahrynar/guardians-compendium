@@ -25,6 +25,42 @@ const SECTION_LABELS = [
   { k: 'notes',      l: 'Notes' },
 ]
 
+const FEATURE_TAB_OPTIONS = [
+  'dashboard','wiki','glossary','characters','familytree','world','locations','map',
+  'manuscript','scenes','timeline','eras','calendar',
+  'inventory','wardrobe','items','flags','questions','canon','spellings',
+  'notes','journal','tools','sessionlog',
+]
+
+const FEATURE_REGISTRY_SEED = [
+  { name: 'Wiki', tab: 'wiki', session: 1, status: 'active' },
+  { name: 'Characters', tab: 'characters', session: 1, status: 'active' },
+  { name: 'Family Tree', tab: 'familytree', session: 1, status: 'active' },
+  { name: 'Scenes', tab: 'scenes', session: 1, status: 'active' },
+  { name: 'Timeline', tab: 'timeline', session: 1, status: 'active' },
+  { name: 'Calendar', tab: 'calendar', session: 1, status: 'active' },
+  { name: 'Flags', tab: 'flags', session: 1, status: 'active' },
+  { name: 'Questions', tab: 'questions', session: 1, status: 'active' },
+  { name: 'Canon', tab: 'canon', session: 1, status: 'active' },
+  { name: 'Notes', tab: 'notes', session: 1, status: 'active' },
+  { name: 'Journal', tab: 'journal', session: 1, status: 'active' },
+  { name: 'Session Log', tab: 'sessionlog', session: 1, status: 'active' },
+  { name: 'Manuscript', tab: 'manuscript', session: 1, status: 'active' },
+  { name: 'Activity Log', tab: 'sessionlog', session: 16, status: 'active' },
+  { name: 'Global Search', tab: 'dashboard', session: 20, status: 'active' },
+  { name: 'Inventory', tab: 'inventory', session: 8, status: 'active' },
+  { name: 'Wardrobe', tab: 'wardrobe', session: 8, status: 'active' },
+  { name: 'Items', tab: 'items', session: 8, status: 'active' },
+  { name: 'Locations', tab: 'locations', session: 1, status: 'active' },
+  { name: 'World', tab: 'world', session: 1, status: 'active' },
+  { name: 'Maps', tab: 'map', session: 1, status: 'active' },
+  { name: 'Spellings', tab: 'spellings', session: 1, status: 'active' },
+  { name: 'Glossary', tab: 'glossary', session: 1, status: 'active' },
+  { name: 'Undo / Activity Tracking', tab: 'sessionlog', session: 25, status: 'active' },
+  { name: 'Quick Capture', tab: 'dashboard', session: 14, status: 'active' },
+  { name: 'Partial Doomsday Export', tab: 'sessionlog', session: 25, status: 'active' },
+]
+
 // ── Supabase helpers ───────────────────────────────────────────
 async function sbLoadSessions() {
   if (!hasSupabase) return null
@@ -51,9 +87,29 @@ async function sbDeleteSession(id) {
   } catch (e) { console.warn('Session log delete failed:', e) }
 }
 
+async function sbLoadFeatureRegistry() {
+  if (!hasSupabase) return null
+  try {
+    const { data, error } = await supabase.from('feature_registry').select('*').order('created_at', { ascending: true })
+    if (error) { console.warn('Feature registry load failed:', error.message); return null }
+    return data || []
+  } catch (e) { console.warn('Feature registry load failed:', e); return null }
+}
+
+async function sbUpsertFeatureRegistry(entries) {
+  if (!hasSupabase || !entries?.length) return
+  try {
+    const { error } = await supabase.from('feature_registry').upsert(entries, { onConflict: 'id' })
+    if (error) console.warn('Feature registry upsert failed:', error.message)
+  } catch (e) { console.warn('Feature registry upsert failed:', e) }
+}
+
 const LS_KEY = 'gcomp_session_log'
 function lsLoad() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || [] } catch { return [] } }
 function lsSave(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch {} }
+const FR_LS_KEY = 'gcomp_feature_registry'
+function lsLoadFeatureRegistry() { try { return JSON.parse(localStorage.getItem(FR_LS_KEY)) || [] } catch { return [] } }
+function lsSaveFeatureRegistry(entries) { try { localStorage.setItem(FR_LS_KEY, JSON.stringify(entries)) } catch {} }
 
 function sessionToMd(s) {
   const lines = [`# Session ${s.session_number} · ${s.date}`]
@@ -314,11 +370,14 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
 }
 
 // ── Main SessionLog tab ────────────────────────────────────────
-export default function SessionLog({ db }) {
+export default function SessionLog({ db, goTo }) {
   const [sessions, setSessions] = useState([])
+  const [featureRegistry, setFeatureRegistry] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [addingFeature, setAddingFeature] = useState(false)
+  const [featureForm, setFeatureForm] = useState({ name: '', tab: 'dashboard', session: 1 })
   const [selected, setSelected] = useState(new Set())
   const [msg, setMsg] = useState('')
   const [search, setSearch] = useState('')
@@ -335,6 +394,18 @@ export default function SessionLog({ db }) {
         const remote = await sbLoadSessions()
         if (remote) { setSessions(remote); lsSave(remote) }
       }
+      const localFeatures = lsLoadFeatureRegistry()
+      let loadedFeatures = localFeatures
+      if (hasSupabase) {
+        const remoteFeatures = await sbLoadFeatureRegistry()
+        if (remoteFeatures) loadedFeatures = remoteFeatures
+      }
+      if (!loadedFeatures.length) {
+        loadedFeatures = FEATURE_REGISTRY_SEED.map(entry => ({ ...entry, id: uid() }))
+        await sbUpsertFeatureRegistry(loadedFeatures)
+      }
+      setFeatureRegistry(loadedFeatures)
+      lsSaveFeatureRegistry(loadedFeatures)
       setLoading(false)
     }
     load()
@@ -385,6 +456,36 @@ export default function SessionLog({ db }) {
     a.click(); flash(`Exported all ${sorted.length} sessions.`)
   }
 
+  async function saveFeatureRegistry(nextEntries) {
+    setFeatureRegistry(nextEntries)
+    lsSaveFeatureRegistry(nextEntries)
+    await sbUpsertFeatureRegistry(nextEntries)
+  }
+
+  async function toggleFeatureArchive(id) {
+    const next = featureRegistry.map(entry => {
+      if (entry.id !== id) return entry
+      return { ...entry, status: entry.status === 'archived' ? 'active' : 'archived' }
+    })
+    await saveFeatureRegistry(next)
+  }
+
+  async function addFeature() {
+    const name = featureForm.name.trim()
+    if (!name) return
+    const sessionNum = Number(featureForm.session)
+    const next = [...featureRegistry, {
+      id: uid(),
+      name,
+      tab: featureForm.tab,
+      session: Number.isFinite(sessionNum) ? sessionNum : 1,
+      status: 'active',
+    }]
+    await saveFeatureRegistry(next)
+    setFeatureForm({ name: '', tab: 'dashboard', session: 1 })
+    setAddingFeature(false)
+  }
+
   const filtered = sessions.filter(s => {
     const q = search.toLowerCase()
     return !q || [s.topics, s.decisions, s.built, s.notes, s.questions, s.flags, s.todo, s.completed]
@@ -413,7 +514,7 @@ export default function SessionLog({ db }) {
         <div style={{ fontSize: 12, color: 'var(--sl)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>{msg}</div>
       )}
 
-      {/* Side-by-side layout: Sessions (60%) | Activity (40%) */}
+      {/* Side-by-side layout: Sessions (60%) | Right panel (40%) */}
       <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
 
         {/* Left panel — Sessions */}
@@ -468,13 +569,103 @@ export default function SessionLog({ db }) {
         {/* Divider */}
         <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', flexShrink: 0 }} />
 
-        {/* Right panel — Activity & Features */}
-        <div style={{ flex: '0 0 40%', minWidth: 0, paddingLeft: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>⟲ Activity & Features</div>
-          <ActivityLog
-            activityLog={db?.activityLog || []}
-            undoActivityRecord={db?.undoActivityRecord}
-          />
+        {/* Right panel — Features + Activity Log */}
+        <div style={{ flex: '0 0 40%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
+          <div style={{ flex: '0 0 55%', minHeight: 260, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>⚙ Features</div>
+              <button
+                onClick={() => setAddingFeature(v => !v)}
+                style={{ fontSize: 10, padding: '3px 9px', borderRadius: 8, border: `1px solid ${tabColor}66`, background: 'none', color: tabColor, cursor: 'pointer', fontWeight: 700 }}
+              >
+                + Add Feature
+              </button>
+            </div>
+
+            {addingFeature && (
+              <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr auto', gap: 6, alignItems: 'center' }}>
+                  <input
+                    value={featureForm.name}
+                    onChange={e => setFeatureForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Feature name"
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }}
+                  />
+                  <select
+                    value={featureForm.tab}
+                    onChange={e => setFeatureForm(f => ({ ...f, tab: e.target.value }))}
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11 }}
+                  >
+                    {FEATURE_TAB_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    value={featureForm.session}
+                    onChange={e => setFeatureForm(f => ({ ...f, session: e.target.value }))}
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }}
+                  />
+                  <button
+                    onClick={addFeature}
+                    style={{ fontSize: 10, padding: '5px 9px', borderRadius: 6, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ overflowY: 'auto', paddingRight: 2 }}>
+              {featureRegistry.map(entry => {
+                const archived = entry.status === 'archived'
+                return (
+                  <div key={entry.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 11,
+                    padding: '5px 8px',
+                    marginBottom: 4,
+                    borderRadius: 6,
+                    background: 'var(--card)',
+                    border: '1px solid var(--brd)',
+                    opacity: archived ? 0.55 : 1,
+                    textDecoration: archived ? 'line-through' : 'none',
+                  }}>
+                    <span style={{ flex: 1 }}>
+                      {entry.name}
+                      <span style={{ marginLeft: 6, fontSize: 9, color: 'var(--dim)' }}>
+                        ({entry.tab} · S{entry.session})
+                      </span>
+                    </span>
+                    <button
+                      onClick={() => goTo?.(entry.tab)}
+                      title={`Go to ${entry.tab}`}
+                      style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, border: `1px solid ${tabColor}55`, background: 'none', color: tabColor, cursor: 'pointer' }}
+                    >
+                      ↗
+                    </button>
+                    <button
+                      onClick={() => toggleFeatureArchive(entry.id)}
+                      title={archived ? 'Restore to active' : 'Archive feature'}
+                      style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}
+                    >
+                      📦
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: 'var(--brd)', margin: '10px 0' }} />
+
+          <div style={{ flex: '0 0 45%', minHeight: 220, overflowY: 'auto' }}>
+            <ActivityLog
+              activityLog={db?.activityLog || []}
+              undoActivityRecord={db?.undoActivityRecord}
+            />
+          </div>
         </div>
       </div>
     </div>
