@@ -308,9 +308,9 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
       onTouchStart={editMode ? onTouchStart : undefined}
     >
       {node.image && <img src={node.image} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', float: 'right', marginLeft: 6, marginBottom: 3, border: `2px solid ${col}` }} />}
-      <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>{node.name}</div>
-      {node.birth_year && <div style={{ fontSize: 9, color: 'var(--dim)' }}>{node.birth_year}{node.death_year ? ` \u2013 ${node.death_year}` : ''}</div>}
-      {node.title && <div style={{ fontSize: 9, color: 'var(--mut)', fontStyle: 'italic' }}>{node.title}</div>}
+      <div style={{ fontSize: '0.85em', fontWeight: 700, fontFamily: "'Cinzel', serif", color: col, lineHeight: 1.3, marginBottom: 1 }}>{node.name}</div>
+      {node.birth_year && <div style={{ fontSize: '0.69em', color: 'var(--dim)' }}>{node.birth_year}{node.death_year ? ` \u2013 ${node.death_year}` : ''}</div>}
+      {node.title && <div style={{ fontSize: '0.69em', color: 'var(--mut)', fontStyle: 'italic' }}>{node.title}</div>}
       {selected && editMode && (
         <div style={{ display: 'flex', gap: 3, marginTop: 5, flexWrap: 'wrap' }}>
           <button style={bs(col)} onClick={e => { e.stopPropagation(); onEdit(node) }}>✎ Edit</button>
@@ -321,7 +321,7 @@ function TreeNode({ node, selected, editMode, allNodeColors, onClick, onEdit, on
     </div>
   )
 }
-const bs = col => ({ background: 'none', border: `1px solid ${col}44`, color: col, fontSize: 9, cursor: 'pointer', padding: '1px 5px', borderRadius: 3 })
+const bs = col => ({ background: 'none', border: `1px solid ${col}44`, color: col, fontSize: '0.69em', cursor: 'pointer', padding: '1px 5px', borderRadius: 3 })
 
 // ── Main component ──────────────────────────────────────────────
 
@@ -531,12 +531,12 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
         {/* Zoom controls */}
         <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4, alignItems:'center', background:'rgba(0,0,0,.5)', borderRadius:8, padding:'4px 8px' }}>
           <button onClick={() => setZoom(z => Math.max(0.1, z - 0.15))}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize:16 }}>−</button>
-          <span style={{ fontSize:10, color:'var(--cca)', minWidth:40, textAlign:'center', fontWeight:700 }}>{Math.round(zoom*100)}%</span>
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize: '1.23em' }}>−</button>
+          <span style={{ fontSize: '0.77em', color:'var(--cca)', minWidth:40, textAlign:'center', fontWeight:700 }}>{Math.round(zoom*100)}%</span>
           <button onClick={() => setZoom(z => Math.min(4, z + 0.15))}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize:16 }}>+</button>
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--tx)', cursor:'pointer', fontSize: '1.23em' }}>+</button>
           <button onClick={() => { setZoom(1); setPan({x:0,y:0}) }}
-            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--mut)', cursor:'pointer', fontSize:12 }}>⊙</button>
+            style={{ width:28, height:28, borderRadius:6, background:'rgba(255,255,255,.1)', border:'1px solid var(--brd)', color:'var(--mut)', cursor:'pointer', fontSize: '0.92em' }}>⊙</button>
         </div>
       </div>
 
@@ -545,20 +545,20 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
         <div style={{ marginTop: 8, padding: '10px 14px', background: 'var(--card)',
           border: '1px solid var(--brd)', borderRadius: 8 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, color: allNodeColors[sel.node_type]||'var(--cc)' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1em', color: allNodeColors[sel.node_type]||'var(--cc)' }}>
               {sel.name}
             </div>
             <button onClick={() => setSelected(null)}
-              style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize:16 }}>✕</button>
+              style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize: '1.23em' }}>✕</button>
           </div>
-          {sel.title && <div style={{ fontSize:10, color:'var(--mut)', marginBottom:6 }}>{sel.title}</div>}
+          {sel.title && <div style={{ fontSize: '0.77em', color:'var(--mut)', marginBottom:6 }}>{sel.title}</div>}
           {selEdges.length > 0 && (
             <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
               {selEdges.map((e, i) => {
                 const other = nodes.find(n => n.id === (e.from === sel.id ? e.to : e.from))
                 const c = allEdgeColors[e.type] || '#666688'
                 return (
-                  <span key={i} style={{ fontSize:10, padding:'2px 8px', borderRadius:10,
+                  <span key={i} style={{ fontSize: '0.77em', padding:'2px 8px', borderRadius:10,
                     background:`${c}22`, color:c, border:`1px solid ${c}44` }}>
                     {e.type}: {other?.name || '?'}
                   </span>
@@ -568,9 +568,9 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
           )}
           {editMode && (
             <div style={{ display:'flex', gap:6, marginTop:8 }}>
-              <button className="btn btn-sm btn-outline" style={{ fontSize:10 }}
+              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
                 onClick={() => setNodeModal(sel)}>✎ Edit</button>
-              <button className="btn btn-sm btn-outline" style={{ fontSize:10, color:'var(--cl)', borderColor:'var(--cl)' }}
+              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', color:'var(--cl)', borderColor:'var(--cl)' }}
                 onClick={() => setEdgeModal({ from: sel.id })}>+ Add Relation</button>
             </div>
           )}
@@ -765,11 +765,11 @@ export default function FamilyTree({ db }) {
     <div>
       {/* ── Toolbar ── */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: 'var(--cl)' }}>🌳 Family Tree</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cl)' }}>🌳 Family Tree</div>
         <div style={{ display:'flex', gap:3 }}>
           {[['🌳 Tree','tree'],['🕸 Web','web']].map(([l,v]) => (
             <button key={v} onClick={() => setViewMode(v)}
-              style={{ fontSize:10, padding:'3px 10px', borderRadius:10,
+              style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:10,
                 background: viewMode===v ? 'var(--cl)' : 'none',
                 color: viewMode===v ? '#000' : 'var(--dim)',
                 border: `1px solid ${viewMode===v ? 'var(--cl)' : 'var(--brd)'}`,
@@ -793,7 +793,7 @@ export default function FamilyTree({ db }) {
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
           <button style={bs('var(--dim)')} onClick={() => setZoom(z => Math.max(0.25, z - 0.15))}>−</button>
-          <span style={{ fontSize: 9, color: 'var(--cca)', minWidth: 32, textAlign: 'center' }}>{Math.round(zoom*100)}%</span>
+          <span style={{ fontSize: '0.69em', color: 'var(--cca)', minWidth: 32, textAlign: 'center' }}>{Math.round(zoom*100)}%</span>
           <button style={bs('var(--dim)')} onClick={() => setZoom(z => Math.min(3, z + 0.15))}>+</button>
           <button style={bs('var(--mut)')} onClick={() => { setZoom(1); setPan({ x:0, y:0 }) }} title="Reset view">⊙</button>
         </div>
@@ -803,26 +803,26 @@ export default function FamilyTree({ db }) {
       {/* ── BG controls ── */}
       {editMode && (
         <div className="tbar" style={{ paddingTop: 0, gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: '0.77em', color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 5 }}>
             BG: <input type="color" value={bgColor} onChange={e => { setBgColor(e.target.value); persist(null,null,e.target.value,undefined) }} style={{ width:26, height:20, padding:0, border:'1px solid var(--brd)', borderRadius:3, cursor:'pointer' }} />
           </span>
-          <label style={{ fontSize:10, color:'var(--dim)', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+          <label style={{ fontSize: '0.77em', color:'var(--dim)', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
             🖼 BG: <input ref={bgRef} type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setBgImage(ev.target.result);persist(null,null,null,ev.target.result)};r.readAsDataURL(f) }} />
             <span style={{ color:'var(--cc)', textDecoration:'underline' }}>Upload</span>
           </label>
-          {bgImage && <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544', fontSize:9 }} onClick={() => { setBgImage(null); persist(null,null,null,null) }}>Remove BG</button>}
-          <span style={{ fontSize:9, color:'var(--mut)' }}>Drag nodes to reposition · Scroll to zoom · Drag background to pan</span>
+          {bgImage && <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544', fontSize: '0.69em' }} onClick={() => { setBgImage(null); persist(null,null,null,null) }}>Remove BG</button>}
+          <span style={{ fontSize: '0.69em', color:'var(--mut)' }}>Drag nodes to reposition · Scroll to zoom · Drag background to pan</span>
         </div>
       )}
 
       {/* ── Unknown panel ── */}
       {showUnk && unknownEdges.length > 0 && (
         <div style={{ margin:'4px 0', padding:10, background:`${UNK_COL}11`, border:`1px solid ${UNK_COL}44`, borderRadius:6 }}>
-          <div style={{ fontSize:10, color:UNK_COL, fontWeight:700, marginBottom:6 }}>⚠ Unknown Relationships — click any to edit:</div>
+          <div style={{ fontSize: '0.77em', color:UNK_COL, fontWeight:700, marginBottom:6 }}>⚠ Unknown Relationships — click any to edit:</div>
           <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
             {unknownEdges.map(e => {
               const fn = nodes.find(n => n.id===e.from), tn = nodes.find(n => n.id===e.to)
-              return <button key={e.id} style={{ fontSize:9, padding:'2px 7px', borderRadius:4, background:'var(--card)', border:`1px solid ${UNK_COL}66`, color:UNK_COL, cursor:'pointer' }} onClick={() => { setEdgeModal(e); setShowUnk(false) }}>{fn?.name||'?'} ↔ {tn?.name||'?'}</button>
+              return <button key={e.id} style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:4, background:'var(--card)', border:`1px solid ${UNK_COL}66`, color:UNK_COL, cursor:'pointer' }} onClick={() => { setEdgeModal(e); setShowUnk(false) }}>{fn?.name||'?'} ↔ {tn?.name||'?'}</button>
             })}
           </div>
         </div>
@@ -833,7 +833,7 @@ export default function FamilyTree({ db }) {
         <div className="empty">
           <div className="empty-icon">🌳</div>
           <p>No family tree yet.</p>
-          <p style={{ fontSize:11, color:'var(--mut)', maxWidth:340, margin:'6px auto 14px' }}>
+          <p style={{ fontSize: '0.85em', color:'var(--mut)', maxWidth:340, margin:'6px auto 14px' }}>
             Click <strong>⟳ Sync Characters</strong> to auto-populate, or add people manually in Edit Mode.
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
@@ -860,7 +860,7 @@ export default function FamilyTree({ db }) {
           {syncToast && (
             <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', zIndex:50,
               background:'rgba(0,0,0,.85)', border:'1px solid var(--sl)', borderRadius:6,
-              padding:'5px 14px', fontSize:11, color:'var(--sl)', whiteSpace:'nowrap', pointerEvents:'none' }}>
+              padding:'5px 14px', fontSize: '0.85em', color:'var(--sl)', whiteSpace:'nowrap', pointerEvents:'none' }}>
               {syncToast}
             </div>
           )}
@@ -905,7 +905,7 @@ export default function FamilyTree({ db }) {
 
       {/* ── Legend ── */}
       {nodes.length > 0 && (
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap', padding:'6px 0', fontSize:9, color:'var(--dim)' }}>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', padding:'6px 0', fontSize: '0.69em', color:'var(--dim)' }}>
           {allEdgeTypes.map(t => {
             const c = allEdgeColors[t]||'#666688', isUnk = t==='Unknown', cnt = isUnk ? unknownEdges.length : 0
             return (
@@ -921,7 +921,7 @@ export default function FamilyTree({ db }) {
       )}
 
       {nodes.length > 0 && (
-        <div style={{ fontSize:9, color:'var(--mut)', paddingBottom:4 }}>
+        <div style={{ fontSize: '0.69em', color:'var(--mut)', paddingBottom:4 }}>
           {nodes.length} people · {edges.length} relationships
           {unknownEdges.length > 0 && <span style={{ color:UNK_COL, marginLeft:8, fontWeight:700 }}>· {unknownEdges.length} Unknown — click ⚠ to review</span>}
         </div>
@@ -940,7 +940,7 @@ export default function FamilyTree({ db }) {
           onAddEdgeType={(t,c) => saveCustom([...customEdgeTypes,t], undefined, {...customEdgeColors,[t]:c}, undefined)} />}
       </Modal>
       <Modal open={clearDlg} onClose={() => setClearDlg(false)} title="Clear Family Tree" color="#ff3355">
-        <p style={{ fontSize:12, color:'var(--dim)', marginBottom:16 }}>Remove all {nodes.length} people and {edges.length} relationships? Cannot be undone.</p>
+        <p style={{ fontSize: '0.92em', color:'var(--dim)', marginBottom:16 }}>Remove all {nodes.length} people and {edges.length} relationships? Cannot be undone.</p>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setClearDlg(false)}>Cancel</button>
           <button className="btn btn-primary" style={{ background:'#ff3355' }} onClick={clearTree}>Clear Tree</button>
@@ -950,7 +950,7 @@ export default function FamilyTree({ db }) {
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Person" color="#ff3355">
         {deleteConfirm && (
           <>
-            <p style={{ fontSize:12, color:'var(--dim)', marginBottom:16 }}>
+            <p style={{ fontSize: '0.92em', color:'var(--dim)', marginBottom:16 }}>
               Remove <strong style={{ color:'var(--tx)' }}>{deleteConfirm.name}</strong> from the tree?
               All their relationships will also be removed. This cannot be undone.
             </p>
@@ -1010,11 +1010,11 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
       <div className="field"><label>Portrait Image</label>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           {image && <img src={image} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',border:'1px solid var(--brd)'}} />}
-          <label style={{cursor:'pointer',fontSize:11,color:'var(--cc)',textDecoration:'underline'}}>
+          <label style={{cursor:'pointer',fontSize: '0.85em',color:'var(--cc)',textDecoration:'underline'}}>
             {image?'Change':'Upload photo'}
             <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setImage(ev.target.result);r.readAsDataURL(f)}} />
           </label>
-          {image && <button style={{background:'none',border:'none',color:'#ff3355',cursor:'pointer',fontSize:11}} onClick={()=>setImage(null)}>Remove</button>}
+          {image && <button style={{background:'none',border:'none',color:'#ff3355',cursor:'pointer',fontSize: '0.85em'}} onClick={()=>setImage(null)}>Remove</button>}
         </div>
       </div>
       <div className="field"><label>Notes</label><textarea value={form.notes} onChange={s('notes')} /></div>
@@ -1064,15 +1064,15 @@ function EdgeForm({ edge, nodes, onSave, onDelete, onCancel, edgeTypes, edgeColo
         {form.type==='__custom__' && (
           <div style={{display:'flex',gap:8,marginTop:4,alignItems:'center'}}>
             <input style={{flex:1}} value={customType} onChange={e=>setCustomType(e.target.value)} placeholder="e.g. Ix'Citlatl Member, The Rebels" />
-            <span style={{fontSize:9,color:'var(--dim)'}}>Color:</span>
+            <span style={{fontSize: '0.69em',color:'var(--dim)'}}>Color:</span>
             <input type="color" value={customColor} onChange={e=>setCustomColor(e.target.value)} style={{width:28,height:22,padding:0,border:'1px solid var(--brd)',borderRadius:3,cursor:'pointer'}} />
           </div>
         )}
-        {dirNote && <div style={{fontSize:9,color:'var(--cca)',marginTop:3}}>{dirNote}</div>}
+        {dirNote && <div style={{fontSize: '0.69em',color:'var(--cca)',marginTop:3}}>{dirNote}</div>}
       </div>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <div style={{width:24,height:3,background:previewCol,borderRadius:2}} />
-        <span style={{fontSize:9,color:previewCol}}>{form.type!=='__custom__'?form.type:customType||'Custom'}</span>
+        <span style={{fontSize: '0.69em',color:previewCol}}>{form.type!=='__custom__'?form.type:customType||'Custom'}</span>
       </div>
       <div className="field">
         <label>Custom Label <span style={{color:'var(--mut)',fontWeight:400}}>(optional — overrides type name on the line)</span></label>

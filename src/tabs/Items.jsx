@@ -42,14 +42,14 @@ function ItemTile({ item, onOpen, search }) {
           onError={e => e.target.style.display = 'none'} />
       )}
       {hasTransfers && (
-        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 9,
+        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: '0.69em',
           background: 'rgba(255,170,51,.2)', color: 'var(--sp)',
           border: '1px solid rgba(255,170,51,.3)', borderRadius: 4, padding: '1px 4px' }}>↔</span>
       )}
-      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
+      <div style={{ fontSize: '0.85em', fontWeight: 600, lineHeight: 1.3, color: 'var(--tx)', marginBottom: 2 }}
         dangerouslySetInnerHTML={{ __html: highlight(item.name || '', search) }} />
       {item.item_type && (
-        <div style={{ fontSize: 9, color: 'var(--ci)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+        <div style={{ fontSize: '0.69em', color: 'var(--ci)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
           {item.item_type}
         </div>
       )}
@@ -98,10 +98,10 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
             style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${bubbleColor}` }}
             onError={e => e.target.style.display = 'none'} />
         )}
-        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: 12, fontWeight: 700, color: bubbleColor }}>
+        <div style={{ flex: 1, fontFamily: "'Cinzel',serif", fontSize: '0.92em', fontWeight: 700, color: bubbleColor }}>
           {name}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
         {/* Color picker button */}
         <div style={{ position: 'relative' }}>
           <button
@@ -115,7 +115,7 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
               background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 10,
               padding: 10, width: 160, boxShadow: '0 4px 20px rgba(0,0,0,.5)' }}
               onClick={e => e.stopPropagation()}>
-              <div style={{ fontSize: 9, color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Bubble Colour</div>
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Bubble Colour</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 8 }}>
                 {PRESET_COLORS.map(c => (
                   <button key={c} onClick={() => { onColorChange(c); setShowPicker(false) }}
@@ -128,7 +128,7 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
                 onChange={e => onColorChange(e.target.value)}
                 style={{ width: '100%', height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', background: 'none' }} />
               <button onClick={() => setShowPicker(false)}
-                style={{ marginTop: 6, width: '100%', fontSize: 10, padding: '3px 0',
+                style={{ marginTop: 6, width: '100%', fontSize: '0.77em', padding: '3px 0',
                   background: 'none', border: '1px solid var(--brd)', borderRadius: 6,
                   color: 'var(--mut)', cursor: 'pointer' }}>Done</button>
             </div>
@@ -138,7 +138,7 @@ function CharBubble({ char, items, color, onColorChange, onDragStart, onDragOver
 
       {/* Items grid inside bubble */}
       {items.length === 0 ? (
-        <div style={{ fontSize: 10, color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--mut)', padding: '8px 0', textAlign: 'center' }}>No items</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: 6 }}>
           {items.map(item => (
@@ -167,8 +167,8 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
         maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tc, flex: 1 }}>{item.name}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--mut)', marginLeft: 10 }}>✕</button>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tc, flex: 1 }}>{item.name}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.38em', color: 'var(--mut)', marginLeft: 10 }}>✕</button>
         </div>
         {/* Image */}
         <div style={{ marginBottom: 14 }}>
@@ -180,18 +180,18 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
           ) : (
             <div style={{ width: '100%', height: 60, border: '1px dashed var(--brd)', borderRadius: 8,
               background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--mut)', fontSize: 11 }}>No image</div>
+              color: 'var(--mut)', fontSize: '0.85em' }}>No image</div>
           )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: 10 }}>
+            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', fontSize: '0.77em' }}>
               {uploadingImg === item.id ? 'Uploading…' : '⬆ Upload'}
               <input type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => { const f = e.target.files[0]; if (f) handleImageUpload(item.id, f); e.target.value = '' }} />
             </label>
-            <button className="btn btn-sm btn-outline" style={{ fontSize: 10 }}
+            <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
               onClick={() => { onClose(); setPickerForItem(item.id) }}>🖼 Browse Library</button>
             {item.image && (
-              <button className="btn btn-sm btn-outline" style={{ fontSize: 10, color: '#ff3355', borderColor: '#ff335544' }}
+              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', color: '#ff3355', borderColor: '#ff335544' }}
                 onClick={() => { const it = items.find(x => x.id === item.id); if (it) db.upsertEntry('items', { ...it, image: null }) }}>Remove</button>
             )}
           </div>
@@ -202,23 +202,23 @@ function ItemPopup({ item, items, chars, db, onClose, onEdit, onTransfer, setLig
           ['Books', (item.books || []).join(', ')],
         ].filter(([, v]) => v).map(([label, val]) => (
           <div key={label} style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
-            <div style={{ fontSize: 12, color: 'var(--tx)' }}>{val}</div>
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>{label}</div>
+            <div style={{ fontSize: '0.92em', color: 'var(--tx)' }}>{val}</div>
           </div>
         ))}
-        {item.significance && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.significance}</div></div>}
-        {item.detail && <div style={{ marginBottom: 8 }}><div style={{ fontSize: 9, fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Detail</div><div style={{ fontSize: 12, color: 'var(--tx)', lineHeight: 1.6 }}>{item.detail}</div></div>}
+        {item.significance && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Significance</div><div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{item.significance}</div></div>}
+        {item.detail && <div style={{ marginBottom: 8 }}><div style={{ fontSize: '0.69em', fontWeight: 700, color: tc, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Detail</div><div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6 }}>{item.detail}</div></div>}
         {(item.transfers || []).length > 0 && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--sp)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>↔ Transfer History</div>
+            <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--sp)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>↔ Transfer History</div>
             {item.transfers.map((t, i) => (
-              <div key={i} style={{ fontSize: 11, color: 'var(--dim)', marginBottom: 3 }}>
+              <div key={i} style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 3 }}>
                 {t.from || '?'} → {t.to || '?'}{t.note ? ` · ${t.note}` : ''}{t.when ? <span style={{ color: 'var(--mut)' }}> ({t.when})</span> : ''}
               </div>
             ))}
           </div>
         )}
-        {item.notes && <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)', fontSize: 11, color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div>}
+        {item.notes && <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brd)', fontSize: '0.85em', color: 'var(--dim)', lineHeight: 1.6 }}>{item.notes}</div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
           <button className="btn btn-outline btn-sm" style={{ color: tc, borderColor: 'var(--ci)44' }}
             onClick={() => { onClose(); onEdit(item) }}>✎ Edit</button>
@@ -348,9 +348,9 @@ export default function Items({ db }) {
         <input className="sx" placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
         <div style={{ display: 'flex', gap: 6 }}>
           <button className={`btn btn-sm btn-outline ${viewMode === 'holder' ? 'active' : ''}`}
-            style={{ fontSize: 10 }} onClick={() => setViewMode('holder')}>By Holder</button>
+            style={{ fontSize: '0.77em' }} onClick={() => setViewMode('holder')}>By Holder</button>
           <button className={`btn btn-sm btn-outline ${viewMode === 'list' ? 'active' : ''}`}
-            style={{ fontSize: 10 }} onClick={() => setViewMode('list')}>List</button>
+            style={{ fontSize: '0.77em' }} onClick={() => setViewMode('list')}>List</button>
         </div>
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)' }}
           onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
@@ -399,8 +399,8 @@ export default function Items({ db }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    {(e.transfers || []).length > 0 && <span style={{ fontSize: 9, color: 'var(--sp)' }}>↔</span>}
-                    {e.holder && <div style={{ fontSize: 10, color: 'var(--ci)' }}>{holderName(e.holder)}</div>}
+                    {(e.transfers || []).length > 0 && <span style={{ fontSize: '0.69em', color: 'var(--sp)' }}>↔</span>}
+                    {e.holder && <div style={{ fontSize: '0.77em', color: 'var(--ci)' }}>{holderName(e.holder)}</div>}
                   </div>
                 </div>
                 <div className="entry-meta">
@@ -410,9 +410,9 @@ export default function Items({ db }) {
                 {isOpen && (
                   <>
                     <div className="entry-detail">
-                      {e.origin && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Origin: </strong>{e.origin}</div>}
-                      {e.significance && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Significance: </strong>{e.significance}</div>}
-                      {e.shared_with && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: 9, textTransform: 'uppercase' }}>Shared with: </strong>{holderName(e.shared_with)}</div>}
+                      {e.origin && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: '0.69em', textTransform: 'uppercase' }}>Origin: </strong>{e.origin}</div>}
+                      {e.significance && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: '0.69em', textTransform: 'uppercase' }}>Significance: </strong>{e.significance}</div>}
+                      {e.shared_with && <div style={{ marginBottom: 3 }}><strong style={{ color: 'var(--ci)', fontSize: '0.69em', textTransform: 'uppercase' }}>Shared with: </strong>{holderName(e.shared_with)}</div>}
                     </div>
                     <div className="entry-actions">
                       <button className="btn btn-sm btn-outline" style={{ color: 'var(--ci)', borderColor: 'var(--ci)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>

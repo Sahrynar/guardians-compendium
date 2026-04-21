@@ -311,7 +311,7 @@ export default function Scenes({ db, navSearch }) {
 
                               {/* Scene name */}
                               <div style={{
-                                fontSize: cardsPerRow === 'XS' ? '0.62em' : cardsPerRow === 'S' ? '0.69em' : '0.77em',
+                                fontSize: '0.77em',
                                 fontWeight: 600, color: 'var(--tx)', lineHeight: 1.3,
                                 overflow: 'hidden', display: '-webkit-box',
                                 WebkitLineClamp: 2,
