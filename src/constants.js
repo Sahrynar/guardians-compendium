@@ -96,7 +96,7 @@ export const CATS = {
   notes:      { l: 'Notes',        i: '📝', c: '#ff6b6b' },  // Coral
   journal:    { l: 'Journal',      i: '📓', c: '#ff4433' },  // Red
   tools:      { l: 'Tools',        i: '🔧', c: '#ff5533' },  // Red-Orange
-  sessionlog: { l: 'Session Log',  i: '📋', c: '#ff44cc' },  // Hot Pink
+  sessionlog: { l: 'Logs',  i: '📋', c: '#ff44cc' },  // Hot Pink
   // eras is a Calendar sub-tab only — kept here for reference/legacy checks
   eras:       { l: 'Eras & Dating',i: '⧖',  c: '#44aaff' },  // same as Calendar (sub-tab)
 }
