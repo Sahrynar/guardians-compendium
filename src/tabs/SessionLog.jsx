@@ -506,7 +506,7 @@ export default function SessionLog({ db, goTo }) {
     <div>
       {/* Header */}
       <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tabColor, marginBottom: 12 }}>
-        📋 Session Log
+        📋 Logs
       </div>
 
       {/* Flash */}
@@ -514,11 +514,41 @@ export default function SessionLog({ db, goTo }) {
         <div style={{ fontSize: 12, color: 'var(--sl)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>{msg}</div>
       )}
 
-      {/* Side-by-side layout: Sessions (60%) | Right panel (40%) */}
-      <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <button
+          onClick={() => setSubTab('sessions')}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: `1px solid ${subTab === 'sessions' ? tabColor : 'var(--brd)'}`,
+            background: subTab === 'sessions' ? tabColor : 'transparent',
+            color: subTab === 'sessions' ? '#000' : tabColor,
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Session Logs
+        </button>
+        <button
+          onClick={() => setSubTab('activityfeatures')}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: `1px solid ${subTab === 'activityfeatures' ? tabColor : 'var(--brd)'}`,
+            background: subTab === 'activityfeatures' ? tabColor : 'transparent',
+            color: subTab === 'activityfeatures' ? '#000' : tabColor,
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Activity & Features
+        </button>
+      </div>
 
-        {/* Left panel — Sessions */}
-        <div style={{ flex: '0 0 60%', minWidth: 0, paddingRight: 14 }}>
+      {subTab === 'sessions' ? (
+        <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📋 Sessions</div>
           {/* Toolbar */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
@@ -565,13 +595,19 @@ export default function SessionLog({ db, goTo }) {
             {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Cloud sync on' : 'Local only'}
           </div>
         </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+          <div style={{ flex: '0 0 50%', minWidth: 0, paddingRight: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📊 Activity Log</div>
+            <ActivityLog
+              activityLog={db?.activityLog || []}
+              undoActivityRecord={db?.undoActivityRecord}
+            />
+          </div>
 
-        {/* Divider */}
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', flexShrink: 0 }} />
+          <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', flexShrink: 0 }} />
 
-        {/* Right panel — Features + Activity Log */}
-        <div style={{ flex: '0 0 40%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
-          <div style={{ flex: '0 0 55%', minHeight: 260, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: '0 0 50%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>⚙ Features</div>
               <button
@@ -657,17 +693,8 @@ export default function SessionLog({ db, goTo }) {
               })}
             </div>
           </div>
-
-          <div style={{ height: 1, background: 'var(--brd)', margin: '10px 0' }} />
-
-          <div style={{ flex: '0 0 45%', minHeight: 220, overflowY: 'auto' }}>
-            <ActivityLog
-              activityLog={db?.activityLog || []}
-              undoActivityRecord={db?.undoActivityRecord}
-            />
-          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
