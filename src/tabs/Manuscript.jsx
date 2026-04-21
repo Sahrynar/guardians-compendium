@@ -272,6 +272,7 @@ function ChapterEditor({ chapter, chars, scenes, onSave, onClose }) {
 
 // ── Main Manuscript tab ───────────────────────────────────────────
 export default function Manuscript({ db, navSearch }) {
+  const tabColor = MS_COLOR
   const chapters = (db.db.manuscript || []).sort((a, b) => {
     const bi = BOOKS.indexOf(a.book) - BOOKS.indexOf(b.book)
     if (bi !== 0) return bi
@@ -348,97 +349,101 @@ export default function Manuscript({ db, navSearch }) {
 
   return (
     <div>
-      {/* Book shelf — portrait cards, image only on cover face */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
-        <button onClick={() => setEditCovers(e => !e)}
-          style={{ fontSize: '0.77em', padding: '3px 12px', borderRadius: 6, cursor: 'pointer',
-            border: `1px solid ${editCovers ? '#aacc00' : 'var(--brd)'}`,
-            background: editCovers ? '#aacc0022' : 'none',
-            color: editCovers ? '#aacc00' : 'var(--dim)' }}>
-          {editCovers ? '✓ Done' : '✎ Edit covers'}
-        </button>
-      </div>
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
-        {byBook.map(({ book, chapters: chs, words }) => {
-          const meta = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
-          const cover = meta.cover || ''
-          const accent = meta.accent || '#aacc00'
-          return (
-            <div key={book} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 200 }}>
-              <div style={{
-                width: 200, height: 300, borderRadius: '4px 10px 10px 4px', overflow: 'hidden',
-                border: `3px solid ${accent}`, background: cover ? 'transparent' : accent + '22',
-                boxShadow: '4px 6px 18px rgba(0,0,0,.55)', cursor: 'pointer',
-              }} onClick={() => {
-                    const meta2 = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
-                    const cover2 = meta2?.cover || ''
-                    if (cover2) {
-                      setCoverLightbox({ book, cover: cover2 })  // lightbox → then TOC on close
-                    } else {
-                      setTocBook(book)
-                      setFilterBook(book)
+      {!tocBook && (
+        <>
+          {/* Book shelf — portrait cards, image only on cover face */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+            <button onClick={() => setEditCovers(e => !e)}
+              style={{ fontSize: '0.77em', padding: '3px 12px', borderRadius: 6, cursor: 'pointer',
+                border: `1px solid ${editCovers ? '#aacc00' : 'var(--brd)'}`,
+                background: editCovers ? '#aacc0022' : 'none',
+                color: editCovers ? '#aacc00' : 'var(--dim)' }}>
+              {editCovers ? '✓ Done' : '✎ Edit covers'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
+            {byBook.map(({ book, chapters: chs, words }) => {
+              const meta = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
+              const cover = meta.cover || ''
+              const accent = meta.accent || '#aacc00'
+              return (
+                <div key={book} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 200 }}>
+                  <div style={{
+                    width: 200, height: 300, borderRadius: '4px 10px 10px 4px', overflow: 'hidden',
+                    border: `3px solid ${accent}`, background: cover ? 'transparent' : accent + '22',
+                    boxShadow: '4px 6px 18px rgba(0,0,0,.55)', cursor: 'pointer',
+                  }} onClick={() => {
+                        const meta2 = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g,'_')}`])
+                        const cover2 = meta2?.cover || ''
+                        if (cover2) {
+                          setCoverLightbox({ book, cover: cover2 })  // lightbox → then TOC on close
+                        } else {
+                          setTocBook(book)
+                          setFilterBook(book)
+                        }
+                      }}>
+                    {cover
+                      ? <img src={cover} alt={book} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: '2.46em', opacity: 0.25 }}>📖</span>
+                        </div>
                     }
-                  }}>
-                {cover
-                  ? <img src={cover} alt={book} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '2.46em', opacity: 0.25 }}>📖</span>
-                    </div>
-                }
-              </div>
-              {/* Edit controls — shown in edit mode */}
-              {editCovers && (
-                <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
-                  <label title="Upload cover image" style={{ cursor: 'pointer', fontSize: '1.08em', color: '#aacc00' }}>
-                    🖼
-                    <input type="file" accept="image/*" style={{ display: 'none' }}
-                      onChange={ev => {
-                        const file = ev.target.files?.[0]; if (!file) return
-                        const reader = new FileReader()
-                        reader.onload = e2 => {
+                  </div>
+                  {/* Edit controls — shown in edit mode */}
+                  {editCovers && (
+                    <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
+                      <label title="Upload cover image" style={{ cursor: 'pointer', fontSize: '1.08em', color: '#aacc00' }}>
+                        🖼
+                        <input type="file" accept="image/*" style={{ display: 'none' }}
+                          onChange={ev => {
+                            const file = ev.target.files?.[0]; if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = e2 => {
+                              const key = `manuscript_book_${book.replace(/ /g,'_')}`
+                              const existing = parseSetting(db.settings?.[key])
+                              db.saveSetting(key, JSON.stringify({ ...existing, cover: e2.target.result }))
+                            }
+                            reader.readAsDataURL(file)
+                          }} />
+                      </label>
+                      <input type="color" value={accent} title="Accent colour"
+                        style={{ width: 22, height: 22, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }}
+                        onChange={ev => {
                           const key = `manuscript_book_${book.replace(/ /g,'_')}`
                           const existing = parseSetting(db.settings?.[key])
-                          db.saveSetting(key, JSON.stringify({ ...existing, cover: e2.target.result }))
-                        }
-                        reader.readAsDataURL(file)
-                      }} />
-                  </label>
-                  <input type="color" value={accent} title="Accent colour"
-                    style={{ width: 22, height: 22, padding: 0, border: 'none', borderRadius: 3, cursor: 'pointer' }}
-                    onChange={ev => {
-                      const key = `manuscript_book_${book.replace(/ /g,'_')}`
-                      const existing = parseSetting(db.settings?.[key])
-                      db.saveSetting(key, JSON.stringify({ ...existing, accent: ev.target.value }))
-                    }} />
-                  {cover && (
-                    <button title="Remove cover" style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', padding: 0 }}
-                      onClick={() => {
-                        const key = `manuscript_book_${book.replace(/ /g,'_')}`
-                        const existing = parseSetting(db.settings?.[key])
-                        db.saveSetting(key, JSON.stringify({ ...existing, cover: '' }))
-                      }}>✕</button>
+                          db.saveSetting(key, JSON.stringify({ ...existing, accent: ev.target.value }))
+                        }} />
+                      {cover && (
+                        <button title="Remove cover" style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer', padding: 0 }}
+                          onClick={() => {
+                            const key = `manuscript_book_${book.replace(/ /g,'_')}`
+                            const existing = parseSetting(db.settings?.[key])
+                            db.saveSetting(key, JSON.stringify({ ...existing, cover: '' }))
+                          }}>✕</button>
+                      )}
+                    </div>
                   )}
+                  <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
+                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: accent, fontWeight: 700 }}>{book}</div>
+                    <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{chs.length} chapters · {words.toLocaleString()} words</div>
+                    <div style={{ display: 'flex', gap: 2, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+                      {STATUSES.map(s => { const n = chs.filter(ch2 => ch2.status === s).length; if (!n) return null
+                        return <span key={s} style={{ fontSize: '0.62em', padding: '1px 5px', borderRadius: 3,
+                          background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{n} {s}</span>
+                      })}
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: accent, fontWeight: 700 }}>{book}</div>
-                <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{chs.length} chapters · {words.toLocaleString()} words</div>
-                <div style={{ display: 'flex', gap: 2, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {STATUSES.map(s => { const n = chs.filter(ch2 => ch2.status === s).length; if (!n) return null
-                    return <span key={s} style={{ fontSize: '0.62em', padding: '1px 5px', borderRadius: 3,
-                      background: `${STATUS_COLORS[s]}22`, color: STATUS_COLORS[s] }}>{n} {s}</span>
-                  })}
-                </div>
-              </div>
+              )
+            })}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 8px' }}>
+              <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.77em', color: 'var(--dim)', marginBottom: 2 }}>Total</div>
+              <div style={{ fontSize: '1.69em', fontWeight: 700, color: 'var(--tx)' }}>{totalWords.toLocaleString()}</div>
+              <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>words · {chapters.length} ch</div>
             </div>
-          )
-        })}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 8px' }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.77em', color: 'var(--dim)', marginBottom: 2 }}>Total</div>
-          <div style={{ fontSize: '1.69em', fontWeight: 700, color: 'var(--tx)' }}>{totalWords.toLocaleString()}</div>
-          <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>words · {chapters.length} ch</div>
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Toolbar */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
@@ -505,89 +510,55 @@ export default function Manuscript({ db, navSearch }) {
         </div>
       )}
 
-      {/* Chapter list */}
-      {filtered.length === 0 && (
-        <div className="empty">
-          <div className="empty-icon">📖</div>
-          <p>{chapters.length === 0 ? 'No chapters yet.' : 'No chapters match your filters.'}</p>
-          {chapters.length === 0 && (
-            <button className="btn btn-primary" style={{ background: '#aacc00' }} onClick={() => setAddingChapter(true)}>
-              + Add First Chapter
-            </button>
+      {tocBook && (
+        <>
+          {/* Chapter list */}
+          {filtered.length === 0 && (
+            <div className="empty">
+              <div className="empty-icon">📖</div>
+              <p>{chapters.length === 0 ? 'No chapters yet.' : 'No chapters match your filters.'}</p>
+              {chapters.length === 0 && (
+                <button className="btn btn-primary" style={{ background: '#aacc00' }} onClick={() => setAddingChapter(true)}>
+                  + Add First Chapter
+                </button>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      {tocBook && BOOKS.filter(b => b === tocBook).map(book => {
-        const bookChapters = filtered.filter(ch => ch.book === book)
-        if (!bookChapters.length) return null
-        return (
-          <div key={book} style={{ marginBottom: 20 }}>
-            <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: '#aacc00',
-              marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)' }}>{book}</div>
-            {bookChapters.map(ch => {
-              const sc = STATUS_COLORS[ch.status] || '#6b7280'
-              const wc = ch.word_count || wordCount(ch.text || '')
-              const detectedCharsInCh = chars.filter(c => {
-                const name = c.display_name || c.name || ''
-                return name && (ch.text || '').includes(name)
-              })
-              return (
-                <div key={ch.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                    background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8,
-                    marginBottom: 4, cursor: 'pointer', transition: '.12s',
-                    borderLeft: `3px solid ${sc}` }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = sc}
-                  onMouseLeave={e => e.currentTarget.style.borderLeft = `3px solid ${sc}`}
-                  onClick={() => setEditingChapter(ch)}>
-                  <div style={{ fontSize: '0.85em', color: 'var(--mut)', minWidth: 28 }}>Ch.{ch.chapter_num}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.92em', fontWeight: 600, color: 'var(--tx)' }}>
-                      {ch.title || <span style={{ color: 'var(--mut)', fontStyle: 'italic' }}>Untitled</span>}
-                    </div>
-                    {MS_SIZE_DETAIL[colSize] > 0 && ch.text && (
-                      <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginTop: 3,
-                        fontStyle: 'italic', lineHeight: 1.4,
-                        display: '-webkit-box', WebkitLineClamp: colSize === 'L' ? 3 : colSize === 'XL' ? 6 : 2,
-                        WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {ch.text.slice(0, MS_SIZE_DETAIL[colSize])}…
+          {BOOKS.filter(b => b === tocBook).map(book => {
+            const bookChapters = filtered.filter(ch => ch.book === book)
+            if (!bookChapters.length) return null
+            return (
+              <div key={book} style={{ marginBottom: 20 }}>
+                <div style={{ display: 'grid', gap: 2 }}>
+                  {bookChapters.map(ch => {
+                    const wc = ch.word_count || wordCount(ch.text || '')
+                    const sc = STATUS_COLORS[ch.status] || '#6b7280'
+                    return (
+                      <div key={ch.id}
+                        style={{ display: 'grid', gridTemplateColumns: '90px 1fr auto', gap: 10, alignItems: 'baseline',
+                          padding: '8px 10px', borderRadius: 4, cursor: 'pointer', transition: 'background .12s ease' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--card)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                        onClick={() => setEditingChapter(ch)}>
+                        <div style={{ fontSize: '0.75em', color: tabColor, letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                          Chapter {ch.chapter_num}
+                        </div>
+                        <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.02em', color: 'var(--tx)' }}>
+                          {ch.title || <span style={{ color: 'var(--mut)', fontStyle: 'italic' }}>Untitled</span>}
+                        </div>
+                        <div style={{ fontSize: '0.75em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
+                          {wc.toLocaleString()} words · <span style={{ color: sc }}>{ch.status || 'Draft'}</span>
+                        </div>
                       </div>
-                    )}
-                    {detectedCharsInCh.length > 0 && (
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
-                        {detectedCharsInCh.slice(0, 8).map(c => (
-                          <span key={c.id} style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 8,
-                            background: 'rgba(51,136,255,.12)', color: 'var(--cc)' }}>
-                            {c.display_name || c.name}
-                          </span>
-                        ))}
-                        {detectedCharsInCh.length > 8 && (
-                          <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>+{detectedCharsInCh.length - 8}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 10,
-                    background: `${sc}22`, color: sc, border: `1px solid ${sc}44`, whiteSpace: 'nowrap' }}>
-                    {ch.status || 'Draft'}
-                  </span>
-                  <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
-                    {wc > 0 ? wc.toLocaleString() + ' w' : 'empty'}
-                  </span>
-                  {ch.notes && <span style={{ fontSize: '0.85em' }} title="Has notes">📝</span>}
-                  {(ch.annotations || []).length > 0 && (
-                    <span style={{ fontSize: '0.69em', color: 'var(--cfl)' }}>🚩{ch.annotations.length}</span>
-                  )}
-                  <button onClick={e => { e.stopPropagation(); setConfirmDelete(ch.id) }}
-                    style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer',
-                      fontSize: '1.08em', padding: '0 4px', flexShrink: 0 }}>✕</button>
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
-        )
-      })}
+              </div>
+            )
+          })}
+        </>
+      )}
 
       {/* ── Cover lightbox overlay ── */}
       {coverLightbox && (
