@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { uid } from '../constants'
+import { supabase, hasSupabase } from '../supabase'
 
 // ── Sticky color presets (pastel — bg, border, text) ─────────────
 const STICKY_COLORS = [
@@ -28,6 +29,12 @@ const DEFAULT_TAGS = [
 ]
 
 const JOURNAL_COLOR = '#38b000'
+const IDEAS_LS_KEY = 'gcomp_ideas'
+const IDEAS_CATEGORIES = [
+  { id: 'names', label: 'Names' },
+  { id: 'words', label: 'Words' },
+  { id: 'phrases', label: 'Phrases' },
+]
 
 // Stable tilt from ID (deterministic, no re-render flicker)
 function stickyTilt(id) {
@@ -45,14 +52,54 @@ function lsSet(key, val) {
 }
 
 // ── QuickCapture ─────────────────────────────────────────────────
-function QuickCapture({ tags, onAdd }) {
+function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
   const [text, setText] = useState('')
   const [tag, setTag] = useState('unsorted')
   const [color, setColor] = useState('yellow')
+  const [quickMode, setQuickMode] = useState('longform')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
-  function submit() {
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false)
+    }
+    if (menuOpen) document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [menuOpen])
+
+  function submitSticky() {
     if (!text.trim()) return
-    onAdd({ text: text.trim(), tag, color, size: 'normal', pinned: false })
+    onAddSticky({ text: text.trim(), tag, color, size: 'normal', pinned: false })
+    setText('')
+  }
+
+  function submitQuickCapture() {
+    if (!text.trim()) return
+    if (quickMode === 'sticky') submitSticky()
+    else {
+      onOpenLongForm(text.trim())
+      setText('')
+    }
+  }
+
+  function selectMode(mode) {
+    setQuickMode(mode)
+    setMenuOpen(false)
+  }
+
+  const quickLabel = quickMode === 'sticky' ? '📌 Sticky' : '📝 Long-form note'
+
+  function handleCtrlQ(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'q') {
+      e.preventDefault()
+      submitQuickCapture()
+    }
+  }
+
+  function submitStickyOnly() {
+    if (!text.trim()) return
+    submitSticky()
     setText('')
   }
 
@@ -62,7 +109,10 @@ function QuickCapture({ tags, onAdd }) {
       <textarea
         value={text}
         onChange={e => setText(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitQuickCapture()
+          handleCtrlQ(e)
+        }}
         placeholder="Capture a thought, name, idea…"
         style={{ width: '100%', minHeight: 70, padding: '6px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 'var(--r)', color: 'var(--tx)', fontSize: '0.92em', resize: 'vertical', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
       />
@@ -75,9 +125,143 @@ function QuickCapture({ tags, onAdd }) {
           style={{ fontSize: '0.77em', padding: '3px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', flex: 1, minWidth: 80 }}>
           {STICKY_COLORS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
-        <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000', flexShrink: 0 }} onClick={submit}>
-          Save (Ctrl+↵)
+        <button className="btn btn-sm btn-outline" style={{ flexShrink: 0 }} onClick={submitStickyOnly}>
+          Save Sticky
         </button>
+        <div ref={menuRef} style={{ display: 'flex', position: 'relative', flexShrink: 0 }}>
+          <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000', borderTopRightRadius: 0, borderBottomRightRadius: 0 }} onClick={submitQuickCapture} title="Quick Capture (Ctrl+Q)">
+            {quickLabel}
+          </button>
+          <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: '1px solid rgba(0,0,0,.2)', paddingInline: 8 }} onClick={() => setMenuOpen(o => !o)} aria-label="Quick capture options">
+            ▾
+          </button>
+          {menuOpen && (
+            <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 160 }}>
+              <button onClick={() => selectMode('longform')} style={{ width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: '0.77em', background: quickMode === 'longform' ? 'rgba(56,176,0,.15)' : 'none', border: 'none', color: 'var(--tx)', cursor: 'pointer' }}>📝 Long-form note</button>
+              <button onClick={() => selectMode('sticky')} style={{ width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: '0.77em', background: quickMode === 'sticky' ? 'rgba(56,176,0,.15)' : 'none', border: 'none', color: 'var(--tx)', cursor: 'pointer' }}>📌 Sticky</button>
+            </div>
+          )}
+        </div>
+        <span style={{ fontSize: '0.62em', color: 'var(--mut)', marginLeft: 'auto' }}>
+          Ctrl+Q
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function IdeasPanel({ ideas, setIdeas }) {
+  const [open, setOpen] = useState(false)
+  const [drafts, setDrafts] = useState({ names: '', words: '', phrases: '' })
+
+  useEffect(() => { lsSet(IDEAS_LS_KEY, ideas) }, [ideas])
+
+  useEffect(() => {
+    let ignore = false
+    async function loadIdeas() {
+      if (!hasSupabase || !supabase) return
+      try {
+        const { data, error } = await supabase.from('ideas_list').select('id, category, value, created_at').order('created_at', { ascending: false })
+        if (error || !data) return
+        if (!ignore) setIdeas(data)
+      } catch {}
+    }
+    loadIdeas()
+    return () => { ignore = true }
+  }, [setIdeas])
+
+  async function addIdea(category) {
+    const value = (drafts[category] || '').trim()
+    if (!value) return
+    const idea = { id: uid(), category, value, created_at: new Date().toISOString() }
+    setIdeas(prev => [idea, ...prev])
+    setDrafts(prev => ({ ...prev, [category]: '' }))
+    if (!hasSupabase || !supabase) return
+    try {
+      await supabase.from('ideas_list').insert(idea)
+    } catch {}
+  }
+
+  async function removeIdea(id) {
+    setIdeas(prev => prev.filter(i => i.id !== id))
+    if (!hasSupabase || !supabase) return
+    try {
+      await supabase.from('ideas_list').delete().eq('id', id)
+    } catch {}
+  }
+
+  return (
+    <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 10, marginBottom: 12 }}>
+      <button className="btn btn-sm btn-outline" onClick={() => setOpen(o => !o)} style={{ width: '100%', justifyContent: 'space-between', display: 'flex', alignItems: 'center' }}>
+        <span>💡 Ideas</span>
+        <span>{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+          {IDEAS_CATEGORIES.map(cat => {
+            const catIdeas = ideas.filter(i => i.category === cat.id)
+            return (
+              <div key={cat.id}>
+                <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 4 }}>{cat.label}</div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <input
+                    className="sx"
+                    placeholder={`Add ${cat.label.toLowerCase()}…`}
+                    value={drafts[cat.id]}
+                    onChange={e => setDrafts(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') addIdea(cat.id) }}
+                    style={{ fontSize: '0.77em' }}
+                  />
+                  <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000' }} onClick={() => addIdea(cat.id)}>Add</button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                  {catIdeas.map(idea => (
+                    <span key={idea.id} style={{ fontSize: '0.69em', padding: '2px 6px', borderRadius: 999, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      {idea.value}
+                      <button onClick={() => removeIdea(idea.id)} style={{ border: 'none', background: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '0.85em', padding: 0 }}>✕</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LongFormNoteModal({ open, draft, setDraft, onClose, onSave }) {
+  if (!open) return null
+  return (
+    <div className="modal-overlay open" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <button className="modal-close" onClick={onClose}>✕</button>
+        <div className="modal-title" style={{ color: JOURNAL_COLOR }}>📝 New Long-form Note</div>
+        <div className="field">
+          <label>Title (optional)</label>
+          <input value={draft.title} onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))} placeholder="Note title…" />
+        </div>
+        <div className="field">
+          <label>Category</label>
+          <select value={draft.category} onChange={e => setDraft(prev => ({ ...prev, category: e.target.value }))}>
+            <option value="General">General</option>
+            <option value="Canon">Canon</option>
+            <option value="Brainstorm">Brainstorm</option>
+            <option value="Research">Research</option>
+            <option value="Todo">Todo</option>
+            <option value="Quote">Quote</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Content</label>
+          <textarea value={draft.content} onChange={e => setDraft(prev => ({ ...prev, content: e.target.value }))} placeholder="Write your long-form note…" style={{ minHeight: 160 }} />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" style={{ background: JOURNAL_COLOR, color: '#000' }} onClick={onSave}>Save Note</button>
+        </div>
       </div>
     </div>
   )
@@ -433,6 +617,9 @@ export default function Journal({ db, navSearch }) {
   const [captures, setCaptures] = useState(() => lsGet('gcomp_captures', []))
   const [showTagManager, setShowTagManager] = useState(false)
   const [mobileZone, setMobileZone] = useState('capture') // 'capture' | 'stickies'
+  const [ideas, setIdeas] = useState(() => lsGet(IDEAS_LS_KEY, []))
+  const [longFormOpen, setLongFormOpen] = useState(false)
+  const [longFormDraft, setLongFormDraft] = useState({ title: '', category: 'Brainstorm', content: '' })
 
   // Persist tags and captures to localStorage (Supabase migration: future build)
   function saveTags(t) { setTags(t); lsSet('gcomp_journal_tags', t) }
@@ -459,6 +646,24 @@ export default function Journal({ db, navSearch }) {
     saveCaptures(updated)
     // Also write to db for cross-device sync
     db.upsertEntry('journal_captures', entry)
+  }
+
+  function openLongForm(prefill = '') {
+    setLongFormDraft({ title: '', category: 'Brainstorm', content: prefill })
+    setLongFormOpen(true)
+  }
+
+  function saveLongForm() {
+    if (!longFormDraft.content.trim()) return
+    db.upsertEntry('notes', {
+      id: uid(),
+      title: longFormDraft.title?.trim() || '',
+      category: longFormDraft.category || 'Brainstorm',
+      content: longFormDraft.content.trim(),
+      updated: new Date().toISOString(),
+    })
+    setLongFormOpen(false)
+    setLongFormDraft({ title: '', category: 'Brainstorm', content: '' })
   }
 
   function deleteCapture(id) {
@@ -497,7 +702,8 @@ export default function Journal({ db, navSearch }) {
         {/* Left: Quick Capture */}
         {(!isMobile || mobileZone === 'capture') && (
           <div style={{ width: isMobile ? '100%' : 260, flexShrink: 0 }}>
-            <QuickCapture tags={tags} onAdd={addCapture} />
+            <QuickCapture tags={tags} onAddSticky={addCapture} onOpenLongForm={openLongForm} />
+            <IdeasPanel ideas={ideas} setIdeas={setIdeas} />
             {/* Recent captures mini list */}
             <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 6 }}>Recent captures</div>
             {captures.slice(0, 8).map(c => {
@@ -543,6 +749,13 @@ export default function Journal({ db, navSearch }) {
           </div>
         </div>
       )}
+      <LongFormNoteModal
+        open={longFormOpen}
+        draft={longFormDraft}
+        setDraft={setLongFormDraft}
+        onClose={() => setLongFormOpen(false)}
+        onSave={saveLongForm}
+      />
     </div>
   )
 }
