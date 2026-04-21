@@ -33,32 +33,32 @@ const FEATURE_TAB_OPTIONS = [
 ]
 
 const FEATURE_REGISTRY_SEED = [
-  { name: 'Wiki', tab: 'wiki', session: 1, status: 'active' },
-  { name: 'Characters', tab: 'characters', session: 1, status: 'active' },
-  { name: 'Family Tree', tab: 'familytree', session: 1, status: 'active' },
-  { name: 'Scenes', tab: 'scenes', session: 1, status: 'active' },
-  { name: 'Timeline', tab: 'timeline', session: 1, status: 'active' },
-  { name: 'Calendar', tab: 'calendar', session: 1, status: 'active' },
-  { name: 'Flags', tab: 'flags', session: 1, status: 'active' },
-  { name: 'Questions', tab: 'questions', session: 1, status: 'active' },
-  { name: 'Canon', tab: 'canon', session: 1, status: 'active' },
-  { name: 'Notes', tab: 'notes', session: 1, status: 'active' },
-  { name: 'Journal', tab: 'journal', session: 1, status: 'active' },
-  { name: 'Session Log', tab: 'sessionlog', session: 1, status: 'active' },
-  { name: 'Manuscript', tab: 'manuscript', session: 1, status: 'active' },
-  { name: 'Activity Log', tab: 'sessionlog', session: 16, status: 'active' },
-  { name: 'Global Search', tab: 'dashboard', session: 20, status: 'active' },
-  { name: 'Inventory', tab: 'inventory', session: 8, status: 'active' },
-  { name: 'Wardrobe', tab: 'wardrobe', session: 8, status: 'active' },
-  { name: 'Items', tab: 'items', session: 8, status: 'active' },
-  { name: 'Locations', tab: 'locations', session: 1, status: 'active' },
-  { name: 'World', tab: 'world', session: 1, status: 'active' },
-  { name: 'Maps', tab: 'map', session: 1, status: 'active' },
-  { name: 'Spellings', tab: 'spellings', session: 1, status: 'active' },
-  { name: 'Glossary', tab: 'glossary', session: 1, status: 'active' },
-  { name: 'Undo / Activity Tracking', tab: 'sessionlog', session: 25, status: 'active' },
-  { name: 'Quick Capture', tab: 'dashboard', session: 14, status: 'active' },
-  { name: 'Partial Doomsday Export', tab: 'sessionlog', session: 25, status: 'active' },
+  { name: 'Wiki', tab: 'wiki', session: 1, status: 'active', description: 'Long-form lore articles with rich blocks (text, tables, callouts, images). The backbone of worldbuilding reference.' },
+  { name: 'Characters', tab: 'characters', session: 1, status: 'active', description: 'Character cards with element filters, bubble colours, portrait upload, and crosslinks to Scenes.' },
+  { name: 'Family Tree', tab: 'familytree', session: 1, status: 'active', description: 'Interactive canvas showing character relationships. Drag-to-reposition nodes, web and force-directed layout modes.' },
+  { name: 'Scenes', tab: 'scenes', session: 1, status: 'active', description: 'Wrapped timeline of story scenes, grouped by chapter with gradient spectrum colours. Links to Manuscript chapters.' },
+  { name: 'Timeline', tab: 'timeline', session: 1, status: 'active', description: 'Visual event track. XS = 8-column grid, XL = full-screen single column with auto-expand.' },
+  { name: 'Calendar', tab: 'calendar', session: 1, status: 'active', description: 'Lajen 12-month calendar with day notes, birthdays, Expand All, and XS–XL grid sizing.' },
+  { name: 'Flags', tab: 'flags', session: 1, status: 'active', description: 'Continuity flags for tracking unresolved story issues, inconsistencies, and reminders.' },
+  { name: 'Questions', tab: 'questions', session: 1, status: 'active', description: 'Open canon questions — things not yet decided or confirmed for the series.' },
+  { name: 'Canon', tab: 'canon', session: 1, status: 'active', description: 'Locked canon entries — confirmed facts about the world, characters, and story.' },
+  { name: 'Notes', tab: 'notes', session: 1, status: 'active', description: 'Structured lore notes with popup view.' },
+  { name: 'Journal', tab: 'journal', session: 1, status: 'active', description: 'Sticky-board quick capture. Cards with pin, size, and colour options.' },
+  { name: 'Session Log', tab: 'sessionlog', session: 1, status: 'active', description: 'Session minutes cards — records of each working session with Claude.' },
+  { name: 'Manuscript', tab: 'manuscript', session: 1, status: 'active', description: 'Book shelf → cover lightbox → TOC → chapter editor. Full writing and editing environment.' },
+  { name: 'Activity Log', tab: 'sessionlog', session: 16, status: 'active', description: 'Automatic record of every add, edit, delete, import, and restore action taken in the Compendium. Includes undo.' },
+  { name: 'Global Search', tab: 'dashboard', session: 20, status: 'active', description: 'Search bar in Dashboard header that searches across all tabs simultaneously.' },
+  { name: 'Inventory', tab: 'inventory', session: 8, status: 'active', description: 'Item tracking in bubble, list, and outfit views. Drag to reorder. Transfer history. OutfitSnapshot inside.' },
+  { name: 'Wardrobe', tab: 'wardrobe', session: 8, status: 'active', description: 'Character wardrobe entries with bubble colour popups.' },
+  { name: 'Items', tab: 'items', session: 8, status: 'active', description: 'Standalone item entries separate from character inventory.' },
+  { name: 'Locations', tab: 'locations', session: 1, status: 'active', description: 'Location entries with flat table view.' },
+  { name: 'World', tab: 'world', session: 1, status: 'active', description: 'World-building entries covering geography, culture, politics, and lore.' },
+  { name: 'Maps', tab: 'map', session: 1, status: 'active', description: 'Uploadable maps with zoom lightbox and drag-to-reorder.' },
+  { name: 'Spellings', tab: 'spellings', session: 1, status: 'active', description: 'Canonical spelling reference for names, places, and terms series-wide.' },
+  { name: 'Glossary', tab: 'glossary', session: 1, status: 'active', description: 'Filtered compact view of Wiki articles for quick reference.' },
+  { name: 'Undo / Activity Tracking', tab: 'sessionlog', session: 25, status: 'active', description: 'The system that logs every Compendium action and enables one-click undo for any record.' },
+  { name: 'Quick Capture', tab: 'dashboard', session: 14, status: 'active', description: 'Ctrl+Q shortcut to instantly capture a note or sticky without navigating away.' },
+  { name: 'Partial Doomsday Export', tab: 'sessionlog', session: 25, status: 'active', description: 'Exports a subset of your data by category — a targeted backup rather than full export.' },
 ]
 
 // ── Supabase helpers ───────────────────────────────────────────
@@ -257,6 +257,19 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
 
   const allActions = ['all', 'add', 'edit', 'delete', 'import', 'restore']
   const allCats = ['all', ...new Set((activityLog || []).map(r => r.category).filter(Boolean))]
+  const formatRecordTimestamp = (timestamp) => {
+    if (!timestamp) return '—'
+    const date = new Date(timestamp)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+  }
 
   const filtered = (activityLog || []).filter(r => {
     if (filterAction !== 'all' && r.action !== filterAction) return false
@@ -271,7 +284,7 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
 
   if (!activityLog || activityLog.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)', fontStyle: 'italic', fontSize: 13 }}>
+      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)', fontStyle: 'italic', fontSize: '1em' }}>
         No activity yet. Actions like adds, edits, deletes, and imports will appear here.
       </div>
     )
@@ -282,11 +295,11 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
-          style={{ flex: 1, minWidth: 140, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }} />
+          style={{ flex: 1, minWidth: 140, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', outline: 'none' }} />
         <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
           {allActions.map(a => (
             <button key={a} onClick={() => setFilterAction(a)}
-              style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, cursor: 'pointer',
+              style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 10, cursor: 'pointer',
                 border: filterAction === a ? `1.5px solid ${ACTION_COLORS[a] || 'var(--cc)'}` : '1px solid var(--brd)',
                 background: filterAction === a ? `${ACTION_COLORS[a] || 'var(--cc)'}22` : 'none',
                 color: filterAction === a ? (ACTION_COLORS[a] || 'var(--cc)') : 'var(--dim)',
@@ -296,12 +309,12 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
           ))}
         </div>
         <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          style={{ fontSize: 10, padding: '4px 7px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)' }}>
+          style={{ fontSize: '0.85em', padding: '4px 7px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)' }}>
           {allCats.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
-      <div style={{ fontSize: 10, color: 'var(--mut)', marginBottom: 10 }}>
+      <div style={{ fontSize: '0.85em', color: 'var(--mut)', marginBottom: 10 }}>
         {filtered.length} record{filtered.length !== 1 ? 's' : ''} · {(activityLog || []).length} total
       </div>
 
@@ -316,45 +329,45 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
             opacity: record.undone ? 0.5 : 1,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: col, minWidth: 80 }}>
+              <span style={{ fontSize: '0.85em', fontWeight: 700, color: col, minWidth: 80 }}>
                 {ACTION_LABELS[record.action] || record.action}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--tx)', flex: 1 }}>
-                <span style={{ color: 'var(--dim)', fontSize: 9 }}>{record.category} · </span>
+              <span style={{ fontSize: '1em', color: 'var(--tx)', flex: 1 }}>
+                <span style={{ color: 'var(--dim)', fontSize: '0.8em' }}>{record.category} · </span>
                 {record.entry_name}
               </span>
-              <span style={{ fontSize: 9, color: 'var(--mut)', whiteSpace: 'nowrap' }}>
-                {new Date(record.timestamp).toLocaleString()}
+              <span style={{ fontSize: '0.8em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
+                {formatRecordTimestamp(record.timestamp)}
               </span>
               {record.diff && record.diff.length > 0 && (
                 <button onClick={() => setExpandedDiff(isExpanded ? null : record.id)}
-                  style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+                  style={{ fontSize: '0.8em', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
                   {isExpanded ? 'Hide diff' : `${record.diff.length} change${record.diff.length !== 1 ? 's' : ''}`}
                 </button>
               )}
               {!record.undone && (record.action === 'delete' || record.action === 'edit' || record.action === 'add') && (
                 <button onClick={() => undoActivityRecord(record.id)}
-                  style={{ fontSize: 9, padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}55`, background: 'none', color: col, cursor: 'pointer', fontWeight: 700 }}>
+                  style={{ fontSize: '0.8em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}55`, background: 'none', color: col, cursor: 'pointer', fontWeight: 700 }}>
                   ⟲ Undo
                 </button>
               )}
               {record.undone && (
-                <span style={{ fontSize: 9, color: 'var(--mut)', fontStyle: 'italic' }}>undone</span>
+                <span style={{ fontSize: '0.8em', color: 'var(--mut)', fontStyle: 'italic' }}>undone</span>
               )}
             </div>
             {/* Diff view */}
             {isExpanded && record.diff && (
-              <div style={{ marginTop: 8, background: 'var(--sf)', borderRadius: 6, padding: 8, fontSize: 10 }}>
+              <div style={{ marginTop: 8, background: 'var(--sf)', borderRadius: 6, padding: 8, fontSize: '0.85em' }}>
                 {record.diff.map((d, i) => (
                   <div key={i} style={{ marginBottom: 6 }}>
-                    <div style={{ color: 'var(--dim)', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', fontSize: 9 }}>{d.field}</div>
+                    <div style={{ color: 'var(--dim)', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', fontSize: '0.8em' }}>{d.field}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       <div style={{ background: '#ff444411', border: '1px solid #ff444433', borderRadius: 4, padding: '4px 6px', color: '#ff8888' }}>
-                        <span style={{ fontSize: 8, display: 'block', marginBottom: 2, opacity: 0.7 }}>Before</span>
+                        <span style={{ fontSize: '0.75em', display: 'block', marginBottom: 2, opacity: 0.7 }}>Before</span>
                         {String(d.before || '—').slice(0, 200)}
                       </div>
                       <div style={{ background: '#44bb4411', border: '1px solid #44bb4433', borderRadius: 4, padding: '4px 6px', color: '#88ff88' }}>
-                        <span style={{ fontSize: 8, display: 'block', marginBottom: 2, opacity: 0.7 }}>After</span>
+                        <span style={{ fontSize: '0.75em', display: 'block', marginBottom: 2, opacity: 0.7 }}>After</span>
                         {String(d.after || '—').slice(0, 200)}
                       </div>
                     </div>
@@ -377,7 +390,8 @@ export default function SessionLog({ db, goTo }) {
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
   const [addingFeature, setAddingFeature] = useState(false)
-  const [featureForm, setFeatureForm] = useState({ name: '', tab: 'dashboard', session: 1 })
+  const [editingDescriptions, setEditingDescriptions] = useState(false)
+  const [featureForm, setFeatureForm] = useState({ name: '', tab: 'dashboard', session: 1, description: '' })
   const [selected, setSelected] = useState(new Set())
   const [msg, setMsg] = useState('')
   const [search, setSearch] = useState('')
@@ -479,11 +493,19 @@ export default function SessionLog({ db, goTo }) {
       name,
       tab: featureForm.tab,
       session: Number.isFinite(sessionNum) ? sessionNum : 1,
+      description: featureForm.description || '',
       status: 'active',
     }]
     await saveFeatureRegistry(next)
-    setFeatureForm({ name: '', tab: 'dashboard', session: 1 })
+    setFeatureForm({ name: '', tab: 'dashboard', session: 1, description: '' })
     setAddingFeature(false)
+  }
+
+  async function toggleDescriptionEditing() {
+    if (editingDescriptions) {
+      await saveFeatureRegistry(featureRegistry)
+    }
+    setEditingDescriptions(prev => !prev)
   }
 
   const filtered = sessions.filter(s => {
@@ -598,7 +620,7 @@ export default function SessionLog({ db, goTo }) {
       ) : (
         <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingRight: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📊 Activity Log</div>
+            <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📊 Activity Log</div>
             <ActivityLog
               activityLog={db?.activityLog || []}
               undoActivityRecord={db?.undoActivityRecord}
@@ -609,28 +631,36 @@ export default function SessionLog({ db, goTo }) {
 
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>⚙ Features</div>
-              <button
-                onClick={() => setAddingFeature(v => !v)}
-                style={{ fontSize: 10, padding: '3px 9px', borderRadius: 8, border: `1px solid ${tabColor}66`, background: 'none', color: tabColor, cursor: 'pointer', fontWeight: 700 }}
-              >
-                + Add Feature
-              </button>
+              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>⚙ Features</div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  onClick={() => setAddingFeature(v => !v)}
+                  style={{ fontSize: '0.85em', padding: '3px 9px', borderRadius: 8, border: `1px solid ${tabColor}66`, background: 'none', color: tabColor, cursor: 'pointer', fontWeight: 700 }}
+                >
+                  + Add Feature
+                </button>
+                <button
+                  onClick={toggleDescriptionEditing}
+                  style={{ fontSize: '0.85em', padding: '3px 9px', borderRadius: 8, border: `1px solid ${tabColor}66`, background: editingDescriptions ? `${tabColor}22` : 'none', color: tabColor, cursor: 'pointer', fontWeight: 700 }}
+                >
+                  ✎ Edit
+                </button>
+              </div>
             </div>
 
             {addingFeature && (
               <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr auto', gap: 6, alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr auto', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                   <input
                     value={featureForm.name}
                     onChange={e => setFeatureForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Feature name"
-                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }}
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', outline: 'none' }}
                   />
                   <select
                     value={featureForm.tab}
                     onChange={e => setFeatureForm(f => ({ ...f, tab: e.target.value }))}
-                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11 }}
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em' }}
                   >
                     {FEATURE_TAB_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -639,15 +669,21 @@ export default function SessionLog({ db, goTo }) {
                     min="1"
                     value={featureForm.session}
                     onChange={e => setFeatureForm(f => ({ ...f, session: e.target.value }))}
-                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 11, outline: 'none' }}
+                    style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', outline: 'none' }}
                   />
                   <button
                     onClick={addFeature}
-                    style={{ fontSize: 10, padding: '5px 9px', borderRadius: 6, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}
+                    style={{ fontSize: '0.85em', padding: '5px 9px', borderRadius: 6, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}
                   >
                     Save
                   </button>
                 </div>
+                <textarea
+                  value={featureForm.description}
+                  onChange={e => setFeatureForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Feature description"
+                  style={{ width: '100%', minHeight: 50, resize: 'vertical', boxSizing: 'border-box', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', fontFamily: 'inherit', outline: 'none' }}
+                />
               </div>
             )}
 
@@ -659,7 +695,7 @@ export default function SessionLog({ db, goTo }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    fontSize: 11,
+                    fontSize: '1em',
                     padding: '5px 8px',
                     marginBottom: 4,
                     borderRadius: 6,
@@ -668,23 +704,34 @@ export default function SessionLog({ db, goTo }) {
                     opacity: archived ? 0.55 : 1,
                     textDecoration: archived ? 'line-through' : 'none',
                   }}>
-                    <span style={{ flex: 1 }}>
-                      {entry.name}
-                      <span style={{ marginLeft: 6, fontSize: 9, color: 'var(--dim)' }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ color: 'var(--tx)', whiteSpace: 'normal' }}>
+                        {entry.name}
+                        {entry.description ? ` — ${entry.description}` : ''}
+                      </span>
+                      {editingDescriptions && (
+                        <input
+                          value={entry.description || ''}
+                          onChange={e => setFeatureRegistry(prev => prev.map(item => item.id === entry.id ? { ...item, description: e.target.value } : item))}
+                          placeholder="Description"
+                          style={{ width: '100%', marginTop: 4, padding: '4px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', outline: 'none' }}
+                        />
+                      )}
+                      <span style={{ display: 'block', marginTop: 2, fontSize: '0.8em', color: 'var(--dim)' }}>
                         ({entry.tab} · S{entry.session})
                       </span>
                     </span>
                     <button
                       onClick={() => goTo?.(entry.tab)}
                       title={`Go to ${entry.tab}`}
-                      style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, border: `1px solid ${tabColor}55`, background: 'none', color: tabColor, cursor: 'pointer' }}
+                      style={{ fontSize: '0.85em', padding: '1px 5px', borderRadius: 4, border: `1px solid ${tabColor}55`, background: 'none', color: tabColor, cursor: 'pointer' }}
                     >
                       ↗
                     </button>
                     <button
                       onClick={() => toggleFeatureArchive(entry.id)}
                       title={archived ? 'Restore to active' : 'Archive feature'}
-                      style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}
+                      style={{ fontSize: '1em', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}
                     >
                       📦
                     </button>
