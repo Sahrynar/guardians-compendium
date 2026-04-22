@@ -262,7 +262,7 @@ export function useDB() {
   const importJSON = useCallback((file) => {
     return new Promise((resolve, reject) => {
       const r = new FileReader()
-      r.onload = ev => {
+      r.onload = async ev => {
         try {
           const parsed = JSON.parse(ev.target.result)
           let added = 0; const conflicts = []
@@ -279,7 +279,16 @@ export function useDB() {
             })
             lsSave(next); return next
           })
-          resolve({ added, conflicts })
+          // Handle session_log - stored in its own Supabase table, not in CATEGORIES
+          let sessionLogAdded = 0
+          if (parsed.session_log && Array.isArray(parsed.session_log) && hasSupabase) {
+            for (const entry of parsed.session_log) {
+              if (!entry?.id) continue
+              const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id', ignoreDuplicates: true })
+              if (!error) sessionLogAdded++
+            }
+          }
+          resolve({ added, conflicts, sessionLogAdded })
         } catch (e) { reject(e) }
       }
       r.readAsText(file)

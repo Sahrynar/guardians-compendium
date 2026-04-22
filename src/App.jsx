@@ -202,7 +202,7 @@ export default function App() {
         setConflictQueue(result.conflicts)
         setImportSummary({ added: result.added, resolved: 0, total: result.conflicts.length })
       } else {
-        setImportSummary({ added: result.added, resolved: 0, total: 0, done: true })
+        setImportSummary({ added: result.added + (result.sessionLogAdded || 0), resolved: 0, total: 0, done: true })
       }
     } catch (err) { setImportSummary({ error: err.message, done: true }) }
   }, [db])

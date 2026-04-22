@@ -40,7 +40,7 @@ export default function Dashboard({ db, goTo, crossLink, navSearch, setNavSearch
   Object.entries(data).forEach(([cat, entries]) => {
     if (!Array.isArray(entries) || !CATS[cat]) return
     entries.forEach(e => {
-      const ts = e.updated_at || e.updated || e.created
+      const ts = e.updated_at || e.updated || e.created_at || e.created
       if (ts) recent.push({ cat, name: e.name || e.title || e.display_name || e.word || '(unnamed)', ts, id: e.id })
     })
   })

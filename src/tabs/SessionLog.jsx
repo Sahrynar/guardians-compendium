@@ -406,7 +406,7 @@ export default function SessionLog({ db, goTo }) {
       setSessions(local)
       if (hasSupabase) {
         const remote = await sbLoadSessions()
-        if (remote) { setSessions(remote); lsSave(remote) }
+        if (remote !== null) { setSessions(remote); lsSave(remote) }
       }
       const localFeatures = lsLoadFeatureRegistry()
       let loadedFeatures = localFeatures
