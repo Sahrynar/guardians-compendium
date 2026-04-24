@@ -1,4 +1,5 @@
 import GenericListTab from '../components/common/GenericListTab'
+import { TAB_RAINBOW } from '../constants'
 
 const SP_FIELDS = [
   { k: 'name', l: 'Term', t: 'text', r: true },
@@ -11,13 +12,15 @@ export default function Spellings({ db, navSearch }) {
   return (
     <GenericListTab
       catKey="spellings"
-      color="#ff69b4"
+      color={TAB_RAINBOW.spellings}
       icon="✎"
       label="Spellings"
       fields={SP_FIELDS}
       db={db}
       navSearch={navSearch}
       getJumpName={e => e.word || e.name}
+      entityKey="spellings"
+      tabColor={TAB_RAINBOW.spellings}
     />
   )
 }

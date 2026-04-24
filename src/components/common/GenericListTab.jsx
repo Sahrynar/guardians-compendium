@@ -5,7 +5,7 @@ import AlphabetJumpBar from './AlphabetJumpBar'
 import { SL, highlight } from '../../constants'
 import { scrollAndFlashEntry } from './entryNav'
 
-const SIZE_COLS = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
+const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
@@ -13,11 +13,15 @@ export default function GenericListTab({
   columns, columnRule,
   navSearch,
   getJumpName,
+  entityKey,
+  tabColor,
 }) {
   const entries = db.db[catKey] || []
   const [search, setSearch] = useState('')
-  const [colSize, setColSize] = useState(() => {
-    try { return localStorage.getItem(`colsize_${label}`) || 'M' } catch { return 'M' }
+  const accent = tabColor || color
+  const storageKey = entityKey || catKey
+  const [cols, setCols] = useState(() => {
+    try { return localStorage.getItem(`${storageKey}_cols`) || 'M' } catch { return 'M' }
   })
   const [fS, setFS] = useState('all')
   const [expanded, setExpanded] = useState(null)
@@ -26,7 +30,7 @@ export default function GenericListTab({
   const [confirmId, setConfirmId] = useState(null)
   const [sortMode, setSortMode] = useState('alpha')
   const [autoOnly, setAutoOnly] = useState(false)
-  const cols = SIZE_COLS[colSize] || 3
+  const colCount = COLS_MAP[cols] || 3
   const autoCount = entries.filter(e => e.auto_imported === true).length
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
@@ -46,9 +50,9 @@ export default function GenericListTab({
     return () => window.removeEventListener('gcomp_expand', onExpand)
   }, [entries])
 
-  function changeColSize(sz) {
-    setColSize(sz)
-    try { localStorage.setItem(`colsize_${label}`, sz) } catch {}
+  function setColsPersist(v) {
+    setCols(v)
+    try { localStorage.setItem(`${storageKey}_cols`, v) } catch {}
   }
 
   const filtered = entries
@@ -105,12 +109,12 @@ export default function GenericListTab({
       <div className="tbar">
         <div style={{ display: 'flex', gap: 3 }}>
           {['XS', 'S', 'M', 'L', 'XL'].map(sz => (
-            <button key={sz} onClick={() => changeColSize(sz)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer', background: colSize === sz ? color : 'none', color: colSize === sz ? '#000' : 'var(--dim)', border: `1px solid ${colSize === sz ? color : 'var(--brd)'}` }}>{sz}</button>
+            <button key={sz} onClick={() => setColsPersist(sz)} style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 4, cursor: 'pointer', background: cols === sz ? `${accent}22` : 'transparent', color: cols === sz ? accent : 'var(--dim)', border: `1px solid ${cols === sz ? accent : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
         <input className="sx" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
         {autoCount > 0 && (
-          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? accent : 'var(--brd)'}`, background: autoOnly ? `${accent}22` : 'none', color: autoOnly ? accent : 'var(--dim)', cursor: 'pointer' }}>
             📥 Auto-imported ({autoCount})
           </button>
         )}
@@ -119,7 +123,7 @@ export default function GenericListTab({
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
         </select>
-        <button className="btn btn-primary btn-sm" style={{ background: color }} onClick={openAdd}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: accent }} onClick={openAdd}>+ Add</button>
       </div>
 
       <div className="tbar" style={{ paddingTop: 0 }}>
@@ -133,22 +137,22 @@ export default function GenericListTab({
       </div>
 
       {getJumpName && filtered.length > 0 && (
-        <AlphabetJumpBar entries={filtered} getName={getJumpName} onJump={target => scrollAndFlashEntry(target.id)} color={color} />
+        <AlphabetJumpBar entries={filtered} getName={getJumpName} onJump={target => scrollAndFlashEntry(target.id)} color={accent} />
       )}
 
-      <div className="cg" style={listStyle}>
+      <div className="cg" style={{ ...listStyle, display: columns && columns > 1 ? undefined : 'grid', gridTemplateColumns: columns && columns > 1 ? undefined : `repeat(${colCount}, 1fr)`, gap: columns && columns > 1 ? undefined : 8 }}>
         {!filtered.length && (
           <div className="empty">
             <div className="empty-icon">{icon}</div>
             <p>No {label.toLowerCase()} yet.</p>
-            <button className="btn btn-primary" style={{ background: color }} onClick={openAdd}>+ Add {label.slice(0, -1)}</button>
+            <button className="btn btn-primary" style={{ background: accent }} onClick={openAdd}>+ Add {label.slice(0, -1)}</button>
           </div>
         )}
         {filtered.map((e, i) => {
           const isOpen = expanded === e.id
           const ts = e.updated_at || e.updated || e.created
           return (
-            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card" style={{ '--card-color': color, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, breakInside: 'avoid', marginBottom: 6 }} onClick={() => setExpanded(isOpen ? null : e.id)}>
+            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card" style={{ '--card-color': accent, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, breakInside: 'avoid', marginBottom: 6 }} onClick={() => setExpanded(isOpen ? null : e.id)}>
               <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.display_name || e.name || e.word || '', search) }} />
               <div className="entry-meta">{badges(e)}</div>
 
@@ -157,7 +161,7 @@ export default function GenericListTab({
                   <div className="entry-detail">
                     {renderDetail ? renderDetail(e) : fields.filter(f => f.k !== 'name' && e[f.k]).map(f => (
                       <div key={f.k} style={{ marginBottom: 3 }}>
-                        <strong style={{ color, fontSize: 'var(--fs-xs)', textTransform: 'uppercase' }}>{f.l}: </strong>
+                        <strong style={{ color: accent, fontSize: 'var(--fs-xs)', textTransform: 'uppercase' }}>{f.l}: </strong>
                         {String(e[f.k])}
                       </div>
                     ))}
@@ -165,7 +169,7 @@ export default function GenericListTab({
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
                   {ts && <div className="entry-timestamp">{e.updated_at && e.updated_at !== e.created ? `Edited ${fmtDate(e.updated_at)}` : e.created ? `Added ${fmtDate(e.created)}` : ''}</div>}
                   <div className="entry-actions">
-                    <button className="btn btn-sm btn-outline" style={{ color, borderColor: color }} onClick={ev => { ev.stopPropagation(); openEdit(e) }}>✎ Edit</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: accent, borderColor: accent }} onClick={ev => { ev.stopPropagation(); openEdit(e) }}>✎ Edit</button>
                     {extraActions && extraActions(e)}
                     <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}>✕</button>
                   </div>
@@ -176,8 +180,8 @@ export default function GenericListTab({
         })}
       </div>
 
-      <Modal open={modalOpen} onClose={closeModal} title={`${editing?.id ? 'Edit' : 'Add'} ${label.slice(0, -1)}`} color={color}>
-        <EntryForm fields={fields} entry={editing || {}} onSave={handleSave} onCancel={closeModal} color={color} label={label} db={db} />
+      <Modal open={modalOpen} onClose={closeModal} title={`${editing?.id ? 'Edit' : 'Add'} ${label.slice(0, -1)}`} color={accent}>
+        <EntryForm fields={fields} entry={editing || {}} onSave={handleSave} onCancel={closeModal} color={accent} label={label} db={db} />
       </Modal>
 
       {confirmId && (

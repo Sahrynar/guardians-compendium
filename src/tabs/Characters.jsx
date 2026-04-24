@@ -5,8 +5,10 @@ import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
-import { CHAR_FIELDS, highlight, SL, uid, hexToRgba, lerpColor } from '../constants'
+import { CHAR_FIELDS, TAB_RAINBOW, highlight, SL, uid, hexToRgba, lerpColor } from '../constants'
 import FilterPopup from '../components/common/FilterPopup'
+
+const tabColor = TAB_RAINBOW.characters
 
 const PRESET_LABELS = [
   { key: 'generic_male_no_wings',    label: 'Generic Male — No Wings' },
@@ -110,6 +112,10 @@ export default function Characters({ db, goTo, tab, navSearch }) {
     }
     if (autoOnly && e.auto_imported !== true) return false
     return true
+  }).sort((a, b) => {
+    const an = (a.display_name || a.name || '').toLowerCase()
+    const bn = (b.display_name || b.name || '').toLowerCase()
+    return an.localeCompare(bn)
   })
 
   function handleSave(entry) {
@@ -193,9 +199,9 @@ export default function Characters({ db, goTo, tab, navSearch }) {
           {['XS','S','M','L','XL'].map(sz => (
             <button key={sz} onClick={() => changeColSize(sz)}
               style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
-                background: colSize === sz ? '#e63946' : 'none',
+                background: colSize === sz ? tabColor : 'none',
                 color: colSize === sz ? '#fff' : 'var(--dim)',
-                border: `1px solid ${colSize === sz ? '#e63946' : 'var(--brd)'}` }}>{sz}</button>
+                border: `1px solid ${colSize === sz ? tabColor : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
         <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
@@ -213,7 +219,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
           ))}
         </div>
         <FilterPopup
-          color="#e63946"
+          color={tabColor}
           filters={[
             { key: 'element', label: 'Element', options: [
               { value: 'Water', label: '💧 Water' },
@@ -234,19 +240,19 @@ export default function Characters({ db, goTo, tab, navSearch }) {
           onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
         />
         {autoCount > 0 && (
-          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? tabColor : 'var(--brd)'}`, background: autoOnly ? `${tabColor}22` : 'none', color: autoOnly ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
             📥 Auto-imported ({autoCount})
           </button>
         )}
-        <button className="btn btn-primary btn-sm" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <AlphabetJumpBar entries={filtered} getName={c => c.display_name || c.name} onJump={target => scrollAndFlashEntry(target.id)} color="#e63946" />
+      <AlphabetJumpBar entries={filtered} getName={c => c.display_name || c.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
 
       <div className="cg">
         {!filtered.length && (
           <div className="empty"><div className="empty-icon">👤</div><p>No characters yet.</p>
-            <button className="btn btn-primary" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
+            <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
           </div>
         )}
         {filtered.map((e, i) => {
@@ -288,7 +294,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
                               style={{ width: 100, height: 'auto', borderRadius: 'var(--r)', border: '1px solid var(--cc)', cursor: 'zoom-in' }}
                               onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.portrait_canvas) }}
                             />
-                            <div style={{ fontSize: 8, color: '#e63946', marginTop: 2, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Edit</div>
+                            <div style={{ fontSize: '0.62em', color: '#e63946', marginTop: 2, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Edit</div>
                           </div>
                         ) : (
                           <div style={{ width: 80, height: 80, border: '1px dashed var(--brd)', borderRadius: 'var(--r)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--mut)', fontSize: '0.69em', cursor: 'pointer', gap: 2 }}
@@ -303,10 +309,10 @@ export default function Characters({ db, goTo, tab, navSearch }) {
                               onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.reference_image) }}
                             />
                             <div style={{ display: 'flex', gap: 4, marginTop: 2, justifyContent: 'center' }}>
-                              <label style={{ fontSize: 8, color: 'var(--dim)', cursor: 'pointer' }}>📎
+                              <label style={{ fontSize: '0.62em', color: 'var(--dim)', cursor: 'pointer' }}>📎
                                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={ev => { const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e2=>{db.upsertEntry('characters',{...e,reference_image:e2.target.result})};r.readAsDataURL(f) }} />
                               </label>
-                              <span style={{ fontSize: 8, color: '#ff3355', cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); db.upsertEntry('characters',{...e,reference_image:null}) }}>✕</span>
+                              <span style={{ fontSize: '0.62em', color: '#ff3355', cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); db.upsertEntry('characters',{...e,reference_image:null}) }}>✕</span>
                             </div>
                           </div>
                         ) : (
@@ -609,18 +615,18 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
                     onClick={() => { if (src) { db.upsertEntry('characters',{...ch,portrait_base:key,portrait_custom:null,portrait_canvas:null}); loadBase(src) } }}>
                     {src
                       ? <img src={src} style={{ width:'100%', height:60, objectFit:'contain', filter:'invert(1) brightness(.7)' }} alt={label} />
-                      : <div style={{ height:60, display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, color:'var(--mut)', flexDirection:'column', gap:2 }}>
+                      : <div style={{ height:60, display:'flex', alignItems:'center', justifyContent:'center', fontSize: '0.69em', color:'var(--mut)', flexDirection:'column', gap:2 }}>
                           <span>No image</span>
-                          <label style={{ fontSize:8, color:'var(--cc)', cursor:'pointer' }}>Upload<input type="file" accept="image/*" style={{display:'none'}} onChange={e => uploadPreset(key, e)} /></label>
+                          <label style={{ fontSize: '0.62em', color:'var(--cc)', cursor:'pointer' }}>Upload<input type="file" accept="image/*" style={{display:'none'}} onChange={e => uploadPreset(key, e)} /></label>
                         </div>
                     }
-                    <div style={{ fontSize: 8, color: sel?'var(--cc)':'var(--dim)', marginTop: 2 }}>{label}</div>
+                    <div style={{ fontSize: '0.62em', color: sel?'var(--cc)':'var(--dim)', marginTop: 2 }}>{label}</div>
                   </div>
                 )
               })}
             </div>
             <div className="field"><label>Upload Custom Image</label>
-              <label style={{ display:'inline-block', padding:'6px 12px', background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--r)', cursor:'pointer', fontSize:11 }}>
+              <label style={{ display:'inline-block', padding:'6px 12px', background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--r)', cursor:'pointer', fontSize: '0.85em' }}>
                 📎 Choose Image
                 <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => {
                   const f=e.target.files[0]; if(!f) return
@@ -637,14 +643,14 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
               <button className="btn btn-sm btn-outline" onClick={undo}>↩ Undo</button>
               <button className="btn btn-sm btn-outline" onClick={reset}>↺ Reset</button>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:10, color:'var(--dim)' }}>Tol:</span>
+                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Tol:</span>
                 <input type="range" min={4} max={80} value={tolerance} style={{ width:70 }} onChange={e => setTolerance(parseInt(e.target.value))} />
-                <span style={{ fontSize:10, color:'var(--cca)' }}>{tolerance}</span>
+                <span style={{ fontSize: '0.77em', color:'var(--cca)' }}>{tolerance}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:10, color:'var(--dim)' }}>Zoom:</span>
+                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Zoom:</span>
                 <input type="range" min={1} max={4} step={0.25} value={zoom} style={{ width:60 }} onChange={e => setZoom(parseFloat(e.target.value))} />
-                <span style={{ fontSize:10, color:'var(--cca)' }}>{zoom}×</span>
+                <span style={{ fontSize: '0.77em', color:'var(--cca)' }}>{zoom}×</span>
               </div>
               <div style={{ display:'flex', gap:4 }}>
                 <button className={`fp ${fillMode==='flat'?'active':''}`} style={{ color:'var(--cc)' }} onClick={() => setFillMode('flat')}>Flat</button>
@@ -653,12 +659,12 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
             </div>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
               <input type="color" value={flatColor} onChange={e => setFlatColor(e.target.value)} style={{ width:36, height:30, padding:0, border:'1px solid var(--brd)', borderRadius:4, cursor:'pointer' }} />
-              <span style={{ fontSize:11, color:'var(--dim)' }}>Current color</span>
+              <span style={{ fontSize: '0.85em', color:'var(--dim)' }}>Current color</span>
               <div style={{ width:20, height:20, borderRadius:'50%', background:flatColor, border:'2px solid rgba(255,255,255,.2)' }} />
             </div>
             {recentColors.length > 0 && (
               <div style={{ marginBottom:8 }}>
-                <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Recent</div>
+                <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Recent</div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:3 }}>
                   {recentColors.map((c,i) => (
                     <div key={i} style={{ width:18, height:18, borderRadius:3, background:c, border:`2px solid ${c===flatColor?'white':'rgba(255,255,255,.15)'}`, cursor:'pointer' }} onClick={() => setFlatColor(c)} title={c} />
@@ -667,7 +673,7 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
               </div>
             )}
             <div style={{ marginBottom:8 }}>
-              <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Palette</div>
+              <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4, textTransform:'uppercase', letterSpacing:'.03em' }}>Palette</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(10,1fr)', gap:2 }}>
                 {PALETTE.map((c,i) => (
                   <div key={i} style={{ width:'100%', paddingBottom:'100%', position:'relative', cursor:'pointer' }} onClick={() => setFlatColor(c)}>
@@ -684,35 +690,35 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
 
         {tab === 'gradient' && (
           <div>
-            <div style={{ fontSize:10, color:'var(--dim)', marginBottom:8 }}>Set up gradient, then switch to Color Tool and click a region.</div>
+            <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:8 }}>Set up gradient, then switch to Color Tool and click a region.</div>
             <GradientBar stops={gradStops} setStops={setGradStops} selectedStop={selectedStop} setSelectedStop={setSelectedStop} />
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginTop:8 }}>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:10, color:'var(--dim)' }}>Stop color:</span>
+                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Stop color:</span>
                 <input type="color" value={gradStops[selectedStop]?.color||'#c966ff'} onChange={e => setGradStops(prev => prev.map((s,i) => i===selectedStop?{...s,color:e.target.value}:s))} style={{ width:32, height:24, padding:0, border:'1px solid var(--brd)', borderRadius:4, cursor:'pointer' }} />
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:10, color:'var(--dim)' }}>Angle:</span>
+                <span style={{ fontSize: '0.77em', color:'var(--dim)' }}>Angle:</span>
                 <input type="number" value={gradAngle} min={0} max={360} style={{ width:50 }} onChange={e => setGradAngle(parseInt(e.target.value)||0)} />°
               </div>
-              <select style={{ padding:'3px 5px', borderRadius:4, border:'1px solid var(--brd)', background:'var(--card)', color:'var(--tx)', fontSize:10 }} value={gradType} onChange={e => setGradType(e.target.value)}>
+              <select style={{ padding:'3px 5px', borderRadius:4, border:'1px solid var(--brd)', background:'var(--card)', color:'var(--tx)', fontSize: '0.77em' }} value={gradType} onChange={e => setGradType(e.target.value)}>
                 <option value="linear">Linear</option>
                 <option value="radial">Radial</option>
               </select>
             </div>
             <div style={{ marginTop:12 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                <div style={{ fontSize:9, color:'var(--dim)', textTransform:'uppercase', letterSpacing:'.03em' }}>Saved Gradients</div>
+                <div style={{ fontSize: '0.69em', color:'var(--dim)', textTransform:'uppercase', letterSpacing:'.03em' }}>Saved Gradients</div>
                 <button className="btn btn-sm btn-outline" style={{ color:'var(--cca)', borderColor:'var(--cca)' }} onClick={saveGradient}>💾 Save Current</button>
               </div>
-              {!savedGrads.length && <div style={{ fontSize:10, color:'var(--mut)' }}>No saved gradients yet.</div>}
+              {!savedGrads.length && <div style={{ fontSize: '0.77em', color:'var(--mut)' }}>No saved gradients yet.</div>}
               {savedGrads.map((g,i) => {
                 const preview = `linear-gradient(90deg, ${[...g.stops].sort((a,b)=>a.pos-b.pos).map(s=>`${s.color} ${s.pos*100}%`).join(', ')})`
                 return (
                   <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                     <div style={{ flex:1, height:20, borderRadius:4, background:preview, border:'1px solid var(--brd)', cursor:'pointer' }} onClick={() => { setGradStops(g.stops); setGradAngle(g.angle); setGradType(g.type) }} />
-                    <span style={{ fontSize:10, color:'var(--dim)', minWidth:60 }}>{g.name}</span>
-                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize:11 }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); localStorage.setItem('gcomp_gradients',JSON.stringify(u)) }}>✕</button>
+                    <span style={{ fontSize: '0.77em', color:'var(--dim)', minWidth:60 }}>{g.name}</span>
+                    <button style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize: '0.85em' }} onClick={() => { const u=savedGrads.filter((_,idx)=>idx!==i); setSavedGrads(u); localStorage.setItem('gcomp_gradients',JSON.stringify(u)) }}>✕</button>
                   </div>
                 )
               })}
@@ -779,7 +785,7 @@ function GradientBar({ stops, setStops, selectedStop, setSelectedStop }) {
   }
   return (
     <div>
-      <div style={{ fontSize:9, color:'var(--dim)', marginBottom:4 }}>Click bar to add stop · Drag to move · Right-click to remove</div>
+      <div style={{ fontSize: '0.69em', color:'var(--dim)', marginBottom:4 }}>Click bar to add stop · Drag to move · Right-click to remove</div>
       <canvas ref={canvasRef} width={300} height={28} style={{ width:'100%', maxWidth:300, borderRadius:4, cursor:'crosshair', display:'block', border:'1px solid var(--brd)' }}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onContextMenu={onContextMenu} />
     </div>

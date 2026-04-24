@@ -5,7 +5,7 @@ import EntryForm from '../components/common/EntryForm'
 import Lightbox from '../components/common/Lightbox'
 import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
-import { highlight, uid, SL } from '../constants'
+import { highlight, TAB_RAINBOW, uid, SL } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 // ── Category config ───────────────────────────────────────────────
@@ -336,6 +336,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 // MAIN INVENTORY COMPONENT
 // ══════════════════════════════════════════════════════════════════
 export default function Inventory({ db }) {
+  const tabColor = TAB_RAINBOW.inventory
   // Merge legacy items + wardrobe + inventory into one list
   const rawInventory = db.db.inventory || []
   const rawItems = (db.db.items || []).map(e => ({ ...e, _source: 'items',
@@ -357,7 +358,10 @@ export default function Inventory({ db }) {
 
   // ── State ──
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState('bubble') // 'bubble' | 'list' | 'outfit'
+  const [topTab, setTopTab] = useState(() => {
+    try { return localStorage.getItem('inventory_topTab') || 'items' } catch { return 'items' }
+  })
+  const [viewMode, setViewMode] = useState('bubble') // 'bubble' | 'list'
   const [filterCat, setFilterCat] = useState('all')
   const [filterChar, setFilterChar] = useState('all')
   const [filterGroup, setFilterGroup] = useState('all')
@@ -378,6 +382,7 @@ export default function Inventory({ db }) {
   const [dragIdx, setDragIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
   const [showColPicker, setShowColPicker] = useState(false)
+  const [significantOnly, setSignificantOnly] = useState(false)
 
   useEffect(() => {
     function onExpand(e) {
@@ -398,6 +403,11 @@ export default function Inventory({ db }) {
   function saveColumns(n) {
     setColumns(n)
     db.saveSetting?.('inv_columns', String(n))
+  }
+
+  function pickTopTab(v) {
+    setTopTab(v)
+    try { localStorage.setItem('inventory_topTab', v) } catch {}
   }
 
   async function handleImageUpload(entryId, file) {
@@ -478,8 +488,9 @@ export default function Inventory({ db }) {
       const ch = chars.find(c => c.id === holderId)
       return ch?.groups?.split(',').map(g => g.trim()).includes(filterGroup)
     })()
-    return ms && mc && mch && mchg
-  }), [allEntries, search, filterCat, filterChar, filterChars, filterGroup, chars])
+    const sig = !significantOnly || (e.significance && e.significance.trim())
+    return ms && mc && mch && mchg && sig
+  }), [allEntries, search, filterCat, filterChar, filterChars, filterGroup, chars, significantOnly])
 
   // ── Grouping for bubble view ──
   const grouped = useMemo(() => {
@@ -517,7 +528,17 @@ export default function Inventory({ db }) {
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        {[['items', '📦 All Items'], ['outfits', '👗 Outfits']].map(([k, l]) => (
+          <button key={k} onClick={() => pickTopTab(k)}
+            style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${topTab === k ? tabColor : 'var(--brd)'}`, background: topTab === k ? `${tabColor}22` : 'transparent', color: topTab === k ? tabColor : 'var(--dim)', fontSize: '0.85em', fontWeight: 700, cursor: 'pointer' }}>
+            {l}
+          </button>
+        ))}
+      </div>
       {/* ── Toolbar ── */}
+      {topTab === 'items' && (
+        <>
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
         <input className="sx" style={{ minWidth: 120 }} placeholder="Search inventory…"
           value={search} onChange={e => setSearch(e.target.value)} />
@@ -550,15 +571,23 @@ export default function Inventory({ db }) {
 
         {/* View toggle */}
         <div style={{ display: 'flex', gap: 3 }}>
-          {[['bubble','🫧 Bubbles'],['list','☰ List'],['outfit','👗 Outfits']].map(([v,l]) => (
+          {[['bubble','Bubbles'],['list','List']].map(([v,l]) => (
             <button key={v} onClick={() => setViewMode(v)}
               style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
                 fontWeight: viewMode === v ? 700 : 400,
-                background: viewMode === v ? 'var(--ci)' : 'none',
+                background: viewMode === v ? tabColor : 'none',
                 color: viewMode === v ? '#000' : 'var(--dim)',
-                border: `2px solid ${viewMode === v ? 'var(--ci)' : 'var(--brd)'}` }}>{l}</button>
+                border: `2px solid ${viewMode === v ? tabColor : 'var(--brd)'}` }}>{l}</button>
           ))}
         </div>
+
+        <button onClick={() => setSignificantOnly(v => !v)}
+          style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12,
+            border: `1px solid ${significantOnly ? tabColor : 'var(--brd)'}`,
+            background: significantOnly ? `${tabColor}22` : 'none',
+            color: significantOnly ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
+          Significant only
+        </button>
 
         {/* List sort (only in list mode) */}
         {viewMode === 'list' && (
@@ -583,16 +612,16 @@ export default function Inventory({ db }) {
               {[1,2,3,4,5,8].map(n => (
                 <button key={n} onClick={() => { saveColumns(n); setShowColPicker(false) }}
                   style={{ width: 30, height: 30, borderRadius: 6, fontSize: '0.92em', fontWeight: 700,
-                    background: columns === n ? 'var(--ci)' : 'var(--card)',
+                    background: columns === n ? tabColor : 'var(--card)',
                     color: columns === n ? '#000' : 'var(--tx)',
-                    border: `1px solid ${columns === n ? 'var(--ci)' : 'var(--brd)'}`,
+                    border: `1px solid ${columns === n ? tabColor : 'var(--brd)'}`,
                     cursor: 'pointer' }}>{n}</button>
               ))}
             </div>
           )}
         </div>
 
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)', marginLeft: 'auto' }}
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor, marginLeft: 'auto' }}
           onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
@@ -681,7 +710,10 @@ export default function Inventory({ db }) {
       )}
 
       {/* ── Outfit Snapshot view ── */}
-      {viewMode === 'outfit' && (
+        </>
+      )}
+
+      {topTab === 'outfits' && (
         <OutfitSnapshot db={db} chars={chars} allEntries={allEntries} />
       )}
 
@@ -707,12 +739,12 @@ export default function Inventory({ db }) {
         }} />
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }}
-        title={`${editing?.id ? 'Edit' : 'Add'} Inventory Entry`} color="var(--ci)">
+        title={`${editing?.id ? 'Edit' : 'Add'} Inventory Entry`} color={tabColor}>
         <EntryForm fields={INV_FIELDS} entry={editing || {}} onSave={handleSave}
-          onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--ci)" db={db} />
+          onCancel={() => { setModalOpen(false); setEditing(null) }} color={tabColor} db={db} />
       </Modal>
 
-      <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color="var(--ci)">
+      <Modal open={!!transferId} onClose={() => setTransferId(null)} title="Transfer Item" color={tabColor}>
         <div className="field"><label>Transfer To</label>
           <select value={txForm.to} onChange={e => setTxForm(p => ({ ...p, to: e.target.value }))}>
             <option value="">— Pick character —</option>
@@ -728,7 +760,7 @@ export default function Inventory({ db }) {
         </div>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setTransferId(null)}>Cancel</button>
-          <button className="btn btn-primary" style={{ background: 'var(--ci)' }} onClick={doTransfer}>Transfer</button>
+          <button className="btn btn-primary" style={{ background: tabColor }} onClick={doTransfer}>Transfer</button>
         </div>
       </Modal>
 

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
-import { CATS, TAB_RAINBOW, uid } from './constants'
+import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid } from './constants'
 
 import Dashboard from './tabs/Dashboard'
 import Characters from './tabs/Characters'
@@ -29,12 +29,7 @@ import SessionLog from './tabs/SessionLog'
 import Glossary from './tabs/Glossary'
 import IOBar from './components/common/IOBar'
 
-const TAB_ORDER = [
-  'dashboard','wiki','glossary','characters','familytree','world','locations','map',
-  'manuscript','scenes','timeline','calendar',
-  'inventory','flags','questions','canon','spellings',
-  'notes','tools','sessionlog'
-]
+const TAB_ORDER = TAB_ORDER_FOR_COLORS
 
 const VALID_TABS = new Set(TAB_ORDER)
 
@@ -140,7 +135,7 @@ export default function App() {
     if (entryId) {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('gcomp_expand', { detail: { id: entryId } }))
-      }, 150)
+      }, 300)
     }
   }, [goTo])
 
@@ -151,7 +146,7 @@ export default function App() {
 
   const adjFont = useCallback((d) => {
     setFontSize(prev => {
-      const next = Math.max(10, Math.min(20, prev + d))
+      const next = Math.max(11, Math.min(22, prev + d))
       try { localStorage.setItem('gcomp_font_size', String(next)) } catch {}
       return next
     })

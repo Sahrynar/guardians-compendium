@@ -24,10 +24,10 @@ const OUTFIT_SLOTS = [
 function SlotPicker({ slot, charItems, value, onChange }) {
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase',
+      <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase',
         letterSpacing: '.05em', marginBottom: 3 }}>{slot.label}</div>
       <select value={value || ''} onChange={e => onChange(slot.id, e.target.value)}
-        style={{ width: '100%', fontSize: 10, padding: '4px 8px', background: 'var(--sf)',
+        style={{ width: '100%', fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
           border: `1px solid ${value ? 'var(--ci)' : 'var(--brd)'}`, borderRadius: 6, color: 'var(--tx)' }}>
         <option value="">— empty —</option>
         {charItems.map(item => (
@@ -37,7 +37,7 @@ function SlotPicker({ slot, charItems, value, onChange }) {
       {value && (() => {
         const item = charItems.find(i => i.id === value)
         return item?.color_material ? (
-          <div style={{ fontSize: 9, color: 'var(--mut)', marginTop: 2, paddingLeft: 4 }}>{item.color_material}</div>
+          <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2, paddingLeft: 4 }}>{item.color_material}</div>
         ) : null
       })()}
     </div>
@@ -102,9 +102,9 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: 14, color: 'var(--ci)' }}>👗 Outfit Snapshot</div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: 'var(--ci)' }}>👗 Outfit Snapshot</div>
         <button onClick={() => setShowSaved(s => !s)}
-          style={{ fontSize: 10, padding: '3px 10px', borderRadius: 10,
+          style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 10,
             background: showSaved ? 'var(--ci)' : 'none', color: showSaved ? '#000' : 'var(--dim)',
             border: '1px solid var(--ci)', cursor: 'pointer' }}>
           📂 Saved ({savedSnapshots.length})
@@ -114,21 +114,21 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
       {showSaved && (
         <div style={{ marginBottom: 14, padding: '10px 14px', background: 'var(--card)',
           border: '1px solid var(--brd)', borderRadius: 8 }}>
-          <div style={{ fontSize: 10, color: 'var(--mut)', marginBottom: 8 }}>All saved outfit snapshots</div>
-          {savedSnapshots.length === 0 && <div style={{ fontSize: 11, color: 'var(--mut)' }}>No snapshots saved yet.</div>}
+          <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 8 }}>All saved outfit snapshots</div>
+          {savedSnapshots.length === 0 && <div style={{ fontSize: '0.85em', color: 'var(--mut)' }}>No snapshots saved yet.</div>}
           {savedSnapshots.map(snap => (
             <div key={snap.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '5px 8px', borderLeft: '3px solid var(--ci)', marginBottom: 4, background: 'var(--sf)', borderRadius: '0 6px 6px 0' }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600 }}>{snap.name}</div>
-                <div style={{ fontSize: 9, color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` · ${snap.scene}` : ''}</div>
+                <div style={{ fontSize: '0.85em', fontWeight: 600 }}>{snap.name}</div>
+                <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` · ${snap.scene}` : ''}</div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => loadSnapshot(snap)}
-                  style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, background: 'none',
+                  style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
                     border: '1px solid var(--ci)', color: 'var(--ci)', cursor: 'pointer' }}>Load</button>
                 <button onClick={() => deleteSnapshot(snap.id)}
-                  style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, background: 'none',
+                  style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
                     border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>✕</button>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
             <label>Additional notes (underwear, base layer, etc.)</label>
             <textarea value={slots._notes || ''} onChange={e => setSlot('_notes', e.target.value)} rows={2}
               placeholder="e.g. off-white linen shift underneath, hair braided..."
-              style={{ width: '100%', fontSize: 11, padding: '6px 8px', background: 'var(--sf)',
+              style={{ width: '100%', fontSize: '0.85em', padding: '6px 8px', background: 'var(--sf)',
                 border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
 

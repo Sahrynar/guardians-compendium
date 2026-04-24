@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
 // ── Rainbow spectrum for session cards ─────────────────────────
@@ -151,19 +151,19 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
         <input type="checkbox" checked={selected} onClick={e => e.stopPropagation()}
           onChange={e => onSelect(e.target.checked)} style={{ flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700, color: col }}>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700, color: col }}>
             Session {session.session_number} · {session.date}
           </div>
           {session.topics && (
-            <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 2 }}>{session.topics}</div>
+            <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{session.topics}</div>
           )}
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button onClick={e => { e.stopPropagation(); onEdit(session) }}
-            style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}66`, background: 'none', color: col, cursor: 'pointer' }}>Edit</button>
+            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}66`, background: 'none', color: col, cursor: 'pointer' }}>Edit</button>
           <button onClick={e => { e.stopPropagation(); onDelete(session.id) }}
-            style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}>✕</button>
-          <span style={{ color: 'var(--dim)', fontSize: 14 }}>{expanded ? '▲' : '▼'}</span>
+            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}>✕</button>
+          <span style={{ color: 'var(--dim)', fontSize: '1.08em' }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
@@ -173,8 +173,8 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
             if (!session[k]?.trim()) return null
             return (
               <div key={k} style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: col, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>{l}</div>
-                <div style={{ fontSize: 12, color: 'var(--tx)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{session[k]}</div>
+                <div style={{ fontSize: '0.77em', fontWeight: 700, color: col, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>{l}</div>
+                <div style={{ fontSize: '0.92em', color: 'var(--tx)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{session[k]}</div>
               </div>
             )
           })}
@@ -191,46 +191,46 @@ function SessionForm({ initial, onSave, onCancel }) {
   const inputStyle = {
     width: '100%', padding: '6px 9px', borderRadius: 6,
     border: '1px solid var(--brd)', background: 'var(--sf)',
-    color: 'var(--tx)', fontSize: 12, outline: 'none', boxSizing: 'border-box',
+    color: 'var(--tx)', fontSize: '0.92em', outline: 'none', boxSizing: 'border-box',
   }
   const taStyle = { ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }
 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 12, padding: 16, marginBottom: 14 }}>
-      <div style={{ fontFamily: "'Cinzel',serif", fontSize: 13, color: 'var(--cc)', marginBottom: 12, fontWeight: 700 }}>
+      <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: 'var(--cc)', marginBottom: 12, fontWeight: 700 }}>
         {initial.session_number ? `Edit Session ${initial.session_number}` : 'New Session'}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 10 }}>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Session #</div>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Session #</div>
           <input type="number" value={form.session_number} onChange={e => set('session_number', e.target.value)} style={inputStyle} />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Date</div>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Date</div>
           <input type="date" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Opened</div>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Opened</div>
           <input value={form.opened_at} onChange={e => set('opened_at', e.target.value)} placeholder="e.g. 9:43 AM CDT" style={inputStyle} />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Closed</div>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Closed</div>
           <input value={form.closed_at} onChange={e => set('closed_at', e.target.value)} placeholder="e.g. 11:30 PM CDT" style={inputStyle} />
         </div>
       </div>
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Topics</div>
+        <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Topics</div>
         <input value={form.topics} onChange={e => set('topics', e.target.value)} placeholder="Brief summary…" style={inputStyle} />
       </div>
       {SECTION_LABELS.map(({ k, l }) => (
         <div key={k} style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 10, color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>{l}</div>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>{l}</div>
           <textarea value={form[k]} onChange={e => set(k, e.target.value)} placeholder={`${l}…`} style={taStyle} />
         </div>
       ))}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-        <button onClick={onCancel} style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
-        <button onClick={() => onSave(form)} style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: 'var(--cc)', color: '#000', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Save Session</button>
+        <button onClick={onCancel} style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.92em' }}>Cancel</button>
+        <button onClick={() => onSave(form)} style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: 'var(--cc)', color: '#000', cursor: 'pointer', fontSize: '0.92em', fontWeight: 700 }}>Save Session</button>
       </div>
     </div>
   )
@@ -249,14 +249,14 @@ const ACTION_LABELS = {
   import: '⬆ Imported', restore: '⟲ Restored',
 }
 
-function ActivityLog({ activityLog, undoActivityRecord }) {
+function ActivityLog({ activityLog, undoActivityRecord, crossLink }) {
   const [filterAction, setFilterAction] = useState('all')
   const [filterCat, setFilterCat] = useState('all')
   const [search, setSearch] = useState('')
   const [expandedDiff, setExpandedDiff] = useState(null)
 
   const allActions = ['all', 'add', 'edit', 'delete', 'import', 'restore']
-  const allCats = ['all', ...new Set((activityLog || []).map(r => r.category).filter(Boolean))]
+  const allCats = ['all', ...new Set((activityLog || []).map(r => r.table || r.category).filter(Boolean))]
   const formatRecordTimestamp = (timestamp) => {
     if (!timestamp) return '—'
     const date = new Date(timestamp)
@@ -273,14 +273,21 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
 
   const filtered = (activityLog || []).filter(r => {
     if (filterAction !== 'all' && r.action !== filterAction) return false
-    if (filterCat !== 'all' && r.category !== filterCat) return false
+    const cat = r.table || r.category
+    if (filterCat !== 'all' && cat !== filterCat) return false
     if (search) {
       const q = search.toLowerCase()
       if (!(r.entry_name || '').toLowerCase().includes(q) &&
-          !(r.category || '').toLowerCase().includes(q)) return false
+          !(cat || '').toLowerCase().includes(q)) return false
     }
     return true
   })
+
+  function onRowClick(record) {
+    if (record.recordId && record.table) {
+      crossLink?.(record.table, record.recordId)
+    }
+  }
 
   if (!activityLog || activityLog.length === 0) {
     return (
@@ -319,35 +326,38 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
       </div>
 
       {filtered.map(record => {
-        const col = ACTION_COLORS[record.action] || 'var(--dim)'
+        const destCat = record.table || record.category || 'sessionlog'
+        const rowColor = TAB_RAINBOW[destCat] || TAB_RAINBOW.sessionlog
+        const actionIconColor = ACTION_COLORS[record.action] || 'var(--dim)'
         const isExpanded = expandedDiff === record.id
         return (
-          <div key={record.id} style={{
-            background: 'var(--card)', border: `1px solid ${col}33`,
-            borderLeft: `3px solid ${col}`, borderRadius: 8,
+          <div key={record.id} onClick={() => onRowClick(record)} style={{
+            background: 'var(--card)', border: `1px solid ${rowColor}33`,
+            borderLeft: `3px solid ${rowColor}`, borderRadius: 8,
             marginBottom: 6, padding: '8px 12px',
             opacity: record.undone ? 0.5 : 1,
+            cursor: record.recordId && record.table ? 'pointer' : 'default',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '0.85em', fontWeight: 700, color: col, minWidth: 80 }}>
+              <span style={{ fontSize: '0.77em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${actionIconColor}66`, color: actionIconColor, marginRight: 8, fontWeight: 700, minWidth: 80, textAlign: 'center' }}>
                 {ACTION_LABELS[record.action] || record.action}
               </span>
               <span style={{ fontSize: '1em', color: 'var(--tx)', flex: 1 }}>
-                <span style={{ color: 'var(--dim)', fontSize: '0.8em' }}>{record.category} · </span>
+                <span style={{ color: rowColor, fontSize: '0.8em' }}>{destCat} · </span>
                 {record.entry_name}
               </span>
               <span style={{ fontSize: '0.8em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
                 {formatRecordTimestamp(record.timestamp)}
               </span>
               {record.diff && record.diff.length > 0 && (
-                <button onClick={() => setExpandedDiff(isExpanded ? null : record.id)}
+                <button onClick={e => { e.stopPropagation(); setExpandedDiff(isExpanded ? null : record.id) }}
                   style={{ fontSize: '0.8em', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
                   {isExpanded ? 'Hide diff' : `${record.diff.length} change${record.diff.length !== 1 ? 's' : ''}`}
                 </button>
               )}
               {!record.undone && (record.action === 'delete' || record.action === 'edit' || record.action === 'add') && (
-                <button onClick={() => undoActivityRecord(record.id)}
-                  style={{ fontSize: '0.8em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}55`, background: 'none', color: col, cursor: 'pointer', fontWeight: 700 }}>
+                <button onClick={e => { e.stopPropagation(); undoActivityRecord(record.id) }}
+                  style={{ fontSize: '0.8em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${actionIconColor}55`, background: 'none', color: actionIconColor, cursor: 'pointer', fontWeight: 700 }}>
                   ⟲ Undo
                 </button>
               )}
@@ -383,7 +393,7 @@ function ActivityLog({ activityLog, undoActivityRecord }) {
 }
 
 // ── Main SessionLog tab ────────────────────────────────────────
-export default function SessionLog({ db, goTo }) {
+export default function SessionLog({ db, goTo, crossLink }) {
   const [sessions, setSessions] = useState([])
   const [featureRegistry, setFeatureRegistry] = useState([])
   const [loading, setLoading] = useState(true)
@@ -522,18 +532,18 @@ export default function SessionLog({ db, goTo }) {
   )
 
   // Tab color for SessionLog is the last in the rainbow
-  const tabColor = '#ff44cc'
+  const tabColor = TAB_RAINBOW.sessionlog || '#ff44cc'
 
   return (
     <div>
       {/* Header */}
-      <div style={{ fontFamily: "'Cinzel',serif", fontSize: 15, color: tabColor, marginBottom: 12 }}>
+      <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor, marginBottom: 12 }}>
         📋 Logs
       </div>
 
       {/* Flash */}
       {msg && (
-        <div style={{ fontSize: 12, color: 'var(--sl)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>{msg}</div>
+        <div style={{ fontSize: '0.92em', color: 'var(--sl)', marginBottom: 10, padding: '6px 12px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>{msg}</div>
       )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -545,7 +555,7 @@ export default function SessionLog({ db, goTo }) {
             border: `1px solid ${subTab === 'sessions' ? tabColor : 'var(--brd)'}`,
             background: subTab === 'sessions' ? tabColor : 'transparent',
             color: subTab === 'sessions' ? '#000' : tabColor,
-            fontSize: 11,
+            fontSize: '0.85em',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -560,7 +570,7 @@ export default function SessionLog({ db, goTo }) {
             border: `1px solid ${subTab === 'activityfeatures' ? tabColor : 'var(--brd)'}`,
             background: subTab === 'activityfeatures' ? tabColor : 'transparent',
             color: subTab === 'activityfeatures' ? '#000' : tabColor,
-            fontSize: 11,
+            fontSize: '0.85em',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -571,26 +581,25 @@ export default function SessionLog({ db, goTo }) {
 
       {subTab === 'sessions' ? (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📋 Sessions</div>
           {/* Toolbar */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sessions…"
-              style={{ flex: 1, minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: 12, outline: 'none' }} />
+              style={{ flex: 1, minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.92em', outline: 'none' }} />
             {selected.size > 0 && (
               <>
-                <button onClick={exportSelected} style={{ fontSize: 11, padding: '4px 12px', borderRadius: 8, border: `1px solid ${tabColor}`, background: 'none', color: tabColor, cursor: 'pointer' }}>
+                <button onClick={exportSelected} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: `1px solid ${tabColor}`, background: 'none', color: tabColor, cursor: 'pointer' }}>
                   ↓ Export {selected.size} selected
                 </button>
-                <button onClick={() => setSelected(new Set())} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Clear</button>
+                <button onClick={() => setSelected(new Set())} style={{ fontSize: '0.85em', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Clear</button>
               </>
             )}
             {filtered.length > 0 && (
               <button onClick={() => setSelected(new Set(filtered.map(s => s.id)))}
-                style={{ fontSize: 10, padding: '3px 9px', borderRadius: 12, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Select all</button>
+                style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Select all</button>
             )}
-            <button onClick={exportAll} style={{ fontSize: 11, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>↓ Export All</button>
+            <button onClick={exportAll} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>↓ Export All</button>
             <button onClick={() => { setAdding(true); setEditing(null) }}
-              style={{ fontSize: 11, padding: '4px 12px', borderRadius: 8, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
+              style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
               + New Session
             </button>
           </div>
@@ -599,7 +608,7 @@ export default function SessionLog({ db, goTo }) {
           {editing && <SessionForm initial={editing} onSave={saveSession} onCancel={() => setEditing(null)} />}
 
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)', fontStyle: 'italic', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)', fontStyle: 'italic', fontSize: '1em' }}>
               {sessions.length === 0 ? 'No sessions yet. Add your first one!' : 'No sessions match this search.'}
             </div>
           ) : (
@@ -613,17 +622,17 @@ export default function SessionLog({ db, goTo }) {
               />
             ))
           )}
-          <div style={{ fontSize: 11, color: 'var(--dim)', textAlign: 'center', marginTop: 12 }}>
+          <div style={{ fontSize: '0.85em', color: 'var(--dim)', textAlign: 'center', marginTop: 12 }}>
             {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Cloud sync on' : 'Local only'}
           </div>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingRight: 14 }}>
-            <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, marginBottom: 10, fontFamily: "'Cinzel',serif" }}>📊 Activity Log</div>
             <ActivityLog
               activityLog={db?.activityLog || []}
               undoActivityRecord={db?.undoActivityRecord}
+              crossLink={crossLink}
             />
           </div>
 
@@ -631,7 +640,7 @@ export default function SessionLog({ db, goTo }) {
 
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>⚙ Features</div>
+              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>âš™ Features</div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   onClick={() => setAddingFeature(v => !v)}
@@ -690,8 +699,9 @@ export default function SessionLog({ db, goTo }) {
             <div style={{ overflowY: 'auto', paddingRight: 2 }}>
               {featureRegistry.map(entry => {
                 const archived = entry.status === 'archived'
+                const featureColor = TAB_RAINBOW[entry.tab] || tabColor
                 return (
-                  <div key={entry.id} style={{
+                  <div key={entry.id} onClick={() => goTo?.(entry.tab)} style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
@@ -700,9 +710,11 @@ export default function SessionLog({ db, goTo }) {
                     marginBottom: 4,
                     borderRadius: 6,
                     background: 'var(--card)',
-                    border: '1px solid var(--brd)',
+                    border: `1px solid ${featureColor}33`,
+                    borderLeft: `3px solid ${featureColor}`,
                     opacity: archived ? 0.55 : 1,
                     textDecoration: archived ? 'line-through' : 'none',
+                    cursor: 'pointer',
                   }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ color: 'var(--tx)', whiteSpace: 'normal' }}>
@@ -722,14 +734,14 @@ export default function SessionLog({ db, goTo }) {
                       </span>
                     </span>
                     <button
-                      onClick={() => goTo?.(entry.tab)}
+                      onClick={e => { e.stopPropagation(); goTo?.(entry.tab) }}
                       title={`Go to ${entry.tab}`}
-                      style={{ fontSize: '0.85em', padding: '1px 5px', borderRadius: 4, border: `1px solid ${tabColor}55`, background: 'none', color: tabColor, cursor: 'pointer' }}
+                      style={{ fontSize: '0.85em', padding: '1px 5px', borderRadius: 4, border: `1px solid ${featureColor}55`, background: 'none', color: featureColor, cursor: 'pointer' }}
                     >
                       ↗
                     </button>
                     <button
-                      onClick={() => toggleFeatureArchive(entry.id)}
+                      onClick={e => { e.stopPropagation(); toggleFeatureArchive(entry.id) }}
                       title={archived ? 'Restore to active' : 'Archive feature'}
                       style={{ fontSize: '1em', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}
                     >
@@ -745,3 +757,6 @@ export default function SessionLog({ db, goTo }) {
     </div>
   )
 }
+
+
+

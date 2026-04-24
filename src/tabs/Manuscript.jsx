@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 import { parseSetting } from '../hooks/useDB'
 
 const BOOKS = ['Book 1', 'Book 2', 'Book 3']
-const MS_COLOR = '#aacc00'
+const MS_COLOR = TAB_RAINBOW.manuscript
 const STATUSES = ['Draft', 'Revision', 'Polishing', 'Done']
 const STATUS_COLORS = { Draft: '#6b7280', Revision: '#f59e0b', Polishing: '#8b5cf6', Done: '#10b981' }
 const SHELF_COLS = { XS: 6, S: 4, M: 3, L: 2, XL: 1 }
@@ -14,18 +14,21 @@ const sizeBtn = active => ({ fontSize: '0.69em', padding: '2px 7px', borderRadiu
 function toHTML(text) {
   if (!text) return ''
   let t = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  t = t.replace(/^[ \t]*\*{3}[ \t]*$/gm, '\n<p style="text-align:center;letter-spacing:.3em">* * *</p>\n')
-  t = t.replace(/^[ \t]*---[ \t]*$/gm, '<hr>')
+  t = t.replace(/^[ \t]*\*{3}[ \t]*$/gm, '\n\n___SCENE_BREAK___\n\n')
+  t = t.replace(/^[ \t]*---[ \t]*$/gm, '\n\n___HR___\n\n')
   t = t.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
   t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
   t = t.replace(/\*(.*?)\*/g, '<em>$1</em>')
   t = t.replace(/_(.*?)_/g, '<em>$1</em>')
-  const paras = t.split(/\n{2,}/)
+  const hasBlankLines = /\n\s*\n/.test(t)
+  const paras = hasBlankLines ? t.split(/\n{2,}/) : t.split(/\n/)
   return paras.map(p => {
     const trimmed = p.trim()
     if (!trimmed) return ''
+    if (trimmed === '___SCENE_BREAK___') return '<p style="text-align:center;letter-spacing:.3em;margin:1.5em 0">* * *</p>'
+    if (trimmed === '___HR___') return '<hr>'
     if (trimmed.startsWith('<')) return trimmed
-    const flowed = trimmed.replace(/\n+/g, ' ').replace(/\s+/g, ' ')
+    const flowed = hasBlankLines ? trimmed.replace(/\n+/g, ' ').replace(/\s+/g, ' ') : trimmed
     return '<p>' + flowed + '</p>'
   }).filter(Boolean).join('\n')
 }
@@ -91,7 +94,9 @@ function FormatBar({ textareaRef, onUpdate }) {
   )
 }
 
-function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC }) {
+const navSelect = { fontSize: '0.85em', padding: '3px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', maxWidth: 240 }
+
+function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome }) {
   const [text, setText] = useState(chapter.text || '')
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
@@ -135,7 +140,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
   function changeFontSize(delta) {
     setFontSize(s => {
-      const next = Math.max(0.7, Math.min(1.8, s + delta))
+      const next = Math.max(0.9, Math.min(2.0, s + delta))
       try { localStorage.setItem('manuscript_fontsize', String(next)) } catch {}
       return next
     })
@@ -183,40 +188,44 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', fontSize: '0.85em', flexWrap: 'wrap' }}>
-        <button onClick={onBackToShelf} style={navBtn}>← Shelf</button>
-        <button onClick={() => onBackToTOC(chapter.book)} style={navBtn}>← TOC</button>
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
-        <button onClick={navPrev} disabled={!prevChapter} style={{ ...navBtn, opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>← Prev Ch</button>
-        <button onClick={navNext} disabled={!nextChapter} style={{ ...navBtn, opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>Next Ch →</button>
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
-        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={{ fontSize: '0.85em', padding: '3px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', maxWidth: 240 }}>
-          {allChapters.map(c => (
-            <option key={c.id} value={c.id}>{c.book} · Ch {c.chapter_num} {c.title ? `· ${c.title}` : ''}</option>
-          ))}
-        </select>
-      </div>
-
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--sf)', flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: MS_COLOR, flex: 1 }}>{chapter.book} · Ch. {chapter.chapter_num}</div>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Chapter title..." style={{ flex: 2, minWidth: 200, fontSize: '1em', padding: '4px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', fontFamily: "'Cinzel',serif" }} />
         <select value={status} onChange={e => setStatus(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: `${statusCol}22`, border: `1px solid ${statusCol}`, borderRadius: 6, color: statusCol, cursor: 'pointer' }}>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>{wc.toLocaleString()} words</span>
+        <button onClick={copyForSubstack} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: MS_COLOR, color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied!' : '📋 Copy for Substack'}</button>
+        <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>Notes ({annotations.length})</span>
+        <button onClick={save} style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6, background: MS_COLOR, color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '1.38em' }}>✕</button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--sf)', flexWrap: 'wrap' }}>
+        <button onClick={() => changeFontSize(-0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A−</button>
+        <button onClick={() => changeFontSize(0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A+</button>
+        <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{Math.round(fontSize * 100)}%</span>
+        <button onClick={toggleIndent} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{indentParas ? '⇥ Indent: ON' : '⇥ Indent: OFF'}</button>
         <div style={{ display: 'flex', gap: 3 }}>
           {[['edit', '✎'], ['preview', '👁'], ['split', '⧉'], ['read', '📖']].map(([v, l]) => (
             <button key={v} onClick={() => setView(v)} title={v} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: view === v ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
-        <button onClick={() => changeFontSize(-0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A−</button>
-        <button onClick={() => changeFontSize(0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A+</button>
-        <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{Math.round(fontSize * 100)}%</span>
-        <button onClick={toggleIndent} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{indentParas ? '⇥ Indent: ON' : '⇥ Indent: OFF'}</button>
-        <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>{wc.toLocaleString()} words · ~{Math.round(wc / 250)} min read</span>
-        <button onClick={copyForSubstack} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: MS_COLOR, color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied!' : '📋 Copy for Substack'}</button>
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
-        <button onClick={save} style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6, background: MS_COLOR, color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '1.38em' }}>✕</button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', fontSize: '0.85em' }}>
+        <button onClick={onHome} title="Home" style={navBtn}>🏠</button>
+        <button onClick={onBackToShelf} title="Shelf" style={navBtn}>📚</button>
+        <button onClick={() => onBackToTOC(chapter.book)} title="Contents" style={navBtn}>📖</button>
+        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
+        <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtn, opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>←</button>
+        <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtn, opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>→</button>
+        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
+        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={navSelect}>
+          {allChapters.map(c => (
+            <option key={c.id} value={c.id}>{c.book} · Ch {c.chapter_num}{c.title ? ` · ${c.title}` : ''}</option>
+          ))}
+        </select>
       </div>
 
       {detectedChars.length > 0 && (
@@ -284,7 +293,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
   )
 }
 
-export default function Manuscript({ db, navSearch }) {
+export default function Manuscript({ db, navSearch, goTo }) {
   const chapters = (db.db.manuscript || []).sort((a, b) => {
     const bi = BOOKS.indexOf(a.book) - BOOKS.indexOf(b.book)
     if (bi !== 0) return bi
@@ -304,7 +313,7 @@ export default function Manuscript({ db, navSearch }) {
     try { return localStorage.getItem('manuscript_shelf_size') || 'M' } catch { return 'M' }
   })
   const [tocSize, setTocSize] = useState(() => {
-    try { return localStorage.getItem('manuscript_toc_size') || 'M' } catch { return 'M' }
+    try { return localStorage.getItem('manuscript_toc_size') || 'L' } catch { return 'L' }
   })
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
@@ -371,6 +380,12 @@ export default function Manuscript({ db, navSearch }) {
   function backToTOC(book) {
     setEditingChapter(null)
     setTocBook(book)
+  }
+
+  function goHome() {
+    setEditingChapter(null)
+    setTocBook(null)
+    goTo?.('dashboard')
   }
 
   function addChapter() {
@@ -528,6 +543,18 @@ export default function Manuscript({ db, navSearch }) {
             </div>
           )}
 
+          {tocSize === 'XL' ? (
+            <div style={{ maxWidth: '65ch', margin: '0 auto', padding: '20px 40px' }}>
+              {filtered.filter(ch => ch.book === tocBook).map(ch => (
+                <div key={ch.id} onClick={() => setEditingChapter(ch)}
+                  style={{ display: 'flex', alignItems: 'baseline', cursor: 'pointer', padding: '10px 0', borderBottom: '1px dotted var(--brd)', fontFamily: 'Georgia, serif' }}>
+                  <span style={{ fontSize: '1em', color: MS_COLOR, minWidth: 60 }}>Ch {ch.chapter_num}</span>
+                  <span style={{ flex: 1, fontSize: '1.08em' }}>{ch.title || '(Untitled)'}</span>
+                  <span style={{ fontSize: '0.85em', color: 'var(--mut)' }}>{ch.word_count || 0} words</span>
+                </div>
+              ))}
+            </div>
+          ) : (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${TOC_COLS[tocSize]}, minmax(0, 1fr))`, gap: 8 }}>
             {filtered.filter(ch => ch.book === tocBook).map(ch => {
               const wc = ch.word_count || wordCount(ch.text || '')
@@ -541,6 +568,7 @@ export default function Manuscript({ db, navSearch }) {
               )
             })}
           </div>
+          )}
         </div>
       )}
 
@@ -561,7 +589,7 @@ export default function Manuscript({ db, navSearch }) {
       )}
 
       {editingChapter && (
-        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapter(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} />
+        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapter(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} />
       )}
     </div>
   )

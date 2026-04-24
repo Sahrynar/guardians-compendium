@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { TAB_RAINBOW } from '../constants'
 import StickiesView from './notes/StickiesView'
 import JournalView from './notes/JournalView'
+import IdeasView from './notes/IdeasView'
 
-const NOTES_COLOR = '#ffcc00'
+const NOTES_COLOR = TAB_RAINBOW.notes
 
 export default function Notes(props) {
   const { db } = props
@@ -25,6 +27,12 @@ export default function Notes(props) {
       if (sticky) {
         pick('stickies')
         setPendingExpandId(targetId)
+        return
+      }
+      const idea = (db.db.ideas_list || []).find(x => x.id === targetId)
+      if (idea) {
+        pick('ideas')
+        setPendingExpandId(targetId)
       }
     }
     window.addEventListener('gcomp_expand', onExpand)
@@ -39,7 +47,7 @@ export default function Notes(props) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {[['stickies', '📌 Stickies'], ['journal', '📝 Journal']].map(([k, l]) => (
+        {[['stickies', '📌 Stickies'], ['journal', '📝 Journal'], ['ideas', '💡 Ideas']].map(([k, l]) => (
           <button
             key={k}
             onClick={() => pick(k)}
@@ -49,7 +57,7 @@ export default function Notes(props) {
               border: `1px solid ${subTab === k ? NOTES_COLOR : 'var(--brd)'}`,
               background: subTab === k ? NOTES_COLOR : 'transparent',
               color: subTab === k ? '#000' : NOTES_COLOR,
-              fontSize: 11,
+              fontSize: '0.85em',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -59,8 +67,9 @@ export default function Notes(props) {
         ))}
       </div>
 
-      {subTab === 'stickies' && <StickiesView {...props} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
+      {subTab === 'stickies' && <StickiesView {...props} goToSubTab={pick} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
       {subTab === 'journal' && <JournalView {...props} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
+      {subTab === 'ideas' && <IdeasView {...props} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
     </div>
   )
 }

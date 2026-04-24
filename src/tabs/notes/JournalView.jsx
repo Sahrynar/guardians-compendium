@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import Modal from '../../components/common/Modal'
-import { uid } from '../../constants'
+import { TAB_RAINBOW, uid } from '../../constants'
 import StickyEditModal from './StickyEditModal'
-import { NOTES_COLOR, normalizeSticky, scrollAndFlashEntry, sortJournalPins, STICKY_COLORS } from './stickyShared'
+import { normalizeSticky, scrollAndFlashEntry, sortJournalPins, STICKY_COLORS, stickyTilt } from './stickyShared'
+
+const NOTES_COLOR = TAB_RAINBOW.notes
 
 const SIZE_COLS_N = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
-const SIZE_LABELS_N = ['XS', 'S', 'M', 'L']
+const SIZE_LABELS_N = ['XS', 'S', 'M', 'L', 'XL']
 const NOTE_CATS = ['General', 'Canon', 'Brainstorm', 'Research', 'Todo', 'Quote', 'Other']
 
 function NoteForm({ note, onSave, onCancel, cats }) {
@@ -66,7 +68,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
   }).sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))
 
   const usedCats = [...new Set(notes.map(n => n.category).filter(Boolean))]
-  const pinnedStickies = sortJournalPins(captures.filter(c => c.pinned_journal))
+  const pinnedStickies = sortJournalPins(captures.filter(c => c.pinned_journal && !c.archived))
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 700 : false
 
   function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_notes', sz) } catch {} }
@@ -105,7 +107,9 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
             <button key={l} onClick={() => changeColSize(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colSize === l ? NOTES_COLOR : 'none', color: colSize === l ? '#000' : 'var(--dim)', border: `1px solid ${colSize === l ? NOTES_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: NOTES_COLOR }}>📝 Journal</div>
+        <div style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: NOTES_COLOR }}>📝 Journal</div>
+        </div>
         <button className="btn btn-primary btn-sm" style={{ background: NOTES_COLOR, color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
       </div>
 
@@ -167,6 +171,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
             )}
             {pinnedStickies.map(sticky => {
               const sc = STICKY_COLORS.find(c => c.id === sticky.color) || STICKY_COLORS[0]
+              const tilt = stickyTilt(sticky.id)
               return (
                 <div
                   key={sticky.id}
@@ -174,16 +179,21 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                   onDragStart={() => setDragId(sticky.id)}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => handleSidebarDrop(sticky.id)}
-                  style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--sf)', border: '1px solid var(--brd)', marginBottom: 6 }}
+                  style={{ width: 120, minHeight: 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer' }}
+                  onClick={() => setSidebarEdit(sticky)}
+                  title={sticky.text}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: sticky.customBg || sc.border, marginTop: 4, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8em', color: 'var(--tx)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: sc.border, flexShrink: 0 }} />
+                    <button className="btn btn-sm btn-outline" onClick={e => { e.stopPropagation(); setSidebarEdit(sticky) }}>✎</button>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: '0.8em', color: sticky.customText || sc.text, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {sticky.text}
-                      </div>
                     </div>
-                    <button className="btn btn-sm btn-outline" onClick={() => setSidebarEdit(sticky)}>✎</button>
+                    <div style={{ fontSize: '0.69em', color: sticky.customText || sc.text, opacity: 0.65, marginTop: 6 }}>
+                      {sticky.created ? new Date(sticky.created).toLocaleDateString() : ''}
+                    </div>
                   </div>
                 </div>
               )

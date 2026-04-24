@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { uid } from '../../constants'
+import { TAB_RAINBOW, uid } from '../../constants'
 import { supabase, hasSupabase } from '../../supabase'
 import StickyEditModal from './StickyEditModal'
 import {
@@ -18,7 +18,8 @@ import {
   stickyTitle,
 } from './stickyShared'
 
-const JOURNAL_COLOR = '#38b000'
+const JOURNAL_COLOR = TAB_RAINBOW.notes
+const STICKY_COLS = { XS: 6, S: 5, M: 4, L: 3, XL: 2 }
 
 const SEND_GROUPS = [
   { label: 'STORY', items: [['characters', 'Characters'], ['locations', 'Locations'], ['items', 'Items'], ['scenes', 'Scenes'], ['timeline', 'Timeline']] },
@@ -43,9 +44,22 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [menuOpen])
 
+  const charCount = text.length
+
+  function inferredSize() {
+    if (charCount > 600) return 'large'
+    if (charCount > 300) return 'normal'
+    return 'small'
+  }
+
   function submitSticky() {
     if (!text.trim()) return
-    onAddSticky({ text: text.trim(), tag, color, size: 'normal', pinned_stickies: false, pinned_journal: false })
+    if (text.trim().length > 1000 && quickMode === 'sticky') {
+      onOpenLongForm(text.trim(), true)
+      setText('')
+      return
+    }
+    onAddSticky({ text: text.trim(), tag, color, size: inferredSize(), pinned_stickies: false, pinned_journal: false })
     setText('')
   }
 
@@ -92,12 +106,12 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
         <select value={color} onChange={e => setColor(e.target.value)} style={{ fontSize: '0.77em', padding: '3px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', flex: 1, minWidth: 80 }}>
           {STICKY_COLORS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
-        <button className="btn btn-sm btn-outline" style={{ flexShrink: 0 }} onClick={submitSticky}>Save Sticky</button>
+        <button style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${JOURNAL_COLOR}`, background: 'transparent', color: JOURNAL_COLOR, fontSize: '0.85em', cursor: 'pointer', flexShrink: 0 }} onClick={submitSticky}>💾 Save</button>
         <div ref={menuRef} style={{ display: 'flex', position: 'relative', flexShrink: 0 }}>
-          <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000', borderTopRightRadius: 0, borderBottomRightRadius: 0 }} onClick={submitQuickCapture} title="Quick Capture (Ctrl+Q)">
+          <button style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${JOURNAL_COLOR}`, background: 'transparent', color: JOURNAL_COLOR, fontSize: '0.85em', cursor: 'pointer', borderTopRightRadius: 0, borderBottomRightRadius: 0 }} onClick={submitQuickCapture} title="Quick Capture (Ctrl+Q)">
             {quickLabel}
           </button>
-          <button className="btn btn-sm" style={{ background: JOURNAL_COLOR, color: '#000', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: '1px solid rgba(0,0,0,.2)', paddingInline: 8 }} onClick={() => setMenuOpen(o => !o)} aria-label="Quick capture options">
+          <button style={{ padding: '6px 8px', borderRadius: 6, border: `1px solid ${JOURNAL_COLOR}`, background: 'transparent', color: JOURNAL_COLOR, fontSize: '0.85em', cursor: 'pointer', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }} onClick={() => setMenuOpen(o => !o)} aria-label="Quick capture options">
             ▾
           </button>
           {menuOpen && (
@@ -109,6 +123,16 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
         </div>
         <span style={{ fontSize: '0.62em', color: 'var(--mut)', marginLeft: 'auto' }}>Ctrl+Q</span>
       </div>
+      {charCount > 900 && charCount <= 1000 && (
+        <div style={{ fontSize: '0.77em', color: 'var(--sp)', marginTop: 4 }}>
+          Approaching sticky size limit ({1000 - charCount} chars left). Past this, content will convert to a Journal entry.
+        </div>
+      )}
+      {charCount > 1000 && (
+        <div style={{ fontSize: '0.77em', color: JOURNAL_COLOR, marginTop: 4 }}>
+          📝 This will save as a Journal entry instead of a sticky.
+        </div>
+      )}
     </div>
   )
 }
@@ -515,18 +539,14 @@ function StickyBoard({
                         {sendOpenId === c.id && <SendToMenu sticky={c} onSend={(sticky, target) => { onSendTo(sticky, target); setSendOpenId(null) }} />}
                       </div>
                     )}
-                    <button onClick={() => onDelete(c.id)} title="Delete" style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(255,0,0,.3)', background: 'none', color: '#cc0000', cursor: 'pointer' }}>✕</button>
                   </div>
 
                   <div style={{ fontSize: '0.62em', marginTop: 6, color: textColor, opacity: 0.8 }}>
-                    {c.archived
-                      ? (
-                        <button onClick={() => c.archived_destination && c.archived_destination_id && crossLink?.(c.archived_destination, c.archived_destination_id)} style={{ border: 'none', background: 'none', color: textColor, cursor: c.archived_destination ? 'pointer' : 'default', padding: 0, fontSize: 'inherit' }}>
-                          📦 → {c.archived_destination ? c.archived_destination[0].toUpperCase() + c.archived_destination.slice(1) : 'Archived'}
-                        </button>
-                        )
-                      : <span>Send to → Choose destination</span>
-                    }
+                    {c.archived && (
+                      <button onClick={() => c.archived_destination && c.archived_destination_id && crossLink?.(c.archived_destination, c.archived_destination_id)} style={{ border: 'none', background: 'none', color: textColor, cursor: c.archived_destination ? 'pointer' : 'default', padding: 0, fontSize: 'inherit' }}>
+                        📦 → {c.archived_destination ? c.archived_destination[0].toUpperCase() + c.archived_destination.slice(1) : 'Archived'}
+                      </button>
+                    )}
                   </div>
 
                   {controlsOpen.has(c.id) && (
@@ -557,6 +577,7 @@ function StickyBoard({
                         <input type="checkbox" checked={!!c.pinned_journal} onChange={e => onEdit({ ...c, pinned_journal: e.target.checked })} />
                         📌 Also pin to Journal sidebar
                       </label>
+                      <button onClick={() => onDelete(c.id)} title="Delete" style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(255,0,0,.3)', background: 'none', color: '#cc0000', cursor: 'pointer' }}>✕ Delete</button>
                     </div>
                   )}
                 </>
@@ -569,7 +590,7 @@ function StickyBoard({
   )
 }
 
-export default function StickiesView({ db, pendingExpandId, clearPendingExpandId, crossLink }) {
+export default function StickiesView({ db, pendingExpandId, clearPendingExpandId, crossLink, goToSubTab }) {
   const [tags, setTags] = useState(() => lsGet('gcomp_journal_tags', DEFAULT_TAGS))
   const [captures, setCaptures] = useState(() => lsGet('gcomp_captures', []).map((c, i) => normalizeSticky(c, i)))
   const [showTagManager, setShowTagManager] = useState(false)
@@ -619,7 +640,20 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
     db.upsertEntry('journal_captures', entry)
   }
 
-  function openLongForm(prefill = '') {
+  function openLongForm(prefill = '', fromOverflow = false) {
+    if (fromOverflow) {
+      db.upsertEntry('notes', {
+        id: uid(),
+        title: prefill.slice(0, 50),
+        content: prefill,
+        category: 'Brainstorm',
+        auto_imported: false,
+        source: 'sticky-overflow',
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      })
+      return
+    }
     setLongFormDraft({ title: '', category: 'Brainstorm', content: prefill })
     setLongFormOpen(true)
   }
@@ -709,7 +743,10 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
 
   const archivedCount = captures.filter(c => c.archived).length
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 700 : false
-  const recentCaptures = sortStickies(captures).slice(0, 8)
+  const recentCaptures = [...captures]
+    .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0))
+    .slice(0, 8)
+  const recentIdeas = [...ideas].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
 
   return (
     <div>
@@ -729,15 +766,20 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
         {(!isMobile || mobileZone === 'capture') && (
           <div style={{ width: isMobile ? '100%' : 260, flexShrink: 0 }}>
             <QuickCapture tags={tags} onAddSticky={addCapture} onOpenLongForm={openLongForm} />
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-              <button onClick={() => setShowArchived(v => !v)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 999, border: `1px solid ${showArchived ? NOTES_COLOR : 'var(--brd)'}`, background: showArchived ? '#ffcc0022' : 'none', color: showArchived ? NOTES_COLOR : 'var(--dim)', cursor: 'pointer' }}>
-                👁 Show archived ({archivedCount})
-              </button>
-              <button onClick={() => setArchivedOnly(v => !v)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 999, border: `1px solid ${archivedOnly ? NOTES_COLOR : 'var(--brd)'}`, background: archivedOnly ? '#ffcc0022' : 'none', color: archivedOnly ? NOTES_COLOR : 'var(--dim)', cursor: 'pointer' }}>
-                Archived only
-              </button>
-            </div>
-            <IdeasPanel ideas={ideas} setIdeas={setIdeas} />
+            {recentIdeas.length > 0 && (
+              <div style={{ marginBottom: 12, padding: 8, background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>
+                <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>💡 Recent Ideas</span>
+                  <button onClick={() => goToSubTab?.('ideas')} style={{ fontSize: '0.77em', color: JOURNAL_COLOR, background: 'none', border: 'none', cursor: 'pointer' }}>see all →</button>
+                </div>
+                {recentIdeas.slice(0, 5).map(i => (
+                  <div key={i.id} style={{ padding: '5px 6px', marginBottom: 4, background: 'var(--sf)', borderRadius: 6, fontSize: '0.77em', color: 'var(--tx)' }}>
+                    <div>{i.value}</div>
+                    <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{i.category}</div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 6 }}>Recent captures</div>
             {recentCaptures.map(c => {
               const sc = STICKY_COLORS.find(x => x.id === c.color) || STICKY_COLORS[0]
@@ -756,6 +798,14 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
 
         {(!isMobile || mobileZone === 'stickies') && (
           <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              <button onClick={() => setShowArchived(v => !v)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 999, border: `1px solid ${showArchived ? NOTES_COLOR : 'var(--brd)'}`, background: showArchived ? `${NOTES_COLOR}22` : 'none', color: showArchived ? NOTES_COLOR : 'var(--dim)', cursor: 'pointer' }}>
+                👁 Show archived ({archivedCount})
+              </button>
+              <button onClick={() => setArchivedOnly(v => !v)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 999, border: `1px solid ${archivedOnly ? NOTES_COLOR : 'var(--brd)'}`, background: archivedOnly ? `${NOTES_COLOR}22` : 'none', color: archivedOnly ? NOTES_COLOR : 'var(--dim)', cursor: 'pointer' }}>
+                Archived only
+              </button>
+            </div>
             <StickyBoard
               captures={captures}
               tags={tags}
