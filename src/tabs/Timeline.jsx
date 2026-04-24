@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, SL, uid } from '../constants'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const TL_FIELDS = [
   { k: 'name',          l: 'Event',          t: 'text', r: true },
@@ -36,6 +37,8 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+  const [autoOnly, setAutoOnly] = useState(false)
+  const autoCount = events.filter(e => e.auto_imported === true).length
 
   useEffect(() => {
     if (crossLink?.search) {
@@ -48,7 +51,23 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
       }
       clearCrossLink?.()
     }
-  }, [crossLink])
+  }, [crossLink, clearCrossLink, events])
+
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = events.find(x => x.id === targetId)
+      if (!entry) return
+      setExpanded(targetId)
+      setEditing(entry)
+      setModalOpen(true)
+      setTrackPopup(null)
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [events])
   const [showVisual, setShowVisual] = useState(true)
   const [listSort, setListSort] = useState('order')
   const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
@@ -108,7 +127,8 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
     .filter(e => {
       const ms = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
       const me = filterEra === 'all' || e.era === filterEra
-      return ms && me
+      const ma = !autoOnly || e.auto_imported === true
+      return ms && me && ma
     })
     .sort((a,b) => {
       if (listSort === 'alpha') return (a.name||'').localeCompare(b.name||'')
@@ -181,6 +201,15 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
             <button key={era} className={`fp ${filterEra===era?'active':''}`} style={{ background: filterEra===era ? ERA_BANDS[era]||'rgba(255,255,255,.05)':'' }} onClick={() => setFilterEra(filterEra===era?'all':era)}>{era}</button>
           ))}
         </div>
+        {autoCount > 0 && (
+          <button onClick={() => setAutoOnly(v => !v)}
+            style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12,
+              border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`,
+              background: autoOnly ? '#ffcc0022' : 'none',
+              color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+            📥 Auto-imported ({autoCount})
+          </button>
+        )}
       </div>
 
       {/* Visual track */}
@@ -342,7 +371,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         {sorted.map((e, i) => {
           const isOpen = colCount === 1 || expanded === e.id  // XL auto-expands all
           return (
-            <div key={e.id} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
+            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
                 <div style={{ fontSize: 10, color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>

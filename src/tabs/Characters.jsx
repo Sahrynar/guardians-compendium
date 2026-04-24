@@ -3,6 +3,8 @@ const SIZE_COLS_CHARS = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
+import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 import { CHAR_FIELDS, highlight, SL, uid, hexToRgba, lerpColor } from '../constants'
 import FilterPopup from '../components/common/FilterPopup'
 
@@ -82,6 +84,21 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   const [portraitCharId, setPortraitCharId] = useState(null)
   const [lightboxSrc, setLightboxSrc] = useState(null)
   const [filterDeceased, setFilterDeceased] = useState('all') // 'all'|'alive'|'deceased'
+  const [autoOnly, setAutoOnly] = useState(false)
+  const autoCount = chars.filter(c => c.auto_imported === true).length
+
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = chars.find(x => x.id === targetId)
+      if (!entry) return
+      setExpanded(targetId)
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [chars])
 
   // filterDeceased can be 'all', 'alive', 'deceased', or a book name like 'Book 1'
   const filtered = chars.filter(e => {
@@ -91,6 +108,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
     } else if (filterDeceased === 'deceased') {
       if (isDeceased(e) !== true) return false
     }
+    if (autoOnly && e.auto_imported !== true) return false
     return true
   })
 
@@ -215,8 +233,15 @@ export default function Characters({ db, goTo, tab, navSearch }) {
           values={filterValues}
           onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
         />
+        {autoCount > 0 && (
+          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+            📥 Auto-imported ({autoCount})
+          </button>
+        )}
         <button className="btn btn-primary btn-sm" style={{ background: '#e63946' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
+
+      <AlphabetJumpBar entries={filtered} getName={c => c.display_name || c.name} onJump={target => scrollAndFlashEntry(target.id)} color="#e63946" />
 
       <div className="cg">
         {!filtered.length && (
@@ -233,7 +258,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
           const dead = isDeceased(e)
 
           return (
-            <div key={e.id} className="entry-card"
+            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card"
               style={{
                 '--card-color': 'var(--cc)',
                 background: dead === true ? 'rgba(255,51,85,.03)' : i%2===1 ? 'rgba(255,255,255,.01)' : undefined,

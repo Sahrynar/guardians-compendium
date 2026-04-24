@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import OutfitSnapshot from './OutfitSnapshot'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
@@ -6,6 +6,7 @@ import Lightbox from '../components/common/Lightbox'
 import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
 import { highlight, uid, SL } from '../constants'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 // ── Category config ───────────────────────────────────────────────
 const CATEGORIES = [
@@ -378,6 +379,22 @@ export default function Inventory({ db }) {
   const [dragOverIdx, setDragOverIdx] = useState(null)
   const [showColPicker, setShowColPicker] = useState(false)
 
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = allEntries.find(x => x.id === targetId)
+      if (!entry) return
+      const holderChar = chars.find(c => c.id === (entry.character || entry.holder))
+      const stableIdx = chars.indexOf(holderChar)
+      const bubbleColor = holderChar?.bubble_color || holderChar?.clothing_color || DEFAULT_COLORS[Math.max(0, stableIdx) % DEFAULT_COLORS.length]
+      setViewPopup({ entry, bubbleColor })
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [allEntries, chars])
+
   function saveColumns(n) {
     setColumns(n)
     db.saveSetting?.('inv_columns', String(n))
@@ -635,7 +652,7 @@ export default function Inventory({ db }) {
             const bubbleColor = holderChar?.bubble_color || holderChar?.clothing_color || DEFAULT_COLORS[Math.max(0,stableIdx) % DEFAULT_COLORS.length]
             const tileColor = e.entry_color || bubbleColor
             return (
-              <div key={e.id} className="entry-card"
+              <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card"
                 style={{ '--card-color': tileColor, borderTop: `2px solid ${tileColor}` }}
                 onClick={() => setViewPopup({ entry: e, bubbleColor })}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

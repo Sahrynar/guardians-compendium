@@ -31,9 +31,9 @@ import IOBar from './components/common/IOBar'
 
 const TAB_ORDER = [
   'dashboard','wiki','glossary','characters','familytree','world','locations','map',
-  'manuscript','scenes','timeline','eras','calendar',
-  'inventory','wardrobe','items','flags','questions','canon','spellings',
-  'notes','journal','tools','sessionlog'
+  'manuscript','scenes','timeline','calendar',
+  'inventory','flags','questions','canon','spellings',
+  'notes','tools','sessionlog'
 ]
 
 const VALID_TABS = new Set(TAB_ORDER)
@@ -232,8 +232,6 @@ export default function App() {
     switch (tab) {
       case 'dashboard':  return <Dashboard {...tabProps} />
       case 'characters': return <Characters {...tabProps} />
-      case 'wardrobe':   return <Wardrobe {...tabProps} />
-      case 'items':      return <Items {...tabProps} />
       case 'locations':  return <Locations {...tabProps} />
       case 'timeline':   return <Timeline {...tabProps} />
       case 'scenes':     return <Scenes {...tabProps} />
@@ -242,12 +240,10 @@ export default function App() {
       case 'canon':      return <Canon {...tabProps} />
       case 'world':      return <World {...tabProps} />
       case 'questions':  return <Questions {...tabProps} />
-      case 'eras':       return <Eras {...tabProps} />
       case 'spellings':  return <Spellings {...tabProps} />
       case 'map':        return <MapTab {...tabProps} />
       case 'wiki':       return <Wiki {...tabProps} />
       case 'notes':      return <Notes {...tabProps} />
-      case 'journal':    return <Journal {...tabProps} />
       case 'familytree': return <FamilyTree {...tabProps} />
       case 'flags':      return <Flags {...tabProps} />
       case 'manuscript': return <Manuscript {...tabProps} />

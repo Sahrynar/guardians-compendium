@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { uid, RAINBOW, lerpColor, BKS } from '../constants'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const SC_COLOR = '#38b000'
 const SCENE_FIELDS = [
@@ -59,6 +60,21 @@ export default function Scenes({ db, navSearch }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+  const [autoOnly, setAutoOnly] = useState(false)
+  const autoCount = scenes.filter(s => s.auto_imported === true).length
+
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = scenes.find(x => x.id === targetId)
+      if (!entry) return
+      setPopup(entry)
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [scenes])
 
   function changeCPR(sz) {
     setCardsPerRow(sz)
@@ -125,8 +141,9 @@ export default function Scenes({ db, navSearch }) {
   const filtered = useMemo(() => coloredScenes.filter(s => {
     const mb = bookFilter === 'all' || s.book === bookFilter
     const ms = !search || JSON.stringify(s).toLowerCase().includes(search.toLowerCase())
-    return mb && ms
-  }), [coloredScenes, bookFilter, search])
+    const ma = !autoOnly || s.auto_imported === true
+    return mb && ms && ma
+  }), [coloredScenes, bookFilter, search, autoOnly])
 
   const cpr = CARDS_PER_ROW[cardsPerRow] || 4
 
@@ -186,6 +203,15 @@ export default function Scenes({ db, navSearch }) {
         </div>
         <input className="sx" placeholder="Search scenes…" value={search}
           onChange={e => setSearch(e.target.value)} style={{ maxWidth: 180 }} />
+        {autoCount > 0 && (
+          <button onClick={() => setAutoOnly(v => !v)}
+            style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12,
+              border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`,
+              background: autoOnly ? '#ffcc0022' : 'none',
+              color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+            📥 Auto-imported ({autoCount})
+          </button>
+        )}
         <button className="btn btn-primary btn-sm" style={{ background: SC_COLOR, color: '#000', marginLeft: 'auto' }}
           onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
@@ -287,7 +313,7 @@ export default function Scenes({ db, navSearch }) {
                             )}
 
                             {/* Card */}
-                            <div onClick={() => setPopup(scene)}
+                            <div id={`gcomp-entry-${scene.id}`} onClick={() => setPopup(scene)}
                               style={{
                                 flex: 1, minWidth: 0,
                                 background: 'var(--card)',

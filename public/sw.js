@@ -1,5 +1,5 @@
-// Guardians of Lajen Compendium — Service Worker v15
-const CACHE_NAME = 'gol-compendium-v16';
+// Guardians of Lajen Compendium — Service Worker v17
+const CACHE_NAME = 'gol-compendium-v17';
 const PRECACHE_URLS = ['/', '/index.html', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', event => {

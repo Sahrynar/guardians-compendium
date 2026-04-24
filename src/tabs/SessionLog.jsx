@@ -27,9 +27,9 @@ const SECTION_LABELS = [
 
 const FEATURE_TAB_OPTIONS = [
   'dashboard','wiki','glossary','characters','familytree','world','locations','map',
-  'manuscript','scenes','timeline','eras','calendar',
-  'inventory','wardrobe','items','flags','questions','canon','spellings',
-  'notes','journal','tools','sessionlog',
+  'manuscript','scenes','timeline','calendar',
+  'inventory','flags','questions','canon','spellings',
+  'notes','tools','sessionlog',
 ]
 
 const FEATURE_REGISTRY_SEED = [

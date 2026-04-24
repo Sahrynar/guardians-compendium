@@ -1,9 +1,10 @@
 const SIZE_COLS_WIKI = { XS: 4, S: 3, M: 2, L: 2, XL: 1 }
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/common/Modal'
 import FilterPopup from '../components/common/FilterPopup'
 import { uid } from '../constants'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const WIKI_CATS = [
   'Lore', 'World History', 'Cosmology', 'Power System',
@@ -302,6 +303,21 @@ export default function Wiki({ db, navSearch }) {
   const [filterValues, setFilterValues] = useState({})
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
   const [confirmId, setConfirmId] = useState(null)
+  const [autoOnly, setAutoOnly] = useState(false)
+  const autoCount = articles.filter(a => a.auto_imported === true).length
+
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = articles.find(x => x.id === targetId)
+      if (!entry) return
+      setEditing(entry)
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [articles])
 
   const filtered = articles.filter(a => {
     const ms = !(navSearch||'') || JSON.stringify(a).toLowerCase().includes((navSearch||'').toLowerCase())
@@ -309,7 +325,8 @@ export default function Wiki({ db, navSearch }) {
     // Extra popup filters
     const selCats = filterValues['category'] || []
     const matchPopupCat = selCats.length === 0 || selCats.includes(a.category)
-    return ms && mc && matchPopupCat
+    const matchAuto = !autoOnly || a.auto_imported === true
+    return ms && mc && matchPopupCat && matchAuto
   })
 
   function handleSave(article) {
@@ -341,6 +358,11 @@ export default function Wiki({ db, navSearch }) {
           values={filterValues}
           onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
         />
+        {autoCount > 0 && (
+          <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>
+            📥 Auto-imported ({autoCount})
+          </button>
+        )}
         <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 
@@ -365,7 +387,7 @@ export default function Wiki({ db, navSearch }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (
-          <div key={a.id} className="entry-card" style={{ '--card-color': '#ff69b4' }}>
+          <div key={a.id} id={`gcomp-entry-${a.id}`} className="entry-card" style={{ '--card-color': '#ff69b4' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>

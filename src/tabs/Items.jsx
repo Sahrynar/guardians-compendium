@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import { highlight, uid, SL } from '../constants'
 import Lightbox from '../components/common/Lightbox'
 import ImagePicker from '../components/common/ImagePicker'
 import { uploadImage } from '../hooks/useImageUpload'
+import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const ITEM_FIELDS = [
   { k: 'name',         l: 'Name',           t: 'text', r: true },
@@ -255,6 +256,21 @@ export default function Items({ db }) {
   const [pickerForItem, setPickerForItem] = useState(null)
   const [dragIdx, setDragIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [autoOnly, setAutoOnly] = useState(false)
+  const autoCount = items.filter(i => i.auto_imported === true).length
+
+  useEffect(() => {
+    function onExpand(e) {
+      const targetId = e?.detail?.id
+      if (!targetId) return
+      const entry = items.find(x => x.id === targetId)
+      if (!entry) return
+      setViewPopup(entry)
+      window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
+    }
+    window.addEventListener('gcomp_expand', onExpand)
+    return () => window.removeEventListener('gcomp_expand', onExpand)
+  }, [items])
 
   function holderName(id) {
     if (!id) return 'Unassigned'
@@ -312,7 +328,7 @@ export default function Items({ db }) {
     setDragIdx(null); setDragOverIdx(null)
   }
 
-  const filtered = items.filter(e => !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase()))
+  const filtered = items.filter(e => (!search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) && (!autoOnly || e.auto_imported === true))
 
   // Group by holder
   const grouped = {}
@@ -352,6 +368,7 @@ export default function Items({ db }) {
           <button className={`btn btn-sm btn-outline ${viewMode === 'list' ? 'active' : ''}`}
             style={{ fontSize: '0.77em' }} onClick={() => setViewMode('list')}>List</button>
         </div>
+        {autoCount > 0 && <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>📥 Auto-imported ({autoCount})</button>}
         <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)' }}
           onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
@@ -393,7 +410,7 @@ export default function Items({ db }) {
           {filtered.map((e, i) => {
             const isOpen = expanded === e.id
             return (
-              <div key={e.id} className="entry-card"
+              <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card"
                 style={{ '--card-color': 'var(--ci)', background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined }}
                 onClick={() => setExpanded(isOpen ? null : e.id)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
