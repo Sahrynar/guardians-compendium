@@ -252,7 +252,7 @@ export default function MapTab({ db }) {
           onClick={() => setLightboxSrc(null)}
         >
           <img src={lightboxSrc} alt="Map" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: 8 }} />
-          <button style={{ position: 'absolute', top: 16, right: 20, background: 'none', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }} onClick={() => setLightboxSrc(null)}>✕</button>
+          <button style={{ position: 'absolute', top: 16, right: 20, background: 'none', border: 'none', color: '#fff', fontSize: '1.85em', cursor: 'pointer' }} onClick={() => setLightboxSrc(null)}>✕</button>
         </div>
       )}
 

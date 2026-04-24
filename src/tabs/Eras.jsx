@@ -128,7 +128,7 @@ export default function Eras({ db }) {
   return (
     <div>
       <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17, color: 'var(--cca)' }}>⧖ Eras & Dating</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.31em', color: 'var(--cca)' }}>⧖ Eras & Dating</div>
         <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>HC 320 = 1554 AD · 8.52 Lajen years = 1 Mnaerah year · All dates EXPLORATORY</div>
       </div>
 
@@ -140,7 +140,7 @@ export default function Eras({ db }) {
               style={{ position: 'absolute', top: 6, right: 6, background: 'none', border: 'none', color: 'var(--mut)', fontSize: '0.92em', cursor: 'pointer', padding: '2px 5px', borderRadius: 4 }}
               title="Edit">✎</button>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: s.col }}>{s.name}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
+            <div style={{ fontSize: '1.38em', fontWeight: 700, margin: '4px 0' }}>{s.ly}</div>
             <div style={{ fontSize: '0.85em', color: 'var(--dim)' }}>{s.my}</div>
             <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 2 }}>{s.desc}</div>
           </div>

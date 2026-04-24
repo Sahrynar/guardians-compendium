@@ -470,6 +470,22 @@ export default function Manuscript({ db, navSearch, goTo }) {
                   <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
                     <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: accent, fontWeight: 700 }}>{book}</div>
                     <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{bookChapters.length} chapters · {words.toLocaleString()} words</div>
+                    {bookChapters.length > 0 && (
+                      <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 6, background: 'var(--brd)' }}>
+                        {STATUSES.map(s => {
+                          const n = bookChapters.filter(ch => ch.status === s).length
+                          if (!n) return null
+                          const pct = (n / bookChapters.length) * 100
+                          return (
+                            <div
+                              key={s}
+                              title={`${n} ${s}`}
+                              style={{ width: `${pct}%`, background: STATUS_COLORS[s] || 'var(--dim)' }}
+                            />
+                          )
+                        })}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: 2, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                       {STATUSES.map(s => {
                         const n = bookChapters.filter(ch => ch.status === s).length
@@ -497,7 +513,6 @@ export default function Manuscript({ db, navSearch, goTo }) {
           </div>
         )}
         {!tocBook && <div style={{ marginRight: 'auto' }} />}
-        <input className="sx" placeholder="Search chapters and text..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
         <select value={filterBook} onChange={e => setFilterBook(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All books</option>
           {BOOKS.map(b => <option key={b} value={b}>{b}</option>)}

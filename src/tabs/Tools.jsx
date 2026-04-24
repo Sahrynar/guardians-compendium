@@ -580,7 +580,7 @@ function PronunciationTool() {
                   )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 17, fontFamily: "'Cinzel',serif",
+                  <span style={{ fontSize: '1.31em', fontFamily: "'Cinzel',serif",
                     color: 'var(--cwr)', fontWeight: 700 }}>{r.phonetic}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
