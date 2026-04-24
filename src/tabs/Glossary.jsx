@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import FilterPopup from '../components/common/FilterPopup'
 import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
+import { TAB_RAINBOW } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const GLOSSARY_CATS = ['Languages', 'Lore', 'Cosmology', 'Power System', 'Cultures', 'Religions', 'Factions', 'Geography']
+const tabColor = TAB_RAINBOW['glossary'] || '#aaaaaa'
 
 export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const [search, setSearch] = useState(navSearch || '')
@@ -63,7 +65,7 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: '#ff6b6b' }}>📚 Glossary</div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>📚 Glossary</div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.77em', color: 'var(--mut)' }}>{filtered.length} term{filtered.length !== 1 ? 's' : ''}</span>
           <button onClick={() => goTo('wiki')} style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>→ Full Wiki</button>
@@ -77,16 +79,16 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
             📥 Auto-imported ({autoCount})
           </button>
         )}
-        <FilterPopup color="#ff6b6b" filters={[{ key: 'category', label: 'Category', options: availableCats.map(c => ({ value: c, label: c })) }]} values={filterValues} onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))} />
+        <FilterPopup color={tabColor} filters={[{ key: 'category', label: 'Category', options: availableCats.map(c => ({ value: c, label: c })) }]} values={filterValues} onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))} />
       </div>
 
-      <AlphabetJumpBar entries={filtered} getName={e => e.term || e.title} onJump={target => scrollAndFlashEntry(target.id)} color="#ff6b6b" />
+      <AlphabetJumpBar entries={filtered} getName={e => e.term || e.title} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
 
       {articles.length === 0 && (
         <div className="empty">
           <div className="empty-icon">📚</div>
           <p>No Wiki entries yet.</p>
-          <button className="btn btn-primary" style={{ background: '#ff6b6b', marginTop: 8 }} onClick={() => goTo('wiki')}>→ Go to Wiki</button>
+          <button className="btn btn-primary" style={{ background: tabColor, marginTop: 8 }} onClick={() => goTo('wiki')}>→ Go to Wiki</button>
         </div>
       )}
 
@@ -99,13 +101,13 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
 
       {letters.map(letter => (
         <div key={letter} style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.54em', fontWeight: 700, color: '#ff6b6b', borderBottom: '1px solid rgba(201,102,255,.2)', paddingBottom: 4, marginBottom: 8, letterSpacing: '.1em' }}>{letter}</div>
+          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.54em', fontWeight: 700, color: tabColor, borderBottom: `1px solid ${tabColor}33`, paddingBottom: 4, marginBottom: 8, letterSpacing: '.1em' }}>{letter}</div>
           {grouped[letter].map(entry => (
             <div key={entry.id} id={`gcomp-entry-${entry.id}`} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => goToWiki ? goToWiki(entry) : goTo('wiki')}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700, color: 'var(--tx)' }}>{entry.title}</span>
-                  <span style={{ fontSize: '0.69em', color: '#ff6b6b', textTransform: 'uppercase', letterSpacing: '.06em', opacity: 0.7 }}>{entry.category}</span>
+                  <span style={{ fontSize: '0.69em', color: tabColor, textTransform: 'uppercase', letterSpacing: '.06em', opacity: 0.7 }}>{entry.category}</span>
                   {entry.auto_imported && <span style={{ fontSize: '0.69em', color: '#ffcc00' }}>📥</span>}
                 </div>
                 {entry.summary && <div style={{ fontSize: '0.92em', color: 'var(--dim)', marginTop: 3, lineHeight: 1.5 }}>{entry.summary}</div>}

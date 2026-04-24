@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Modal from '../components/common/Modal'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 
 // ── Built-in relationship types ─────────────────────────────────
+const tabColor = TAB_RAINBOW['familytree'] || '#aaaaaa'
+
 const BUILTIN_EDGE_TYPES = [
   'Parent/Child', 'Married', 'Romantic Partner', 'Other Parent',
   'Sibling', 'Half-sibling', 'Step-sibling',
@@ -570,7 +572,7 @@ function RelationshipWeb({ nodes, edges, allEdgeColors, allNodeColors, editMode,
             <div style={{ display:'flex', gap:6, marginTop:8 }}>
               <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em' }}
                 onClick={() => setNodeModal(sel)}>✎ Edit</button>
-              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', color:'var(--cl)', borderColor:'var(--cl)' }}
+              <button className="btn btn-sm btn-outline" style={{ fontSize: '0.77em', color:tabColor, borderColor:tabColor }}
                 onClick={() => setEdgeModal({ from: sel.id })}>+ Add Relation</button>
             </div>
           )}
@@ -765,16 +767,16 @@ export default function FamilyTree({ db }) {
     <div>
       {/* ── Toolbar ── */}
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cl)' }}>🌳 Family Tree</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: tabColor }}>🌳 Family Tree</div>
         <div style={{ display:'flex', gap:3 }}>
-          {[['🌳 Tree','tree'],['🕸 Web','web']].map(([l,v]) => (
-            <button key={v} onClick={() => setViewMode(v)}
-              style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:10,
-                background: viewMode===v ? 'var(--cl)' : 'none',
+            {[['🌳 Tree','tree'],['🕸 Web','web']].map(([l,v]) => (
+              <button key={v} onClick={() => setViewMode(v)}
+                style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:10,
+                background: viewMode===v ? tabColor : 'none',
                 color: viewMode===v ? '#000' : 'var(--dim)',
-                border: `1px solid ${viewMode===v ? 'var(--cl)' : 'var(--brd)'}`,
+                border: `1px solid ${viewMode===v ? tabColor : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
-          ))}
+            ))}
         </div>
         <button className="btn btn-sm btn-outline" style={{ color: editMode ? 'var(--cc)' : 'var(--dim)', borderColor: editMode ? 'var(--cc)' : 'var(--brd)' }} onClick={() => setEditMode(v => !v)}>
           {editMode ? '✓ Editing' : '✎ Edit Mode'}
@@ -783,7 +785,7 @@ export default function FamilyTree({ db }) {
           <button className="btn btn-primary btn-sm" style={{ background: 'var(--cc)' }} onClick={() => setNodeModal({})}>+ Person</button>
           <button className="btn btn-sm btn-outline" style={{ color: 'var(--cca)', borderColor: 'var(--cca)' }} onClick={() => setEdgeModal({})}>+ Relation</button>
         </>}
-        <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={syncChars} title="Adds new characters without removing existing edits">
+        <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={syncChars} title="Adds new characters without removing existing edits">
           ⟳ Sync Characters
         </button>
         {unknownEdges.length > 0 && (
@@ -837,7 +839,7 @@ export default function FamilyTree({ db }) {
             Click <strong>⟳ Sync Characters</strong> to auto-populate, or add people manually in Edit Mode.
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
-            <button className="btn btn-primary" style={{ background:'var(--cl)', color:'#000' }} onClick={syncChars}>⟳ Sync Characters</button>
+            <button className="btn btn-primary" style={{ background:tabColor, color:'#000' }} onClick={syncChars}>⟳ Sync Characters</button>
             <button className="btn btn-outline" style={{ color:'var(--cc)', borderColor:'var(--cc)' }} onClick={() => { setEditMode(true); setNodeModal({}) }}>+ Add Manually</button>
           </div>
         </div>
@@ -928,7 +930,7 @@ export default function FamilyTree({ db }) {
       )}
 
       {/* ── Modals ── */}
-      <Modal open={!!nodeModal} onClose={() => setNodeModal(null)} title={nodeModal?.id ? 'Edit Person' : 'Add Person'} color="var(--cl)">
+      <Modal open={!!nodeModal} onClose={() => setNodeModal(null)} title={nodeModal?.id ? 'Edit Person' : 'Add Person'} color={tabColor}>
         {nodeModal && <NodeForm node={nodeModal} onSave={saveNode} onCancel={() => setNodeModal(null)} db={db} nodeTypes={allNodeTypes}
           onAddNodeType={t => saveCustom(undefined, [...customNodeTypes, t], undefined, undefined)} />}
       </Modal>
@@ -1020,7 +1022,7 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
       <div className="field"><label>Notes</label><textarea value={form.notes} onChange={s('notes')} /></div>
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-primary" style={{background:'var(--cl)',color:'#000'}} onClick={handleSave}>{node.id?'Save Changes':'Add Person'}</button>
+        <button className="btn btn-primary" style={{background:tabColor,color:'#000'}} onClick={handleSave}>{node.id?'Save Changes':'Add Person'}</button>
       </div>
     </>
   )

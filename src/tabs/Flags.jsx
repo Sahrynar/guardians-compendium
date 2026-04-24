@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/common/Modal'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 export default function Flags({ db }) {
+  const tabColor = TAB_RAINBOW['flags'] || '#aaaaaa'
   const flags = db.db.flags || []
   const [filter, setFilter] = useState('active')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('fl_cols') || '2'))
@@ -63,10 +64,10 @@ export default function Flags({ db }) {
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cfl)' }}>🚩 Flags & Review</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>🚩 Flags & Review</div>
         <div style={{ display: 'flex', gap: 3 }}>
           {[['XS', 8], ['S', 5], ['M', 3], ['L', 2], ['XL', 1]].map(([l, n]) => (
-            <button key={l} onClick={() => saveColCount(n)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colCount === n ? 'var(--cfl)' : 'none', color: colCount === n ? '#000' : 'var(--dim)', border: `1px solid ${colCount === n ? 'var(--cfl)' : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
+            <button key={l} onClick={() => saveColCount(n)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: colCount === n ? tabColor : 'none', color: colCount === n ? '#000' : 'var(--dim)', border: `1px solid ${colCount === n ? tabColor : 'var(--brd)'}`, cursor: 'pointer' }}>{l}</button>
           ))}
           <button onClick={toggleDividers} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, marginLeft: 8, background: dividers ? 'rgba(255,255,255,.08)' : 'none', color: dividers ? 'var(--tx)' : 'var(--mut)', border: '1px solid var(--brd)', cursor: 'pointer' }}>{dividers ? '┃ on' : '┃ off'}</button>
         </div>
@@ -75,12 +76,12 @@ export default function Flags({ db }) {
             📥 Auto-imported ({autoCount})
           </button>
         )}
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={() => { setForm({ name: '', priority: 'high', detail: '' }); setModalOpen(true) }}>+ Add Flag</button>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => { setForm({ name: '', priority: 'high', detail: '' }); setModalOpen(true) }}>+ Add Flag</button>
       </div>
 
       <div className="tbar" style={{ paddingTop: 0 }}>
         <div className="filter-group">
-          {[['active', 'Active'], ['resolved', 'Resolved'], ['all', 'All']].map(([k, l]) => <button key={k} className={`fp ${filter === k ? 'active' : ''}`} style={{ color: 'var(--cfl)' }} onClick={() => setFilter(k)}>{l}</button>)}
+          {[['active', 'Active'], ['resolved', 'Resolved'], ['all', 'All']].map(([k, l]) => <button key={k} className={`fp ${filter === k ? 'active' : ''}`} style={{ color: tabColor }} onClick={() => setFilter(k)}>{l}</button>)}
         </div>
         <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>{flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved</span>
       </div>
@@ -103,7 +104,7 @@ export default function Flags({ db }) {
                   ? <button className="btn btn-sm btn-outline" style={{ color: 'var(--sl)', borderColor: 'var(--sl)' }} onClick={() => resolve(f)}>✓ Resolve</button>
                   : <button className="btn btn-sm btn-outline" style={{ color: 'var(--sp)', borderColor: 'var(--sp)' }} onClick={() => reopen(f)}>↩ Reopen</button>
                 }
-                <button className="btn btn-sm btn-outline" style={{ color: 'var(--cfl)', borderColor: 'var(--cfl)' }} onClick={() => { setForm(f); setModalOpen(true) }}>✎ Edit</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => { setForm(f); setModalOpen(true) }}>✎ Edit</button>
                 <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(f.id)}>✕ Delete</button>
               </div>
             </div>
@@ -111,13 +112,13 @@ export default function Flags({ db }) {
         })}
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={form.id ? 'Edit Flag' : 'Add Flag'} color="var(--cfl)">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={form.id ? 'Edit Flag' : 'Add Flag'} color={tabColor}>
         <div className="field"><label>Description *</label><input value={form.name || ''} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="What needs attention?" /></div>
         <div className="field"><label>Priority</label><select value={form.priority || 'high'} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}>{['urgent', 'high', 'medium', 'low'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
         <div className="field"><label>Detail</label><textarea value={form.detail || ''} onChange={e => setForm(p => ({ ...p, detail: e.target.value }))} placeholder="Optional detail..." /></div>
         <div className="modal-actions">
           <button className="btn btn-outline" onClick={() => setModalOpen(false)}>Cancel</button>
-          <button className="btn btn-primary" style={{ background: 'var(--cfl)', color: '#000' }} onClick={saveFlag}>{form.id ? 'Save Flag' : 'Add Flag'}</button>
+          <button className="btn btn-primary" style={{ background: tabColor, color: '#000' }} onClick={saveFlag}>{form.id ? 'Save Flag' : 'Add Flag'}</button>
         </div>
       </Modal>
 

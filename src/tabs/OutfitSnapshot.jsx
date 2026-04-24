@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { TAB_RAINBOW } from '../constants'
 
 const OUTFIT_SLOTS = [
   { id:'head',        label:'Head / Hat' },
@@ -21,14 +22,14 @@ const OUTFIT_SLOTS = [
   { id:'accessory_2', label:'Accessory 2' },
 ]
 
-function SlotPicker({ slot, charItems, value, onChange }) {
+function SlotPicker({ slot, charItems, value, onChange, tabColor }) {
   return (
     <div style={{ marginBottom: 6 }}>
       <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase',
         letterSpacing: '.05em', marginBottom: 3 }}>{slot.label}</div>
       <select value={value || ''} onChange={e => onChange(slot.id, e.target.value)}
         style={{ width: '100%', fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)',
-          border: `1px solid ${value ? 'var(--ci)' : 'var(--brd)'}`, borderRadius: 6, color: 'var(--tx)' }}>
+          border: `1px solid ${value ? tabColor : 'var(--brd)'}`, borderRadius: 6, color: 'var(--tx)' }}>
         <option value="">— empty —</option>
         {charItems.map(item => (
           <option key={item.id} value={item.id}>{item.name}</option>
@@ -45,6 +46,7 @@ function SlotPicker({ slot, charItems, value, onChange }) {
 }
 
 export default function OutfitSnapshot({ db, chars, allEntries }) {
+  const tabColor = TAB_RAINBOW['items'] || '#aaaaaa'
   const [selectedChar, setSelectedChar] = useState('')
   const [slots, setSlots] = useState({})
   const [snapshotName, setSnapshotName] = useState('')
@@ -102,11 +104,11 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: 'var(--ci)' }}>👗 Outfit Snapshot</div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: tabColor }}>👗 Outfit Snapshot</div>
         <button onClick={() => setShowSaved(s => !s)}
           style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 10,
-            background: showSaved ? 'var(--ci)' : 'none', color: showSaved ? '#000' : 'var(--dim)',
-            border: '1px solid var(--ci)', cursor: 'pointer' }}>
+            background: showSaved ? tabColor : 'none', color: showSaved ? '#000' : 'var(--dim)',
+            border: `1px solid ${tabColor}`, cursor: 'pointer' }}>
           📂 Saved ({savedSnapshots.length})
         </button>
       </div>
@@ -118,7 +120,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
           {savedSnapshots.length === 0 && <div style={{ fontSize: '0.85em', color: 'var(--mut)' }}>No snapshots saved yet.</div>}
           {savedSnapshots.map(snap => (
             <div key={snap.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '5px 8px', borderLeft: '3px solid var(--ci)', marginBottom: 4, background: 'var(--sf)', borderRadius: '0 6px 6px 0' }}>
+              padding: '5px 8px', borderLeft: `3px solid ${tabColor}`, marginBottom: 4, background: 'var(--sf)', borderRadius: '0 6px 6px 0' }}>
               <div>
                 <div style={{ fontSize: '0.85em', fontWeight: 600 }}>{snap.name}</div>
                 <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` · ${snap.scene}` : ''}</div>
@@ -126,7 +128,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => loadSnapshot(snap)}
                   style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
-                    border: '1px solid var(--ci)', color: 'var(--ci)', cursor: 'pointer' }}>Load</button>
+                    border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>Load</button>
                 <button onClick={() => deleteSnapshot(snap.id)}
                   style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
                     border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>✕</button>
@@ -151,7 +153,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, marginBottom: 14 }}>
             {OUTFIT_SLOTS.map(slot => (
               <SlotPicker key={slot.id} slot={slot} charItems={charItems}
-                value={slots[slot.id] || ''} onChange={setSlot} />
+                value={slots[slot.id] || ''} onChange={setSlot} tabColor={tabColor} />
             ))}
           </div>
 
@@ -176,7 +178,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
               <input value={linkedScene} onChange={e => setLinkedScene(e.target.value)}
                 placeholder="e.g. Ch. 1 — Barn power manifestation" />
             </div>
-            <button className="btn btn-primary btn-sm" style={{ background: 'var(--ci)', alignSelf: 'flex-end' }}
+            <button className="btn btn-primary btn-sm" style={{ background: tabColor, alignSelf: 'flex-end' }}
               onClick={saveSnapshot} disabled={!snapshotName.trim()}>
               💾 Save Snapshot
             </button>

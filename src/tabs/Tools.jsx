@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { RATIO, LDAYS, MDAYS, LDPM, MONTHS } from '../constants'
+import { RATIO, TAB_RAINBOW, LDAYS, MDAYS, LDPM, MONTHS } from '../constants'
 
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
@@ -621,6 +621,7 @@ function PronunciationTool() {
 
 
 export default function Tools({ db }) {
+  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
   const [lYear, setLYear] = useState(320)
   const [lMonth, setLMonth] = useState(1)
   const [lDay, setLDay] = useState(1)
@@ -718,7 +719,7 @@ export default function Tools({ db }) {
   return (
     <div>
       {/* ── Title ── */}
-      <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:'var(--ctl)', marginBottom:10 }}>🔧 Tools</div>
+      <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:tabColor, marginBottom:10 }}>🔧 Tools</div>
 
       {/* ── Quick-nav bar ── */}
       <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:16, padding:'8px 10px',

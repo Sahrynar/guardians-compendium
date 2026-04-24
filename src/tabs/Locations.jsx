@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
+import { TAB_RAINBOW } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
-const TAB_COLOR = '#ffb700'
+const tabColor = TAB_RAINBOW['locations'] || '#aaaaaa'
+const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 
 const LOC_FIELDS = [
   { k: 'name', l: 'Name', t: 'text', r: true },
@@ -29,7 +31,7 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
   return (
     <div style={{ marginBottom: 2 }}>
       <div id={`gcomp-entry-${loc.id}`} className="loc-node" onClick={() => onToggle(loc.id)}>
-        {kids.length > 0 ? <span style={{ fontSize: '0.69em', color: TAB_COLOR, transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>►</span> : <span style={{ width: 12 }} />}
+        {kids.length > 0 ? <span style={{ fontSize: '0.69em', color: tabColor, transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>►</span> : <span style={{ width: 12 }} />}
         <span style={{ fontSize: '0.92em', fontWeight: 600 }}>{loc.name}</span>
         {loc.status && <span className={`badge badge-${loc.status}`} style={{ marginLeft: 4 }}>{loc.status}</span>}
         {loc.auto_imported && <span style={{ marginLeft: 6, fontSize: '0.69em', color: '#ffcc00' }}>📥</span>}
@@ -40,8 +42,8 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
           {loc.description && <div>{loc.description}</div>}
           {loc.notes && <div className="entry-notes">{loc.notes}</div>}
           <div className="entry-actions" style={{ marginTop: 4 }}>
-            <button className="btn btn-sm btn-outline" style={{ color: TAB_COLOR, borderColor: TAB_COLOR }} onClick={e => { e.stopPropagation(); onEdit(loc) }}>✎ Edit</button>
-            <button className="btn btn-sm btn-outline" style={{ color: TAB_COLOR, borderColor: TAB_COLOR }} onClick={e => { e.stopPropagation(); onAddChild(loc.id) }}>+ Child</button>
+            <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={e => { e.stopPropagation(); onEdit(loc) }}>✎ Edit</button>
+            <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={e => { e.stopPropagation(); onAddChild(loc.id) }}>+ Child</button>
             <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); onDelete(loc.id) }}>✕</button>
           </div>
         </div>
@@ -90,9 +92,9 @@ function FlatTable({ locations, onEdit, onDelete, onAddChild, navSearch }) {
       <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: colWidths.reduce((a, b) => a + b, 0) }}>
         <colgroup>{colWidths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
         <thead>
-          <tr style={{ background: 'var(--sf)', borderBottom: `2px solid ${TAB_COLOR}` }}>
+          <tr style={{ background: 'var(--sf)', borderBottom: `2px solid ${tabColor}` }}>
             {COLS.map((col, i) => (
-              <th key={col} style={{ padding: '6px 8px', textAlign: 'left', fontSize: '0.77em', fontWeight: 700, color: TAB_COLOR, textTransform: 'uppercase', letterSpacing: '.05em', position: 'relative', userSelect: 'none', width: colWidths[i] }}>
+              <th key={col} style={{ padding: '6px 8px', textAlign: 'left', fontSize: '0.77em', fontWeight: 700, color: tabColor, textTransform: 'uppercase', letterSpacing: '.05em', position: 'relative', userSelect: 'none', width: colWidths[i] }}>
                 {col}
                 {i < COLS.length - 1 && <div onMouseDown={e => onMouseDown(e, i)} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 6, cursor: 'col-resize', background: 'transparent', zIndex: 1 }} />}
               </th>
@@ -104,12 +106,12 @@ function FlatTable({ locations, onEdit, onDelete, onAddChild, navSearch }) {
           {visible.map((l, idx) => (
             <tr key={l.id} id={`gcomp-entry-${l.id}`} style={{ background: idx % 2 === 0 ? 'var(--card)' : 'transparent' }}>
               <td style={tdStyle(0)}><span style={{ fontWeight: 600 }}>{l.name}</span></td>
-              <td style={tdStyle(1)}><span style={{ color: TAB_COLOR, fontSize: '0.85em' }}>{l.loc_type || '—'}</span></td>
+              <td style={tdStyle(1)}><span style={{ color: tabColor, fontSize: '0.85em' }}>{l.loc_type || '—'}</span></td>
               <td style={{ ...tdStyle(2), color: 'var(--dim)' }}>{locPath(l.id, locations) || '—'}</td>
               <td style={{ ...tdStyle(3), color: 'var(--dim)' }}>{l.description || '—'}</td>
               <td style={{ ...tdStyle(4), whiteSpace: 'nowrap' }}>
-                <button className="btn btn-sm btn-outline" style={{ color: TAB_COLOR, borderColor: TAB_COLOR, marginRight: 3 }} onClick={() => onEdit(l)}>✎</button>
-                <button className="btn btn-sm btn-outline" style={{ color: TAB_COLOR, borderColor: TAB_COLOR, marginRight: 3 }} onClick={() => onAddChild(l.id)}>+</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={() => onEdit(l)}>✎</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={() => onAddChild(l.id)}>+</button>
                 <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => onDelete(l.id)}>✕</button>
               </td>
             </tr>
@@ -128,6 +130,13 @@ export default function Locations({ db, navSearch }) {
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [autoOnly, setAutoOnly] = useState(false)
+  const [cols, setCols] = useState(() => {
+    try { return localStorage.getItem('locations_cols') || 'M' } catch { return 'M' }
+  })
+  function setColsPersist(v) {
+    setCols(v)
+    try { localStorage.setItem('locations_cols', v) } catch {}
+  }
 
   const search = (navSearch || '').toLowerCase()
   const autoCount = locations.filter(l => l.auto_imported === true).length
@@ -159,35 +168,46 @@ export default function Locations({ db, navSearch }) {
   const roots = locations.filter(l => !l.parent_id)
   const filtered = (search ? locations.filter(l => l.name?.toLowerCase().includes(search) || l.loc_type?.toLowerCase().includes(search)) : roots).filter(l => !autoOnly || l.auto_imported === true)
 
-  const btnStyle = active => ({ fontSize: '0.77em', padding: '3px 10px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${active ? TAB_COLOR : 'var(--brd)'}`, background: active ? `${TAB_COLOR}22` : 'none', color: active ? TAB_COLOR : 'var(--dim)' })
+  const btnStyle = active => ({ fontSize: '0.77em', padding: '3px 10px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${active ? tabColor : 'var(--brd)'}`, background: active ? `${tabColor}22` : 'none', color: active ? tabColor : 'var(--dim)' })
 
   return (
     <div>
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: TAB_COLOR }}>🗺 Locations</div>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>🗺 Locations</div>
         <div style={{ display: 'flex', gap: 4 }}>
           <button style={btnStyle(view === 'tree')} onClick={() => setView('tree')}>🌳 Tree</button>
           <button style={btnStyle(view === 'table')} onClick={() => setView('table')}>☰ Table</button>
         </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {['XS','S','M','L','XL'].map(l => (
+            <button key={l} onClick={() => setColsPersist(l)}
+              style={{ fontSize: '0.77em', padding: '2px 7px',
+                borderRadius: 4, border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`,
+                background: cols === l ? `${tabColor}22` : 'transparent',
+                color: cols === l ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
+              {l}
+            </button>
+          ))}
+        </div>
         {autoCount > 0 && <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>📥 Auto-imported ({autoCount})</button>}
-        <button className="btn btn-primary btn-sm" style={{ background: TAB_COLOR, color: '#000' }} onClick={() => openAdd()}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => openAdd()}>+ Add</button>
       </div>
 
-      <AlphabetJumpBar entries={locations.filter(l => !autoOnly || l.auto_imported === true)} getName={e => e.name} onJump={target => scrollAndFlashEntry(target.id)} color={TAB_COLOR} />
+      <AlphabetJumpBar entries={locations.filter(l => !autoOnly || l.auto_imported === true)} getName={e => e.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
 
       {!locations.length && <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>}
 
       {view === 'tree' && (
-        <>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols]}, 1fr)`, gap: 8, alignItems: 'start' }}>
           {filtered.map(l => <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
           {locations.filter(l => l.parent_id && !locations.find(p => p.id === l.parent_id)).map(l => <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
-        </>
+        </div>
       )}
 
       {view === 'table' && <FlatTable locations={locations.filter(l => !autoOnly || l.auto_imported === true)} navSearch={navSearch} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />}
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color={TAB_COLOR}>
-        <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color={TAB_COLOR} db={db} />
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color={tabColor}>
+        <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color={tabColor} db={db} />
       </Modal>
 
       {confirmId && (

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
-import { highlight, SL, uid } from '../constants'
+import { TAB_RAINBOW, highlight, SL, uid } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 const TL_FIELDS = [
@@ -25,6 +25,7 @@ const ERA_BANDS = {
 const DOT_COLS = ['var(--ct)','var(--cc)','var(--ccn)','var(--cl)','var(--ci)','var(--cw)','var(--cq)']
 
 export default function Timeline({ db, crossLink, clearCrossLink }) {
+  const tabColor = TAB_RAINBOW['timeline'] || '#aaaaaa'
   const events = db.db.timeline || []
   const [search, setSearch] = useState('')
   const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('tl_cols') || '2'))
@@ -173,9 +174,9 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
           {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
             <button key={l} onClick={() => saveColCount(n)}
               style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
-                background: colCount===n ? 'var(--ct)' : 'none',
+                background: colCount===n ? tabColor : 'none',
                 color: colCount===n ? '#000' : 'var(--dim)',
-                border: `1px solid ${colCount===n ? 'var(--ct)' : 'var(--brd)'}`,
+                border: `1px solid ${colCount===n ? tabColor : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
           <button onClick={toggleDividers}
@@ -189,7 +190,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         <button className="btn btn-sm btn-outline" onClick={() => setShowVisual(v => !v)}>
           {showVisual ? 'Hide' : 'Show'} Track
         </button>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
       </div>
 
@@ -327,12 +328,12 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         if (!ev) return null
         return (
           <div style={{ margin: '6px 0 10px', padding: '10px 14px',
-            background: 'var(--card)', border: '1px solid var(--ct)',
+            background: 'var(--card)', border: `1px solid ${tabColor}`,
             borderRadius: 8, position: 'relative' }}>
             <button onClick={() => setTrackPopup(null)}
               style={{ position:'absolute', top:8, right:10, background:'none',
                 border:'none', color:'var(--mut)', cursor:'pointer', fontSize: '1.23em' }}>✕</button>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1em', color:'var(--ct)', marginBottom:4 }}>{ev.name}</div>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1em', color:tabColor, marginBottom:4 }}>{ev.name}</div>
             <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:6 }}>
               {[ev.date_hc, ev.date_mnaerah].filter(Boolean).join(' / ')}
               {ev.era && <span style={{ marginLeft:8, color:'var(--dim)' }}>{ev.era}</span>}
@@ -340,7 +341,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
             {ev.detail && <div style={{ fontSize: '0.85em', color:'var(--dim)', lineHeight:1.6, marginBottom:8 }}>{ev.detail}</div>}
             {ev.notes && <div style={{ fontSize: '0.85em', color:'var(--mut)', fontStyle:'italic' }}>{ev.notes}</div>}
             <div style={{ display:'flex', gap:8, marginTop:8 }}>
-              <button className="btn btn-sm btn-outline" style={{ color:'var(--ct)', borderColor:'var(--ct)' }}
+              <button className="btn btn-sm btn-outline" style={{ color:tabColor, borderColor:tabColor }}
                 onClick={() => { setEditing(ev); setModalOpen(true); setTrackPopup(null) }}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color:'#ff3355', borderColor:'#ff335544' }}
                 onClick={() => { setConfirmId(ev.id); setTrackPopup(null) }}>✕ Delete</button>
@@ -365,16 +366,16 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
       <div className="cg" style={{ marginTop: 4, columns: colCount, columnGap: 12, columnRule: '1px solid var(--brd)' }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
-            <button className="btn btn-primary" style={{ background: 'var(--ct)' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
+            <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>
           </div>
         )}
         {sorted.map((e, i) => {
           const isOpen = colCount === 1 || expanded === e.id  // XL auto-expands all
           return (
-            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': 'var(--ct)' }} onClick={() => setExpanded(isOpen?null:e.id)}>
+            <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card" style={{ breakInside: 'avoid', marginBottom: 6, '--card-color': tabColor }} onClick={() => setExpanded(isOpen?null:e.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.name||'', search) }} />
-                <div style={{ fontSize: '0.77em', color: 'var(--ct)' }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
+                <div style={{ fontSize: '0.77em', color: tabColor }}>{[e.date_hc, e.date_mnaerah].filter(Boolean).join(' / ')}</div>
               </div>
               <div className="entry-meta">
                 {e.era && <span className="badge" style={{ color: 'var(--cca)', borderColor: 'rgba(255,170,51,.3)' }}>{e.era}</span>}
@@ -387,7 +388,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
                   </div>
                   {e.notes && <div className="entry-notes">{e.notes}</div>}
                   <div className="entry-actions">
-                    <button className="btn btn-sm btn-outline" style={{ color: 'var(--ct)', borderColor: 'var(--ct)' }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
+                    <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={ev => { ev.stopPropagation(); setEditing(e); setModalOpen(true) }}>✎ Edit</button>
                     <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={ev => { ev.stopPropagation(); setConfirmId(e.id) }}>✕</button>
                   </div>
                 </>
@@ -439,8 +440,8 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id?'Edit':'Add'} Event`} color="var(--ct)">
-        <EntryForm fields={TL_FIELDS} entry={editing||{}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--ct)" db={db} />
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id?'Edit':'Add'} Event`} color={tabColor}>
+        <EntryForm fields={TL_FIELDS} entry={editing||{}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color={tabColor} db={db} />
       </Modal>
 
       {confirmId && (

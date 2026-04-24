@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
-import { MONTHS, WEEKDAYS, SEASON_TAG_COLORS, ERA_TIMELINE, ERA_SPANS, uid } from '../constants'
+import { MONTHS, WEEKDAYS, SEASON_TAG_COLORS, TAB_RAINBOW, ERA_TIMELINE, ERA_SPANS, uid } from '../constants'
 
 const MC = ['#00ffcc','#66cc99','#ff3366','#f4c430','#cc6622','#990000','#4477cc','#7799cc','#a9c0d3','#7fff00','#bb77cc','#9400d3']
-const CAL_COLOR = '#4cc9f0'
+const CAL_COLOR = TAB_RAINBOW['calendar'] || '#aaaaaa'
 const ERA_TABLE = [
   { cat: 'EARLY HUMANITY', rows: [
     { mn:'~300,000 BC', ev:'First Homo sapiens (Africa)',          my:301554, hc:-2568920, lc:2569240, mc:35394 },
@@ -73,7 +73,7 @@ function EraEditModal({ item, type, onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 12, padding: 20, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: 'var(--cca)', marginBottom: 14 }}>
+        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', color: CAL_COLOR, marginBottom: 14 }}>
           ✎ Edit {type === 'timeline' ? 'Timeline Entry' : 'Era Span'}
         </div>
         {type === 'timeline' ? (
@@ -83,7 +83,7 @@ function EraEditModal({ item, type, onSave, onClose }) {
         )}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
           <button className="btn btn-outline btn-sm" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary btn-sm" style={{ background: 'var(--cca)', color: '#000' }}
+          <button className="btn btn-primary btn-sm" style={{ background: CAL_COLOR, color: '#000' }}
             onClick={() => { onSave(form); onClose() }}>Save</button>
         </div>
       </div>
@@ -141,7 +141,7 @@ function ErasView({ db }) {
 
       {/* Visual timeline */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: 'var(--cca)', marginBottom: 12 }}>Timeline</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: CAL_COLOR, marginBottom: 12 }}>Timeline</div>
         <div style={{ position: 'relative', paddingLeft: 90 }}>
           {timeline.map((e, i) => {
             const isLast = i === timeline.length - 1
@@ -171,12 +171,12 @@ function ErasView({ db }) {
 
       {/* Conversion table */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: 'var(--cca)', marginBottom: 4 }}>Conversion Table</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: CAL_COLOR, marginBottom: 4 }}>Conversion Table</div>
         <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Anchor: HC 320 = 1554 AD. Earth-history sections collapsed by default.</div>
         <div style={{ overflowX: 'auto' }}>
           {ERA_TABLE.map(cat => (
             <details key={cat.cat} open={lajenCore.has(cat.cat)} style={{ marginBottom: 4 }}>
-              <summary style={{ fontSize: '0.77em', fontWeight: 700, color: 'var(--cca)', padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <summary style={{ fontSize: '0.77em', fontWeight: 700, color: CAL_COLOR, padding: '6px 4px', cursor: 'pointer', userSelect: 'none', textTransform: 'uppercase', letterSpacing: '.06em', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {cat.cat} <span style={{ fontSize: '0.69em', color: 'var(--mut)', fontWeight: 400, textTransform: 'none' }}>({cat.rows.length} entries)</span>
               </summary>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em', marginBottom: 4 }}>
@@ -195,7 +195,7 @@ function ErasView({ db }) {
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--dim)' }}>{fmt(r.my)}</td>
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cc)', whiteSpace: 'nowrap' }}>{typeof r.hc==='number'&&r.hc<0?`HC ${fmt(r.hc)}`:`HC ${r.hc}`}</td>
                       <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cl)', whiteSpace: 'nowrap' }}>{fmt(r.lc)} LY</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'right', color: 'var(--cca)', whiteSpace: 'nowrap' }}>{fmt(r.mc)} MY</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'right', color: CAL_COLOR, whiteSpace: 'nowrap' }}>{fmt(r.mc)} MY</td>
                     </tr>
                   ))}
                 </tbody>
@@ -299,7 +299,7 @@ export default function CalendarTab({ db }) {
       {activeTab === 'calendar' && (
         <div>
           <div style={{ textAlign: 'center', padding: '8px 0 6px' }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: 'var(--cca)' }}>🌙 The Lajen Calendar</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: CAL_COLOR }}>🌙 The Lajen Calendar</div>
             <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>12 months × 30 days · 5-day week · 4 seasons × 90 days</div>
           </div>
 
@@ -309,16 +309,16 @@ export default function CalendarTab({ db }) {
               {['XS','S','M','L','XL'].map(s => (
                 <button key={s} onClick={() => { setGridSize(s); try { localStorage.setItem('colsize_calendar', s) } catch {} }}
                   style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
-                    background: gridSize === s ? 'var(--cca)' : 'none',
+                    background: gridSize === s ? CAL_COLOR : 'none',
                     color: gridSize === s ? '#000' : 'var(--dim)',
-                    border: `1px solid ${gridSize === s ? 'var(--cca)' : 'var(--brd)'}` }}>{s}</button>
+                    border: `1px solid ${gridSize === s ? CAL_COLOR : 'var(--brd)'}` }}>{s}</button>
               ))}
             </div>
             <button onClick={toggleExpandAll}
               style={{ fontSize: '0.85em', padding: '4px 14px', borderRadius: 8, cursor: 'pointer',
-                background: expandAll ? 'var(--cca)' : 'var(--card)',
+                background: expandAll ? CAL_COLOR : 'var(--card)',
                 color: expandAll ? '#000' : 'var(--dim)',
-                border: `1px solid ${expandAll ? 'var(--cca)' : 'var(--brd)'}` }}>
+                border: `1px solid ${expandAll ? CAL_COLOR : 'var(--brd)'}` }}>
               {expandAll ? '⊟ Collapse All' : '⊞ Expand All'}
             </button>
             {openMonths.size > 0 && !expandAll && (
@@ -399,7 +399,7 @@ export default function CalendarTab({ db }) {
           <Modal open={!!dayModal}
             onClose={() => { setDayModal(null); setDayText(''); setEditingEntry(null) }}
             title={dayModal ? `${MONTHS[dayModal.mi]?.n}, Day ${dayModal.day}` : ''}
-            color="var(--cca)">
+            color={CAL_COLOR}>
             {dayModal && (
               <>
                 {getEntriesForDay(dayModal.mi, dayModal.day).map(e => (
@@ -420,7 +420,7 @@ export default function CalendarTab({ db }) {
                 </div>
                 <div className="modal-actions">
                   <button className="btn btn-outline" onClick={() => { setDayModal(null); setDayText(''); setEditingEntry(null) }}>Cancel</button>
-                  <button className="btn btn-primary" style={{ background: 'var(--cca)' }} onClick={saveEntry}>
+                  <button className="btn btn-primary" style={{ background: CAL_COLOR }} onClick={saveEntry}>
                     {editingEntry ? 'Update' : 'Save'}
                   </button>
                 </div>

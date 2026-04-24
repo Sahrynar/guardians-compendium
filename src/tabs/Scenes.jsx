@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
-import { uid, RAINBOW, lerpColor, BKS } from '../constants'
+import { TAB_RAINBOW, uid, RAINBOW, lerpColor, BKS } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
-const SC_COLOR = '#38b000'
+const SC_COLOR = TAB_RAINBOW['scenes'] || '#aaaaaa'
 const SCENE_FIELDS = [
   { k: 'name',              l: 'Scene',             t: 'text', r: true },
   { k: 'book',              l: 'Book',              t: 'sel', o: ['','Book 1','Book 2','Book 3'] },

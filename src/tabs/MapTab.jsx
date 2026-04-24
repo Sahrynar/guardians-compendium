@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import Modal from '../components/common/Modal'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 
 export default function MapTab({ db }) {
+  const tabColor = TAB_RAINBOW['map'] || '#aaaaaa'
   const maps = (db.db.maps || []).slice().sort((a, b) => {
     const ao = a.sort_order != null ? Number(a.sort_order) : 9999
     const bo = b.sort_order != null ? Number(b.sort_order) : 9999
@@ -105,9 +106,9 @@ export default function MapTab({ db }) {
           <button key={l} onClick={() => saveColCount(n)}
             style={{
               fontSize: 'var(--fs-xs)', padding: '2px 7px', borderRadius: 8,
-              background: colCount===n ? 'var(--cl)' : 'none',
+              background: colCount===n ? tabColor : 'none',
               color: colCount===n ? '#000' : 'var(--dim)',
-              border: `1px solid ${colCount===n ? 'var(--cl)' : 'var(--brd)'}`,
+              border: `1px solid ${colCount===n ? tabColor : 'var(--brd)'}`,
               cursor: 'pointer',
             }}>{l}</button>
         ))}
@@ -124,9 +125,9 @@ export default function MapTab({ db }) {
         {Object.entries(MAP_HEIGHTS).map(([l, h]) => (
           <button key={l} onClick={() => { setMapHeight(h); try { localStorage.setItem('map_img_height', String(h)) } catch {} }}
             style={{ fontSize: 'var(--fs-xs)', padding: '2px 7px', borderRadius: 8,
-              background: mapHeight === h ? 'var(--cl)' : 'none',
+              background: mapHeight === h ? tabColor : 'none',
               color: mapHeight === h ? '#000' : 'var(--dim)',
-              border: `1px solid ${mapHeight === h ? 'var(--cl)' : 'var(--brd)'}`,
+              border: `1px solid ${mapHeight === h ? tabColor : 'var(--brd)'}`,
               cursor: 'pointer' }}>{l}</button>
         ))}
         <span style={{ marginLeft: 'auto', fontSize: 'var(--fs-xs)', color: 'var(--mut)' }}>
@@ -135,15 +136,15 @@ export default function MapTab({ db }) {
       </div>
 
       <div className="tbar">
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: 'var(--cl)' }}>🌍 Maps</div>
-        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cl)', color: '#000' }} onClick={() => setAddingMap(true)}>+ Add Map</button>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>🌍 Maps</div>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => setAddingMap(true)}>+ Add Map</button>
       </div>
 
       {!maps.length && (
         <div className="empty">
           <div className="empty-icon">🌍</div>
           <p>No maps yet. Upload your Lajen/Mnaerah maps here.</p>
-          <button className="btn btn-primary" style={{ background: 'var(--cl)', color: '#000' }} onClick={() => setAddingMap(true)}>+ Add Map</button>
+          <button className="btn btn-primary" style={{ background: tabColor, color: '#000' }} onClick={() => setAddingMap(true)}>+ Add Map</button>
         </div>
       )}
 
@@ -166,7 +167,7 @@ export default function MapTab({ db }) {
               transition: 'box-shadow .15s',
               cursor: 'grab',
             }}
-            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 0 1px var(--cl)'}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = `0 0 0 1px ${tabColor}`}
             onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
           >
             {/* Drag handle bar */}
@@ -193,7 +194,7 @@ export default function MapTab({ db }) {
                 </div>
               )}
               <div style={{ marginTop: 6, display: 'flex', gap: 4 }}>
-                <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={() => setLightboxSrc(m.src)}>🔍 Zoom</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => setLightboxSrc(m.src)}>🔍 Zoom</button>
                 <button className="btn btn-sm btn-outline" style={{ color: 'var(--dim)', borderColor: 'var(--brd)' }} onClick={() => setEditingMap({ id: m.id, name: m.name, notes: m.notes || '' })}>✎ Edit</button>
                 <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(m.id)}>✕</button>
               </div>
@@ -205,22 +206,22 @@ export default function MapTab({ db }) {
       {/* Locations reference */}
       {(db.db.locations||[]).length > 0 && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: 'var(--cl)', marginBottom: 8 }}>Locations for Reference</div>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: tabColor, marginBottom: 8 }}>Locations for Reference</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {(db.db.locations||[]).map(l => (
-              <span key={l.id} style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: '1px solid rgba(0,229,204,.3)', color: 'var(--cl)', background: 'rgba(0,229,204,.05)' }}>{l.name}</span>
+              <span key={l.id} style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: `1px solid ${tabColor}44`, color: tabColor, background: `${tabColor}11` }}>{l.name}</span>
             ))}
           </div>
         </div>
       )}
 
       {/* ── Add map modal ── */}
-      <Modal open={addingMap} onClose={() => setAddingMap(false)} title="Add Map" color="var(--cl)">
+      <Modal open={addingMap} onClose={() => setAddingMap(false)} title="Add Map" color={tabColor}>
         <div className="field"><label>Map Name</label><input value={newMapName} onChange={e => setNewMapName(e.target.value)} placeholder="e.g. Lajen World Map" /></div>
         <div className="field"><label>Notes</label><textarea value={newMapNotes} onChange={e => setNewMapNotes(e.target.value)} placeholder="Optional notes about this map…" /></div>
         <div className="field">
           <label>Image File(s)</label>
-          <label style={{ display: 'inline-block', padding: '8px 14px', background: 'var(--cl)', color: '#000', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: '0.85em', fontWeight: 600 }}>
+          <label style={{ display: 'inline-block', padding: '8px 14px', background: tabColor, color: '#000', borderRadius: 'var(--r)', cursor: 'pointer', fontSize: '0.85em', fontWeight: 600 }}>
             📎 Choose Image(s)
             <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleUpload} />
           </label>
@@ -231,14 +232,14 @@ export default function MapTab({ db }) {
       </Modal>
 
       {/* ── Edit map modal ── */}
-      <Modal open={!!editingMap} onClose={() => setEditingMap(null)} title="Edit Map" color="var(--cl)">
+      <Modal open={!!editingMap} onClose={() => setEditingMap(null)} title="Edit Map" color={tabColor}>
         {editingMap && (
           <>
             <div className="field"><label>Map Name</label><input value={editingMap.name} onChange={e => setEditingMap(p => ({ ...p, name: e.target.value }))} /></div>
             <div className="field"><label>Notes</label><textarea value={editingMap.notes} onChange={e => setEditingMap(p => ({ ...p, notes: e.target.value }))} placeholder="Optional notes…" /></div>
             <div className="modal-actions">
               <button className="btn btn-outline" onClick={() => setEditingMap(null)}>Cancel</button>
-              <button className="btn btn-primary" style={{ background: 'var(--cl)', color: '#000' }} onClick={saveEdit}>Save</button>
+              <button className="btn btn-primary" style={{ background: tabColor, color: '#000' }} onClick={saveEdit}>Save</button>
             </div>
           </>
         )}

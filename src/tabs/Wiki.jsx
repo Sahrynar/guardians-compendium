@@ -1,10 +1,11 @@
-const SIZE_COLS_WIKI = { XS: 4, S: 3, M: 2, L: 2, XL: 1 }
-
 import { useEffect, useRef, useState } from 'react'
 import Modal from '../components/common/Modal'
 import FilterPopup from '../components/common/FilterPopup'
-import { uid } from '../constants'
+import { TAB_RAINBOW, uid } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
+
+const SIZE_COLS_WIKI = { XS: 4, S: 3, M: 2, L: 2, XL: 1 }
+const tabColor = TAB_RAINBOW['wiki'] || '#aaaaaa'
 
 const WIKI_CATS = [
   'Lore', 'World History', 'Cosmology', 'Power System',
@@ -49,7 +50,7 @@ function FlowchartRenderer({ content }) {
           const outgoing = edges.filter(e => e.from === id)
           return (
             <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: '0.85em', fontWeight: 600, color: '#ff69b4', whiteSpace: 'nowrap' }}>
+              <div style={{ padding: '4px 12px', background: 'var(--card)', border: '1px solid var(--cc)', borderRadius: 6, fontSize: '0.85em', fontWeight: 600, color: tabColor, whiteSpace: 'nowrap' }}>
                 {nodes[id]}
               </div>
               {outgoing.map((e, i) => (
@@ -78,7 +79,7 @@ function TableRenderer({ content }) {
         <thead>
           <tr>
             {header.map((h, i) => (
-              <th key={i} style={{ padding: '6px 10px', background: 'rgba(201,102,255,.1)', border: '1px solid var(--brd)', color: '#ff69b4', fontWeight: 600, textAlign: 'left' }}>{h}</th>
+              <th key={i} style={{ padding: '6px 10px', background: 'rgba(201,102,255,.1)', border: '1px solid var(--brd)', color: tabColor, fontWeight: 600, textAlign: 'left' }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -106,7 +107,7 @@ function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
         <div style={{ display: 'flex', gap: 3 }}>
           <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveUp}>↑</button>
           <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveDown}>↓</button>
-          <button className="btn btn-sm btn-outline" style={{ color: '#ff69b4', borderColor: 'var(--cc)', padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
+          <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
           <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: '0.77em' }} onClick={onDelete}>✕</button>
         </div>
       </div>
@@ -157,7 +158,7 @@ function BlockEditor({ block, onSave, onClose }) {
   }
 
   return (
-    <Modal open onClose={onClose} title={block ? 'Edit Block' : 'Add Block'} color="var(--cc)">
+    <Modal open onClose={onClose} title={block ? 'Edit Block' : 'Add Block'} color={tabColor}>
       <div className="field">
         <label>Block Type</label>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -165,7 +166,7 @@ function BlockEditor({ block, onSave, onClose }) {
             <button
               key={ct.k}
               className={`fp ${type === ct.k ? 'active' : ''}`}
-              style={{ color: '#ff69b4' }}
+              style={{ color: tabColor }}
               onClick={() => setType(ct.k)}
             >{ct.l}</button>
           ))}
@@ -201,7 +202,7 @@ function BlockEditor({ block, onSave, onClose }) {
 
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" style={{ background: '#ff69b4' }} onClick={() => onSave({ ...block, id: block?.id || uid(), type, content, caption })}>
+        <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => onSave({ ...block, id: block?.id || uid(), type, content, caption })}>
           {block?.id ? 'Save' : 'Add Block'}
         </button>
       </div>
@@ -243,10 +244,10 @@ function ArticleEditor({ article, onSave, onCancel }) {
     <div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-outline" onClick={onCancel}>← Back</button>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: '#ff69b4', flex: 1 }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: tabColor, flex: 1 }}>
           {article?.id ? 'Editing Article' : 'New Article'}
         </div>
-        <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor }} onClick={() => onSave({ ...article, id: article?.id || uid(), title, category, summary, blocks, updated: new Date().toISOString() })}>
           Save Article
         </button>
       </div>
@@ -263,7 +264,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
 
       {/* Blocks */}
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.92em', color: '#ff69b4', marginBottom: 8 }}>Content Blocks</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.92em', color: tabColor, marginBottom: 8 }}>Content Blocks</div>
         {!blocks.length && (
           <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mut)', fontSize: '0.85em', border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
             No blocks yet. Add your first content block below.
@@ -281,7 +282,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
         ))}
         <button
           className="btn btn-outline"
-          style={{ width: '100%', borderStyle: 'dashed', color: '#ff69b4', borderColor: 'var(--cc)', marginTop: 4 }}
+          style={{ width: '100%', borderStyle: 'dashed', color: tabColor, borderColor: tabColor, marginTop: 4 }}
           onClick={() => setAddingBlock(true)}
         >+ Add Block</button>
       </div>
@@ -346,14 +347,14 @@ export default function Wiki({ db, navSearch }) {
           {['XS','S','M','L','XL'].map(sz => (
             <button key={sz} onClick={() => changeColSize(sz)}
               style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, cursor: 'pointer',
-                background: colSize === sz ? '#ff69b4' : 'none',
+                background: colSize === sz ? tabColor : 'none',
                 color: colSize === sz ? '#000' : 'var(--dim)',
-                border: `1px solid ${colSize === sz ? '#ff69b4' : 'var(--brd)'}` }}>{sz}</button>
+                border: `1px solid ${colSize === sz ? tabColor : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: '#ff69b4' }}>📖 Wiki</div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>📖 Wiki</div>
         <FilterPopup
-          color="#ff69b4"
+          color={tabColor}
           filters={[{ key: 'category', label: 'Category', options: WIKI_CATS.map(c => ({ value: c, label: c })) }]}
           values={filterValues}
           onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
@@ -363,14 +364,14 @@ export default function Wiki({ db, navSearch }) {
             📥 Auto-imported ({autoCount})
           </button>
         )}
-        <button className="btn btn-primary btn-sm" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
+        <button className="btn btn-primary btn-sm" style={{ background: tabColor }} onClick={() => setEditing({})}>+ New Article</button>
       </div>
 
       {/* Category filter */}
       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 10 }}>
-        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: '#ff69b4' }} onClick={() => setCatFilter('all')}>All</button>
+        <button className={`fp ${catFilter==='all'?'active':''}`} style={{ color: tabColor }} onClick={() => setCatFilter('all')}>All</button>
         {WIKI_CATS.filter(c => articles.some(a => a.category === c)).map(c => (
-          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: '#ff69b4' }} onClick={() => setCatFilter(c)}>{c}</button>
+          <button key={c} className={`fp ${catFilter===c?'active':''}`} style={{ color: tabColor }} onClick={() => setCatFilter(c)}>{c}</button>
         ))}
       </div>
 
@@ -381,25 +382,25 @@ export default function Wiki({ db, navSearch }) {
           <p style={{ fontSize: '0.85em', color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>
             The wiki is where long-form lore lives — world history, cosmology, power system deep-dives, cultures, languages, factions. Supports text, tables, flowcharts, diagrams, images, and callouts.
           </p>
-          <button className="btn btn-primary" style={{ background: '#ff69b4' }} onClick={() => setEditing({})}>+ New Article</button>
+          <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => setEditing({})}>+ New Article</button>
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (
-          <div key={a.id} id={`gcomp-entry-${a.id}`} className="entry-card" style={{ '--card-color': '#ff69b4' }}>
+          <div key={a.id} id={`gcomp-entry-${a.id}`} className="entry-card" style={{ '--card-color': tabColor }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div className="entry-title">{a.title}</div>
                 {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
               </div>
-              <span className="badge" style={{ color: '#ff69b4', borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
+              <span className="badge" style={{ color: tabColor, borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
             </div>
             <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
               {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
             </div>
             <div className="entry-actions" style={{ marginTop: 6 }}>
-              <button className="btn btn-sm btn-outline" style={{ color: '#ff69b4', borderColor: 'var(--cc)' }} onClick={() => setEditing(a)}>✎ Edit</button>
+              <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => setEditing(a)}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(a.id)}>✕</button>
             </div>
           </div>
