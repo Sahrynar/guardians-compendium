@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TAB_RAINBOW, uid } from '../../constants'
 import { supabase, hasSupabase } from '../../supabase'
+import QuickIdeaModal from '../../components/common/QuickIdeaModal'
 import StickyEditModal from './StickyEditModal'
 import {
   DEFAULT_TAGS,
@@ -20,6 +21,7 @@ import {
 
 const JOURNAL_COLOR = TAB_RAINBOW.notes
 const STICKY_COLS = { XS: 6, S: 5, M: 4, L: 3, XL: 2 }
+const WIKI_CATEGORIES = ['Lore', 'World History', 'Cosmology', 'Power System', 'Cultures', 'Languages', 'Religions', 'Factions', 'Geography', 'Characters', 'Items', 'Events', 'Other']
 
 const SEND_GROUPS = [
   { label: 'STORY', items: [['characters', 'Characters'], ['locations', 'Locations'], ['items', 'Items'], ['scenes', 'Scenes'], ['timeline', 'Timeline']] },
@@ -548,7 +550,7 @@ function StickyBoard({
                     <button onClick={() => onEdit({ ...c, pinned_stickies: !c.pinned_stickies, pinned_journal: !c.pinned_stickies, pinned: undefined })} title={c.pinned_stickies ? 'Unpin' : 'Pin'} style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: c.pinned_stickies ? sc.border : 'none', color: c.pinned_stickies ? '#fff' : textColor, cursor: 'pointer' }}>📌</button>
                     {!c.archived && (
                       <div ref={sendOpenId === c.id ? sendMenuRef : null} style={{ position: 'relative' }}>
-                        <button onClick={() => setSendOpenId(sendOpenId === c.id ? null : c.id)} style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: 'none', color: textColor, cursor: 'pointer' }}>Send to ▾</button>
+                        <button onClick={() => setSendOpenId(sendOpenId === c.id ? null : c.id)} title="Send to..." style={{ fontSize: '0.62em', padding: '1px 6px', borderRadius: 4, border: `1px solid ${sc.border}`, background: 'none', color: textColor, cursor: 'pointer' }}>→</button>
                         {sendOpenId === c.id && <SendToMenu sticky={c} onSend={(sticky, target) => { onSendTo(sticky, target); setSendOpenId(null) }} />}
                       </div>
                     )}
@@ -557,7 +559,7 @@ function StickyBoard({
                   <div style={{ fontSize: '0.62em', marginTop: 6, color: textColor, opacity: 0.8 }}>
                     {c.archived && (
                       <button onClick={() => c.archived_destination && c.archived_destination_id && crossLink?.(c.archived_destination, c.archived_destination_id)} style={{ border: 'none', background: 'none', color: textColor, cursor: c.archived_destination ? 'pointer' : 'default', padding: 0, fontSize: 'inherit' }}>
-                        📦 → {c.archived_destination ? c.archived_destination[0].toUpperCase() + c.archived_destination.slice(1) : 'Archived'}
+                        📤 → {c.archived_destination ? c.archived_destination[0].toUpperCase() + c.archived_destination.slice(1) : 'Archived'}{c.archived_destination_name ? `: ${c.archived_destination_name}` : ''}
                       </button>
                     )}
                   </div>
@@ -608,12 +610,14 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
   const [captures, setCaptures] = useState(() => lsGet('gcomp_captures', []).map((c, i) => normalizeSticky(c, i)))
   const [showTagManager, setShowTagManager] = useState(false)
   const [mobileZone, setMobileZone] = useState('capture')
-  const [ideas, setIdeas] = useState(() => lsGet(IDEAS_LS_KEY, []))
   const [longFormOpen, setLongFormOpen] = useState(false)
   const [longFormDraft, setLongFormDraft] = useState({ title: '', category: 'Brainstorm', content: '' })
   const [showArchived, setShowArchived] = useState(false)
   const [archivedOnly, setArchivedOnly] = useState(false)
   const [focusedSticky, setFocusedSticky] = useState(null)
+  const [showIdeaModal, setShowIdeaModal] = useState(false)
+  const [wikiPickerSticky, setWikiPickerSticky] = useState(null)
+  const ideas = db.db.ideas_list || lsGet(IDEAS_LS_KEY, [])
 
   useEffect(() => {
     const dbCaptures = (db.db.journal_captures || []).map((c, i) => normalizeSticky(c, i))
@@ -723,7 +727,7 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
     })
   }
 
-  function buildDestination(target, sticky) {
+  function buildDestination(target, sticky, wikiCategory = null) {
     const now = new Date()
     const note = importNoteText(now)
     const baseTitle = stickyTitle(sticky.text)
@@ -742,7 +746,21 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
     if (target === 'items') return { category: 'items', tab: 'items', entry: { ...base, name: baseTitle, significance: fullText, detail: note } }
     if (target === 'scenes') return { category: 'scenes', tab: 'scenes', entry: { ...base, name: baseTitle, summary: sticky.text.slice(0, 80), detail: fullText, notes: note } }
     if (target === 'timeline') return { category: 'timeline', tab: 'timeline', entry: { ...base, name: baseTitle, detail: fullText, notes: note } }
-    if (target === 'wiki') return { category: 'wiki', tab: 'wiki', entry: { ...base, title: baseTitle, summary: fullText.slice(0, 150), category: 'Lore', blocks: [{ id: uid(), type: 'callout', content: note }, { id: uid(), type: 'text', content: fullText }] } }
+    if (target === 'wiki') {
+      const lines = fullText.split('\n').map(line => line.trim()).filter(Boolean)
+      const stickySummary = lines.length > 1 ? lines.slice(1).join(' ').slice(0, 150) : fullText.slice(0, 150)
+      return {
+        category: 'wiki',
+        tab: 'wiki',
+        entry: {
+          ...base,
+          title: lines[0]?.slice(0, 50) || baseTitle,
+          summary: stickySummary,
+          category: wikiCategory || 'Other',
+          blocks: [{ id: uid(), type: 'callout', content: note }, { id: uid(), type: 'text', content: fullText }],
+        },
+      }
+    }
     if (target === 'world') return { category: 'world', tab: 'world', entry: { ...base, name: baseTitle, detail: fullText, notes: note } }
     if (target === 'glossary') return { category: 'wiki', tab: 'glossary', entry: { ...base, title: baseTitle, summary: fullText.slice(0, 150), category: 'Lore', is_glossary: true, blocks: [{ id: uid(), type: 'callout', content: note }, { id: uid(), type: 'text', content: fullText }] } }
     if (target === 'spellings') return { category: 'spellings', tab: 'spellings', entry: { ...base, name: baseTitle, word: baseTitle, detail: fullText, notes: note } }
@@ -752,18 +770,27 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
     return { category: 'notes', tab: 'notes', entry: { ...base, title: baseTitle, content: fullText, import_note: note, category: 'Brainstorm' } }
   }
 
-  function sendStickyTo(sticky, target) {
-    const { category, tab, entry } = buildDestination(target, sticky)
+  function sendStickyTo(sticky, target, wikiCategory = null) {
+    if (target === 'wiki' && !wikiCategory) {
+      setWikiPickerSticky(sticky)
+      return
+    }
+    const { category, tab, entry } = buildDestination(target, sticky, wikiCategory)
     db.upsertEntry(category, entry)
     const archivedSticky = {
       ...sticky,
       archived: true,
       archived_destination: tab,
       archived_destination_id: entry.id,
+      archived_destination_name: getEntryName(entry),
       archived_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
     editCapture(archivedSticky)
+  }
+
+  function getEntryName(entry) {
+    return entry.display_name || entry.name || entry.title || entry.term || entry.word || entry.text?.slice(0, 50) || ''
   }
 
   const archivedCount = captures.filter(c => c.archived).length
@@ -783,6 +810,10 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
             <button className="btn btn-sm" style={{ background: mobileZone === 'stickies' ? JOURNAL_COLOR : 'none', color: mobileZone === 'stickies' ? '#000' : 'var(--dim)', border: `1px solid ${JOURNAL_COLOR}` }} onClick={() => setMobileZone('stickies')}>Stickies</button>
           </div>
         )}
+        <button onClick={() => setShowIdeaModal(true)} title="Quick idea"
+          style={{ fontSize: '1em', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+          💡
+        </button>
         <button className="btn btn-sm btn-outline" onClick={() => setShowTagManager(true)}>🏷 Tags</button>
         <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{captures.length} stickies</span>
       </div>
@@ -790,7 +821,7 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         {(!isMobile || mobileZone === 'capture') && (
           <div style={{ width: isMobile ? '100%' : 260, flexShrink: 0 }}>
-            <QuickCapture tags={tags} onAddSticky={addCapture} onOpenLongForm={openLongForm} />
+            <QuickCapture tags={tags} onAddSticky={addCapture} onOpenLongForm={openLongForm} onSaveIdea={entry => db.upsertEntry('ideas_list', entry)} />
             {recentIdeas.length > 0 && (
               <div style={{ marginBottom: 12, padding: 8, background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)' }}>
                 <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
@@ -857,7 +888,26 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
       )}
 
       <LongFormNoteModal open={longFormOpen} draft={longFormDraft} setDraft={setLongFormDraft} onClose={() => setLongFormOpen(false)} onSave={saveLongForm} />
-      <StickyEditModal open={!!focusedSticky} sticky={focusedSticky} tags={tags} onSave={editCapture} onClose={() => setFocusedSticky(null)} />
+      <QuickIdeaModal open={showIdeaModal} onClose={() => setShowIdeaModal(false)} db={db} color={JOURNAL_COLOR} />
+      <StickyEditModal open={!!focusedSticky} sticky={focusedSticky} tags={tags} onSave={editCapture} onClose={() => setFocusedSticky(null)} onUnarchive={sticky => {
+        if (!confirm(`Un-archive this sticky? The entry created in ${sticky.archived_destination || 'the destination'} will remain.`)) return
+        editCapture({ ...sticky, archived: false, archived_destination: null, archived_destination_id: null, archived_destination_name: null })
+      }} />
+      {wikiPickerSticky && (
+        <div className="modal-overlay open" onClick={() => setWikiPickerSticky(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <button className="modal-close" onClick={() => setWikiPickerSticky(null)}>✕</button>
+            <div className="modal-title" style={{ color: JOURNAL_COLOR }}>Choose Wiki category</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {WIKI_CATEGORIES.map(cat => (
+                <button key={cat} className="btn btn-outline" onClick={() => { sendStickyTo(wikiPickerSticky, 'wiki', cat); setWikiPickerSticky(null) }}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

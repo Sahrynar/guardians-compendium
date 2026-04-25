@@ -7,7 +7,7 @@ import IdeasView from './notes/IdeasView'
 const NOTES_COLOR = TAB_RAINBOW.notes
 
 export default function Notes(props) {
-  const { db } = props
+  const { db, setCrumbs } = props
   const [pendingExpandId, setPendingExpandId] = useState(null)
   const [subTab, setSubTab] = useState(() => {
     try { return localStorage.getItem('notes_subtab') || 'stickies' } catch { return 'stickies' }
@@ -37,7 +37,19 @@ export default function Notes(props) {
     }
     window.addEventListener('gcomp_expand', onExpand)
     return () => window.removeEventListener('gcomp_expand', onExpand)
-  }, [db.db.notes, db.db.journal_captures])
+  }, [db.db.notes, db.db.journal_captures, db.db.ideas_list])
+
+  useEffect(() => {
+    if (!setCrumbs) return
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const tabCrumb = { icon: '📝', label: 'Notes' }
+    const subMap = {
+      stickies: { icon: '📌', label: 'Stickies' },
+      journal: { icon: '📝', label: 'Journal' },
+      ideas: { icon: '💡', label: 'Ideas' },
+    }
+    setCrumbs([root, tabCrumb, subMap[subTab] || { icon: '·', label: subTab }])
+  }, [setCrumbs, subTab])
 
   function pick(t) {
     setSubTab(t)

@@ -28,6 +28,7 @@ import Inventory from './tabs/Inventory'
 import SessionLog from './tabs/SessionLog'
 import Glossary from './tabs/Glossary'
 import IOBar from './components/common/IOBar'
+import Breadcrumb from './components/common/Breadcrumb'
 
 const TAB_ORDER = TAB_ORDER_FOR_COLORS
 
@@ -52,6 +53,7 @@ export default function App() {
   const [histIdx, setHistIdx] = useState(-1)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
   const [navSearch, setNavSearch] = useState('')
+  const [crumbs, setCrumbs] = useState([])
   const [headerImg, setHeaderImg] = useState('')
   const [quickCapOpen, setQuickCapOpen] = useState(false)
   const [quickCapText, setQuickCapText] = useState('')
@@ -77,6 +79,16 @@ export default function App() {
 
   useEffect(() => {
     try { localStorage.setItem('gcomp_active_tab', tab) } catch {}
+  }, [tab])
+
+  useEffect(() => {
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const tabIconMap = {
+      dashboard: { icon: '🏠', label: 'Dashboard' },
+    }
+    const cat = CATS[tab]
+    const tabCrumb = tabIconMap[tab] || (cat ? { icon: cat.i, label: cat.l } : { icon: '·', label: tab })
+    setCrumbs([root, tabCrumb])
   }, [tab])
 
   // Focus quick capture input when opened
@@ -213,7 +225,7 @@ export default function App() {
 
   const clearCrossLink = useCallback(() => {}, [])
 
-  const tabProps = { db, goTo, goToWithSearch, crossLink, clearCrossLink, tab, navSearch, setNavSearch }
+  const tabProps = { db, goTo, goToWithSearch, crossLink, clearCrossLink, tab, navSearch, setNavSearch, setCrumbs }
 
   function renderTab() {
     if (db.loading) return (
@@ -248,9 +260,6 @@ export default function App() {
       default:           return <Dashboard {...tabProps} />
     }
   }
-
-  const tabName = tab === 'familytree' ? 'family tree' : tab === 'sessionlog' ? 'session log' :
-    tab === 'eras' ? 'eras' : tab === 'map' ? 'maps' : tab
 
   return (
     <div>
@@ -292,12 +301,6 @@ export default function App() {
             <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
             <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
           </div>
-          <input
-            className="sx nav-search"
-            placeholder={tab === 'dashboard' ? 'Search everything…' : `Search ${tabName}…`}
-            value={navSearch}
-            onChange={e => setNavSearch(e.target.value)}
-          />
           <div className="nav-btns">
             <span className={`sync-dot ${db.syncStatus}`} title={`Sync: ${db.syncStatus}`} style={{ marginRight: 4 }} />
             <button className="nav-btn" onClick={() => adjFont(-1)} title="Smaller text">A−</button>
@@ -332,6 +335,8 @@ export default function App() {
           <button className="nav-btn" onClick={() => scrollTabs(1)} style={{ flexShrink: 0 }}>▶</button>
         </div>
       </nav>
+
+      <Breadcrumb crumbs={crumbs} />
 
       <div className="area">{renderTab()}</div>
 

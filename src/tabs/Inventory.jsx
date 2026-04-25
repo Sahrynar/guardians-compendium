@@ -335,7 +335,7 @@ function EntryPopup({ entry, allEntries, chars, db, onClose, onEdit, onTransfer,
 // ══════════════════════════════════════════════════════════════════
 // MAIN INVENTORY COMPONENT
 // ══════════════════════════════════════════════════════════════════
-export default function Inventory({ db }) {
+export default function Inventory({ db, setCrumbs }) {
   const tabColor = TAB_RAINBOW.inventory
   // Merge legacy items + wardrobe + inventory into one list
   const rawInventory = db.db.inventory || []
@@ -383,6 +383,17 @@ export default function Inventory({ db }) {
   const [dragOverIdx, setDragOverIdx] = useState(null)
   const [showColPicker, setShowColPicker] = useState(false)
   const [significantOnly, setSignificantOnly] = useState(false)
+
+  useEffect(() => {
+    if (!setCrumbs) return
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const tabCrumb = { icon: '📦', label: 'Inventory' }
+    const subMap = {
+      items: { icon: '📦', label: 'All Items' },
+      outfits: { icon: '👗', label: 'Outfits' },
+    }
+    setCrumbs([root, tabCrumb, subMap[topTab] || { icon: '·', label: topTab }])
+  }, [setCrumbs, topTab])
 
   useEffect(() => {
     function onExpand(e) {
@@ -586,7 +597,7 @@ export default function Inventory({ db }) {
             border: `1px solid ${significantOnly ? tabColor : 'var(--brd)'}`,
             background: significantOnly ? `${tabColor}22` : 'none',
             color: significantOnly ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
-          Significant only
+          📖 Significant only
         </button>
 
         {/* List sort (only in list mode) */}
@@ -684,9 +695,16 @@ export default function Inventory({ db }) {
               <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card"
                 style={{ '--card-color': tileColor, borderTop: `2px solid ${tileColor}` }}
                 onClick={() => setViewPopup({ entry: e, bubbleColor })}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div className="entry-title"
-                    dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', minWidth: 0 }}>
+                    <div className="entry-title"
+                      dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
+                    {e.significance && (
+                      <span style={{ fontSize: '0.77em', padding: '1px 6px', borderRadius: 8, background: `${tabColor}22`, color: tabColor, flexShrink: 0 }}>
+                        📖 sig
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.69em', color: tileColor, flexShrink: 0, marginLeft: 6 }}>
                     {cat?.icon} {e.category}
                   </div>

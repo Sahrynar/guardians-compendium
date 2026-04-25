@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Modal from '../../components/common/Modal'
 import { DEFAULT_TAGS, STICKY_COLORS } from './stickyShared'
 
-export default function StickyEditModal({ open, sticky, tags, onSave, onClose, showJournalUnpin = false }) {
+export default function StickyEditModal({ open, sticky, tags, onSave, onClose, showJournalUnpin = false, onUnarchive }) {
   const [form, setForm] = useState(sticky || null)
 
   useEffect(() => {
@@ -88,6 +88,15 @@ export default function StickyEditModal({ open, sticky, tags, onSave, onClose, s
             onClick={() => patch({ pinned_journal: false })}
           >
             Unpin from Journal
+          </button>
+        )}
+        {form.archived && onUnarchive && (
+          <button
+            className="btn btn-sm btn-outline"
+            style={{ justifySelf: 'flex-start' }}
+            onClick={() => onUnarchive(form)}
+          >
+            Un-archive
           </button>
         )}
       </div>

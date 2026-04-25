@@ -11,7 +11,7 @@ const TAB_LIST = [
 
 const REVIEW_CATS = ['characters', 'locations', 'items', 'scenes', 'timeline', 'wiki', 'world', 'glossary', 'spellings', 'canon', 'flags', 'questions', 'notes']
 const DASH_SEARCH_SCOPES = [
-  ['all', '🌐 All Tabs'],
+  ['all', '🌐 Global (everything)'],
   ['characters', '👤 Characters'],
   ['wiki', '📖 Wiki'],
   ['glossary', '📚 Glossary'],
@@ -33,10 +33,15 @@ function getEntryName(e) {
 
 function getCategoryEntries(data, cat) {
   if (cat === 'glossary') return (data.wiki || []).filter(e => e.is_glossary)
+  if (cat === 'familytree') return data.family_tree || []
+  if (cat === 'map') return data.maps || []
+  if (cat === 'calendar') return data.calendar_entries || []
+  if (cat === 'sessionlog') return data.session_log || data.session_logs || []
   return data[cat] || []
 }
 
 function getCategoryCount(data, cat) {
+  if (cat === 'tools') return null
   return getCategoryEntries(data, cat).length
 }
 
@@ -53,9 +58,9 @@ export default function Dashboard({ db, goTo, crossLink }) {
   let op = 0
   const fl = (data.flags || []).length
 
-  Object.keys(CATS).forEach(c => {
-    if (c === 'flags' || c === 'dashboard') return
-    const entries = getCategoryEntries(data, c)
+  Object.keys(CATS).forEach(cat => {
+    if (cat === 'flags' || cat === 'dashboard') return
+    const entries = getCategoryEntries(data, cat)
     if (!Array.isArray(entries) || !entries.length) return
     tot += entries.length
     entries.forEach(e => {
@@ -73,32 +78,43 @@ export default function Dashboard({ db, goTo, crossLink }) {
       entries.forEach(e => {
         const ts = e.updated_at || e.updated || e.created_at || e.created
         if (!ts) return
-        rows.push({ cat, name: getEntryName(e), ts, id: e.id })
+        rows.push({
+          cat,
+          name: getEntryName(e),
+          ts,
+          id: e.id,
+          updated: e.updated,
+          updated_at: e.updated_at,
+          from_sticky: e.source === 'sticky',
+          from_session: e.source === 'session-import',
+        })
       })
     })
     rows.sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0))
     return rows
   }, [data])
 
-  let reviewCount = 0
-  const reviewItems = []
-  REVIEW_CATS.forEach(cat => {
-    getCategoryEntries(data, cat).forEach(e => {
-      if (e.auto_imported === true || e.source === 'sticky' || e.source === 'session-import') {
-        reviewCount++
-        reviewItems.push({
-          cat,
-          name: getEntryName(e),
-          id: e.id,
-          source: e.source || 'unknown',
-          updated: e.updated || e.updated_at || e.created_at || e.created,
-        })
-      }
+  const reviewItems = useMemo(() => {
+    const items = []
+    REVIEW_CATS.forEach(cat => {
+      getCategoryEntries(data, cat).forEach(e => {
+        if (e.auto_imported === true || e.source === 'sticky' || e.source === 'session-import') {
+          items.push({
+            cat,
+            name: getEntryName(e),
+            id: e.id,
+            source: e.source || 'unknown',
+            updated: e.updated || e.updated_at || e.created_at || e.created,
+          })
+        }
+      })
     })
-  })
-  reviewItems.sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))
+    items.sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))
+    return items
+  }, [data])
+  const reviewCount = reviewItems.length
 
-  const flags = (data.flags || []).slice(0, 14)
+  const flags = data.flags || []
 
   const searchResults = useMemo(() => {
     if (!dashSearch.trim()) return []
@@ -112,16 +128,26 @@ export default function Dashboard({ db, goTo, crossLink }) {
           e.summary, e.notes, e.detail, e.content, e.definition, e.significance,
         ].filter(Boolean).join(' ').toLowerCase()
         if (hay.includes(q)) {
-          results.push({
-            cat,
-            id: e.id,
-            name: getEntryName(e),
-          })
+          results.push({ cat, id: e.id, name: getEntryName(e) })
         }
       })
     })
     return results.slice(0, 40)
   }, [dashSearch, searchScope, data])
+
+  function openPreview(cat, id) {
+    const entry = getCategoryEntries(data, cat).find(e => e.id === id)
+    if (!entry) return
+    setPreviewEntry(entry)
+    setPreviewCategory(cat)
+  }
+
+  function openInTabForEdit() {
+    if (!previewCategory || !previewEntry) return
+    crossLink(previewCategory, previewEntry.id)
+    setPreviewEntry(null)
+    setPreviewCategory(null)
+  }
 
   const panelHead = (icon, label, color, count) => (
     <div style={{ fontSize: '0.77em', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
@@ -144,26 +170,12 @@ export default function Dashboard({ db, goTo, crossLink }) {
     </div>
   )
 
-  function openPreview(cat, id) {
-    const entry = getCategoryEntries(data, cat).find(e => e.id === id)
-    if (!entry) return
-    setPreviewEntry(entry)
-    setPreviewCategory(cat)
-  }
-
-  function openInTabForEdit() {
-    if (!previewCategory || !previewEntry) return
-    crossLink(previewCategory, previewEntry.id)
-    setPreviewEntry(null)
-    setPreviewCategory(null)
-  }
-
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {searchResults.length === 0 && dashSearch && (
         <div style={{ padding: 10, fontSize: '0.85em', color: 'var(--mut)' }}>No matches.</div>
       )}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14 }}>
+      <div style={{ maxWidth: 600, margin: '0 auto 14px', display: 'flex', gap: 6, alignItems: 'center' }}>
         <select value={searchScope} onChange={e => setSearchScope(e.target.value)}
           style={{ padding: '6px 10px', fontSize: '0.85em', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           {DASH_SEARCH_SCOPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -234,7 +246,7 @@ export default function Dashboard({ db, goTo, crossLink }) {
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)' }}
               >
                 <span style={{ fontSize: '0.85em', color: 'var(--tx)', whiteSpace: 'nowrap' }}>{c.i} {c.l}</span>
-                <span style={{ fontSize: '0.92em', fontFamily: "'Cinzel',serif", color }}>{count}</span>
+                {count ? <span style={{ fontSize: '0.92em', fontFamily: "'Cinzel',serif", color }}>{count}</span> : null}
               </div>
             )
           })}
@@ -242,23 +254,36 @@ export default function Dashboard({ db, goTo, crossLink }) {
 
         <div style={{ flex: '0 1 auto', minWidth: 80, maxWidth: 'calc(33.33% - 8px)', overflow: 'hidden' }}>
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
-          {recent.length === 0
-            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
-            : recent.slice(0, 14).map((r, i) => panelRow({ ...r, detail: null }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id)))}
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {recent.length === 0
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
+              : recent.slice(0, 15).map((r, i) => {
+                  const sourceLabel = r.from_sticky ? '📌 from sticky'
+                    : r.from_session ? '📥 from session'
+                    : r.updated ? `✎ edit ${new Date(r.updated).toLocaleDateString()}`
+                    : r.updated_at ? `✎ edit ${new Date(r.updated_at).toLocaleDateString()}`
+                    : null
+                  return panelRow({ ...r, detail: sourceLabel }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id))
+                })}
+          </div>
         </div>
 
         <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
           {panelHead('🔍', 'Review Queue', '#fff', reviewCount)}
-          {reviewItems.length === 0
-            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>Nothing to review</div>
-            : reviewItems.slice(0, 14).map((r, i) => panelRow({ ...r, detail: r.source === 'sticky' ? '📌 from sticky' : '📥 from session import' }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id)))}
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {reviewItems.length === 0
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>Nothing to review</div>
+              : reviewItems.slice(0, 15).map((r, i) => panelRow({ ...r, detail: r.source === 'sticky' ? '📌 from sticky' : '📥 from session import' }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id)))}
+          </div>
         </div>
 
         <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', TAB_RAINBOW.flags, fl)}
-          {flags.length === 0
-            ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
-            : flags.map((f, i) => panelRow({ ...f, detail: f.detail }, i, TAB_RAINBOW.flags, () => openPreview('flags', f.id)))}
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {flags.length === 0
+              ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
+              : flags.slice(0, 15).map((f, i) => panelRow({ ...f, detail: f.detail }, i, TAB_RAINBOW.flags, () => openPreview('flags', f.id)))}
+          </div>
         </div>
       </div>
 

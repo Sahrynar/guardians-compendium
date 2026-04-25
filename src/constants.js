@@ -125,6 +125,12 @@ export const TAB_ORDER_FOR_COLORS = [
 
 export const TAB_RAINBOW = buildTabRainbow(TAB_ORDER_FOR_COLORS)
 
+export const BOOK_TITLES = {
+  'Book 1': 'The Book of Sevorech — The First Book of The Guardians of Lajen',
+  'Book 2': 'The Book of Akatriel — The Second Book of The Guardians of Lajen',
+  'Book 3': 'The Gathering — The Third Book of The Guardians of Lajen',
+}
+
 // ── CSS variable map — kept for backward compatibility ─────────
 // Some older tab files reference these; they still work via globals.css
 export const CSS_VARS = {

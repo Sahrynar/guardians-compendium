@@ -128,7 +128,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => loadSnapshot(snap)}
                   style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
-                    border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>Load</button>
+                    border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>↻ Load</button>
                 <button onClick={() => deleteSnapshot(snap.id)}
                   style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none',
                     border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>✕</button>

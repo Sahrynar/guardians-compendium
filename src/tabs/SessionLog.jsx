@@ -249,7 +249,7 @@ const ACTION_LABELS = {
   import: '⬆ Imported', restore: '⟲ Restored',
 }
 
-function ActivityLog({ activityLog, undoActivityRecord, crossLink }) {
+function ActivityLog({ activityLog, undoActivityRecord, crossLink, tabColor }) {
   const [filterAction, setFilterAction] = useState('all')
   const [filterCat, setFilterCat] = useState('all')
   const [search, setSearch] = useState('')
@@ -286,6 +286,8 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink }) {
   function onRowClick(record) {
     if (record.recordId && record.table) {
       crossLink?.(record.table, record.recordId)
+    } else {
+      alert('This older record does not have a linked entry.')
     }
   }
 
@@ -307,9 +309,9 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink }) {
           {allActions.map(a => (
             <button key={a} onClick={() => setFilterAction(a)}
               style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 10, cursor: 'pointer',
-                border: filterAction === a ? `1.5px solid ${ACTION_COLORS[a] || 'var(--cc)'}` : '1px solid var(--brd)',
-                background: filterAction === a ? `${ACTION_COLORS[a] || 'var(--cc)'}22` : 'none',
-                color: filterAction === a ? (ACTION_COLORS[a] || 'var(--cc)') : 'var(--dim)',
+                border: filterAction === a ? `1.5px solid ${ACTION_COLORS[a] || tabColor}` : '1px solid var(--brd)',
+                background: filterAction === a ? `${ACTION_COLORS[a] || tabColor}22` : 'none',
+                color: filterAction === a ? (ACTION_COLORS[a] || tabColor) : 'var(--dim)',
                 fontWeight: filterAction === a ? 700 : 400 }}>
               {a === 'all' ? 'All' : ACTION_LABELS[a]}
             </button>
@@ -393,7 +395,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink }) {
 }
 
 // ── Main SessionLog tab ────────────────────────────────────────
-export default function SessionLog({ db, goTo, crossLink }) {
+export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
   const [sessions, setSessions] = useState([])
   const [featureRegistry, setFeatureRegistry] = useState([])
   const [loading, setLoading] = useState(true)
@@ -406,6 +408,17 @@ export default function SessionLog({ db, goTo, crossLink }) {
   const [msg, setMsg] = useState('')
   const [search, setSearch] = useState('')
   const [subTab, setSubTab] = useState('sessions')
+
+  useEffect(() => {
+    if (!setCrumbs) return
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const tabCrumb = { icon: '📋', label: 'Logs' }
+    const subMap = {
+      sessions: { icon: '📋', label: 'Sessions' },
+      activityfeatures: { icon: '⚡', label: 'Activity & Features' },
+    }
+    setCrumbs([root, tabCrumb, subMap[subTab] || { icon: '·', label: subTab }])
+  }, [setCrumbs, subTab])
 
   function flash(text, ms = 3000) { setMsg(text); setTimeout(() => setMsg(''), ms) }
 
@@ -633,6 +646,7 @@ export default function SessionLog({ db, goTo, crossLink }) {
               activityLog={db?.activityLog || []}
               undoActivityRecord={db?.undoActivityRecord}
               crossLink={crossLink}
+              tabColor={tabColor}
             />
           </div>
 
@@ -640,7 +654,7 @@ export default function SessionLog({ db, goTo, crossLink }) {
 
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>âš™ Features</div>
+              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>✨ Features</div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   onClick={() => setAddingFeature(v => !v)}
