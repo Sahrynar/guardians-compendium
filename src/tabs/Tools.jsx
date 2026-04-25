@@ -1149,7 +1149,7 @@ function ImageLibraryTool({ db }) {
 
   return (
     <div className="tool-card" id="tool-imagelib">
-      <h3 style={{ color: 'var(--cl)' }}>🖼 Image Library</h3>
+      <h3 style={{ color: tabColor }}>🖼 Image Library</h3>
       <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
         All images from across the Compendium in one place — characters, wardrobe, items, locations,
         maps, manuscript covers and chapter headers. You can also upload images directly here.
@@ -1186,9 +1186,9 @@ function ImageLibraryTool({ db }) {
           {IMG_LIB_CATS.map(c => (
             <button key={c} onClick={() => setFilterCat(c)}
               style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 12, cursor: 'pointer',
-                background: filterCat === c ? 'var(--cl)' : 'none',
+                background: filterCat === c ? tabColor : 'none',
                 color: filterCat === c ? '#000' : 'var(--dim)',
-                border: `1px solid ${filterCat === c ? 'var(--cl)' : 'var(--brd)'}` }}>
+                border: `1px solid ${filterCat === c ? tabColor : 'var(--brd)'}` }}>
               {c}
             </button>
           ))}
@@ -1217,7 +1217,7 @@ function ImageLibraryTool({ db }) {
             <div style={{ padding: '5px 7px' }}>
               <div style={{ fontSize: '0.77em', fontWeight: 600, color: 'var(--tx)',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{img.name}</div>
-              <div style={{ fontSize: '0.69em', color: 'var(--cl)' }}>{img.cat}</div>
+              <div style={{ fontSize: '0.69em', color: tabColor }}>{img.cat}</div>
             </div>
             {img.direct && (
               <button onClick={() => deleteDirectImage(img.id)}

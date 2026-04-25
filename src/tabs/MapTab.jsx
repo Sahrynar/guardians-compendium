@@ -25,6 +25,7 @@ export default function MapTab({ db }) {
   const [newMapNotes, setNewMapNotes] = useState('')
   const [confirmId, setConfirmId] = useState(null)
   const [editingMap, setEditingMap] = useState(null) // { id, name, notes }
+  const [showLocations, setShowLocations] = useState(false)
 
   // ── Drag-to-reorder state ──────────────────────────────────
   const dragId = useRef(null)
@@ -137,8 +138,24 @@ export default function MapTab({ db }) {
 
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>🌍 Maps</div>
+        {(db.db.locations || []).length > 0 && (
+          <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => setShowLocations(v => !v)}>
+            📍 {showLocations ? 'Hide locations' : 'Show locations'}
+          </button>
+        )}
         <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => setAddingMap(true)}>+ Add Map</button>
       </div>
+
+      {showLocations && (db.db.locations || []).length > 0 && (
+        <div style={{ marginBottom: 16, padding: '10px 12px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8 }}>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: tabColor, marginBottom: 8 }}>Locations for Reference</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {(db.db.locations || []).map(l => (
+              <span key={l.id} style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: `1px solid ${tabColor}44`, color: tabColor, background: `${tabColor}11` }}>{l.name}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!maps.length && (
         <div className="empty">
@@ -202,18 +219,6 @@ export default function MapTab({ db }) {
           </div>
         ))}
       </div>
-
-      {/* Locations reference */}
-      {(db.db.locations||[]).length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: tabColor, marginBottom: 8 }}>Locations for Reference</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-            {(db.db.locations||[]).map(l => (
-              <span key={l.id} style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: `1px solid ${tabColor}44`, color: tabColor, background: `${tabColor}11` }}>{l.name}</span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Add map modal ── */}
       <Modal open={addingMap} onClose={() => setAddingMap(false)} title="Add Map" color={tabColor}>

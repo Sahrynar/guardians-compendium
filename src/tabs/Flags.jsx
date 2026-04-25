@@ -92,7 +92,7 @@ export default function Flags({ db }) {
         {filtered.map(f => {
           const pc = priCol[f.priority] || 'var(--dim)'
           return (
-            <div key={f.id} id={`gcomp-entry-${f.id}`} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1, breakInside: 'avoid', marginBottom: 6 }}>
+            <div key={f.id} id={`gcomp-entry-${f.id}`} className="flag-card" style={{ opacity: f.resolved ? 0.6 : 1, breakInside: 'avoid', marginBottom: 6, borderLeft: `3px solid ${tabColor}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '0.92em', fontWeight: 600, color: f.resolved ? 'var(--dim)' : 'var(--tx)', textDecoration: f.resolved ? 'line-through' : 'none' }}>{f.name}</div>
                 <span className="flag-pri" style={{ background: `${pc}22`, color: pc, border: `1px solid ${pc}44` }}>{f.priority || 'none'}</span>

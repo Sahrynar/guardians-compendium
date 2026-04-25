@@ -3,7 +3,6 @@ import { TAB_RAINBOW, uid } from '../../constants'
 import { IDEAS_CATEGORIES, IDEAS_LS_KEY, lsGet, lsSet } from './stickyShared'
 
 const NOTES_COLOR = TAB_RAINBOW.notes
-const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 const CAT_COLORS = { names: '#ff6b6b', words: '#44aaff', phrases: '#44bb44' }
 
 export default function IdeasView({ db, pendingExpandId, clearPendingExpandId }) {
@@ -14,9 +13,6 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
   const [draftCategory, setDraftCategory] = useState('names')
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
-  const [cols, setCols] = useState(() => {
-    try { return localStorage.getItem('ideas_list_cols') || 'M' } catch { return 'M' }
-  })
   const ideas = db.db.ideas_list || lsGet(IDEAS_LS_KEY, [])
 
   useEffect(() => { lsSet(IDEAS_LS_KEY, ideas) }, [ideas])
@@ -29,11 +25,6 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
     setEditValue(found.value || '')
     clearPendingExpandId?.()
   }, [pendingExpandId, ideas, clearPendingExpandId])
-
-  function setColsPersist(v) {
-    setCols(v)
-    try { localStorage.setItem('ideas_list_cols', v) } catch {}
-  }
 
   async function addIdea() {
     const value = draftValue.trim()
@@ -48,8 +39,7 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
     if (!value) return
     const entry = ideas.find(i => i.id === id)
     if (!entry) return
-    const updated = { ...entry, value }
-    db.upsertEntry('ideas_list', updated)
+    db.upsertEntry('ideas_list', { ...entry, value })
     setEditingId(null)
   }
 
@@ -74,11 +64,6 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
   return (
     <div>
       <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ display: 'flex', gap: 3 }}>
-          {['XS', 'S', 'M', 'L', 'XL'].map(l => (
-            <button key={l} onClick={() => setColsPersist(l)} style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 4, border: `1px solid ${cols === l ? NOTES_COLOR : 'var(--brd)'}`, background: cols === l ? `${NOTES_COLOR}22` : 'transparent', color: cols === l ? NOTES_COLOR : 'var(--dim)', cursor: 'pointer' }}>{l}</button>
-          ))}
-        </div>
         <input className="sx" placeholder="Search ideas..." value={search} onChange={e => setSearch(e.target.value)} />
         <select value={sortMode} onChange={e => setSortMode(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="newest">Newest</option>
@@ -101,35 +86,49 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols] || 3}, 1fr)`, gap: 8 }}>
-        {filtered.map(idea => {
-          const color = CAT_COLORS[idea.category] || NOTES_COLOR
-          const editing = editingId === idea.id
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${IDEAS_CATEGORIES.length}, 1fr)`, gap: 12, alignItems: 'flex-start' }}>
+        {IDEAS_CATEGORIES.map(cat => {
+          const items = filtered.filter(i => i.category === cat.id)
+          const color = CAT_COLORS[cat.id] || NOTES_COLOR
           return (
-            <div key={idea.id} id={`gcomp-entry-${idea.id}`} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderLeft: `3px solid ${color}`, borderRadius: 8, padding: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.69em', padding: '2px 6px', borderRadius: 999, background: `${color}22`, color, border: `1px solid ${color}55` }}>
-                  {IDEAS_CATEGORIES.find(c => c.id === idea.category)?.label || idea.category}
-                </span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={() => { setEditingId(idea.id); setEditValue(idea.value || '') }} style={{ fontSize: '0.85em', border: 'none', background: 'none', color, cursor: 'pointer' }}>✎</button>
-                  <button onClick={() => deleteIdea(idea.id)} style={{ fontSize: '0.85em', border: 'none', background: 'none', color: '#ff3355', cursor: 'pointer' }}>✕</button>
-                </div>
+            <div key={cat.id} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderTop: `3px solid ${color}`, borderRadius: 8, padding: 10, minHeight: 200 }}>
+              <div style={{ fontFamily: "'Cinzel', serif", color, marginBottom: 8, fontSize: '1em', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span>{cat.label}</span>
+                <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{items.length}</span>
               </div>
-              {editing ? (
-                <div style={{ marginTop: 8 }}>
-                  <textarea value={editValue} onChange={e => setEditValue(e.target.value)} style={{ width: '100%', minHeight: 90, padding: '6px 8px', fontSize: '0.92em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', boxSizing: 'border-box' }} />
-                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                    <button onClick={() => saveIdea(idea.id)} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid ${color}`, background: 'transparent', color, fontSize: '0.85em', cursor: 'pointer' }}>Save</button>
-                    <button onClick={() => setEditingId(null)} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'transparent', color: 'var(--dim)', fontSize: '0.85em', cursor: 'pointer' }}>Cancel</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 600, overflowY: 'auto' }}>
+                {items.length === 0 && (
+                  <div style={{ fontSize: '0.77em', color: 'var(--mut)', fontStyle: 'italic', textAlign: 'center', padding: '8px 0' }}>
+                    No {cat.label.toLowerCase()} yet
                   </div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ marginTop: 8, fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{idea.value}</div>
-                  <div style={{ marginTop: 8, fontSize: '0.69em', color: 'var(--mut)' }}>{idea.created_at ? new Date(idea.created_at).toLocaleString() : ''}</div>
-                </>
-              )}
+                )}
+                {items.map(idea => {
+                  const editing = editingId === idea.id
+                  return (
+                    <div key={idea.id} id={`gcomp-entry-${idea.id}`}
+                      style={{ padding: '5px 7px', fontSize: '0.9em', borderBottom: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {editing ? (
+                        <>
+                          <textarea value={editValue} onChange={e => setEditValue(e.target.value)}
+                            style={{ width: '100%', minHeight: 60, padding: '4px 6px', fontSize: '0.85em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--tx)', boxSizing: 'border-box' }} />
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <button onClick={() => saveIdea(idea.id)} style={{ fontSize: '0.77em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${color}`, background: 'transparent', color, cursor: 'pointer' }}>Save</button>
+                            <button onClick={() => setEditingId(null)} style={{ fontSize: '0.77em', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--brd)', background: 'transparent', color: 'var(--dim)', cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
+                          <span style={{ flex: 1, color: 'var(--tx)', whiteSpace: 'pre-wrap' }}>{idea.value}</span>
+                          <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                            <button onClick={() => { setEditingId(idea.id); setEditValue(idea.value || '') }} style={{ fontSize: '0.77em', border: 'none', background: 'none', color, cursor: 'pointer', padding: '0 2px' }}>✎</button>
+                            <button onClick={() => deleteIdea(idea.id)} style={{ fontSize: '0.77em', border: 'none', background: 'none', color: '#ff3355', cursor: 'pointer', padding: '0 2px' }}>✕</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )
         })}

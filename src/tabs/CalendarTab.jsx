@@ -340,12 +340,12 @@ export default function CalendarTab({ db }) {
               const dayEntries = calEntries.filter(e => e.month_idx === mi)
 
               return (
-                <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}`, userSelect: 'none' }}
+                <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}`, userSelect: 'none', border: `1px solid ${mc}`, background: isExp ? mc : 'transparent', color: isExp ? '#fff' : 'var(--dim)' }}
                   onClick={() => toggleMonth(mi)}>
-                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.85em', fontWeight: 600, color: mc }}>{m.num}. {m.n}</div>
+                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: isExp ? '1.1em' : '0.85em', fontWeight: 600, color: isExp ? '#fff' : mc }}>{m.num}. {m.n}</div>
                   <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
-                  <div style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: `${stc}18`, color: stc, border: `1px solid ${stc}33` }}>{m.ssn}</div>
-                  <div style={{ fontSize: '0.62em', color: 'var(--mut)' }}>{m.eq}</div>
+                  <div style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: isExp ? 'rgba(255,255,255,.18)' : `${stc}18`, color: isExp ? '#fff' : stc, border: `1px solid ${isExp ? 'rgba(255,255,255,.35)' : `${stc}33`}` }}>{m.ssn}</div>
+                  <div style={{ fontSize: '0.62em', color: isExp ? 'rgba(255,255,255,.82)' : 'var(--mut)' }}>{m.eq}</div>
 
                   {birthdays.map(c => (
                     <div key={c.id} style={{ borderLeft: '2px solid var(--cc)', fontSize: '0.69em', paddingLeft: 4, marginTop: 2 }}>🎂 {c.name}</div>

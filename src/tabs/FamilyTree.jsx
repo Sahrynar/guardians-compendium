@@ -931,7 +931,7 @@ export default function FamilyTree({ db }) {
 
       {/* ── Modals ── */}
       <Modal open={!!nodeModal} onClose={() => setNodeModal(null)} title={nodeModal?.id ? 'Edit Person' : 'Add Person'} color={tabColor}>
-        {nodeModal && <NodeForm node={nodeModal} onSave={saveNode} onCancel={() => setNodeModal(null)} db={db} nodeTypes={allNodeTypes}
+        {nodeModal && <NodeForm node={nodeModal} onSave={saveNode} onCancel={() => setNodeModal(null)} db={db} nodeTypes={allNodeTypes} tabColor={tabColor}
           onAddNodeType={t => saveCustom(undefined, [...customNodeTypes, t], undefined, undefined)} />}
       </Modal>
       <Modal open={!!edgeModal} onClose={() => setEdgeModal(null)} title={edgeModal?.id ? 'Edit Relation' : 'Add Relation'} color="var(--cca)">
@@ -968,7 +968,7 @@ export default function FamilyTree({ db }) {
 }
 
 // ── Node form ───────────────────────────────────────────────────
-function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
+function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType, tabColor }) {
   const [form, setForm] = useState({ name:'', birth_year:'', death_year:'', title:'', nodeType:'Other', notes:'', ...node })
   const [image, setImage] = useState(node.image||null)
   const [customType, setCustomType] = useState('')
@@ -984,7 +984,7 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
 
   return (
     <>
-      <div className="field"><label>Link to Character (optional)</label>
+      <div className="field"><label style={{ color: tabColor }}>Link to Character (optional)</label>
         <select value={form.char_id||''} onChange={e => {
           const ch=chars.find(c=>c.id===e.target.value)
           setForm(p=>({...p,char_id:e.target.value,name:ch?(ch.display_name||ch.name):p.name,birth_year:ch?.birthday||p.birth_year}))
@@ -994,14 +994,14 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
           {[...chars].sort((a,b)=>(a.display_name||a.name||'').localeCompare(b.display_name||b.name||'')).map(c=><option key={c.id} value={c.id}>{c.display_name||c.name}</option>)}
         </select>
       </div>
-      <div className="field"><label>Name *</label><input value={form.name} onChange={s('name')} /></div>
+      <div className="field"><label style={{ color: tabColor }}>Name *</label><input value={form.name} onChange={s('name')} /></div>
       <div className="field-row">
-        <div className="field"><label>Birth Year</label><input value={form.birth_year} onChange={s('birth_year')} placeholder="e.g. 1517 or HC 1" /></div>
-        <div className="field"><label>Death Year</label><input value={form.death_year} onChange={s('death_year')} placeholder="blank if living" /></div>
+        <div className="field"><label style={{ color: tabColor }}>Birth Year</label><input value={form.birth_year} onChange={s('birth_year')} placeholder="e.g. 1517 or HC 1" /></div>
+        <div className="field"><label style={{ color: tabColor }}>Death Year</label><input value={form.death_year} onChange={s('death_year')} placeholder="blank if living" /></div>
       </div>
       <div className="field-row">
-        <div className="field"><label>Title / Role</label><input value={form.title} onChange={s('title')} placeholder="e.g. Queen of Lurlen" /></div>
-        <div className="field"><label>Type</label>
+        <div className="field"><label style={{ color: tabColor }}>Title / Role</label><input value={form.title} onChange={s('title')} placeholder="e.g. Queen of Lurlen" /></div>
+        <div className="field"><label style={{ color: tabColor }}>Type</label>
           <select value={form.nodeType} onChange={s('nodeType')}>
             {nodeTypes.map(t=><option key={t} value={t}>{t}</option>)}
             <option value="__custom__">+ Add new type…</option>
@@ -1009,7 +1009,7 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
           {form.nodeType==='__custom__' && <input style={{marginTop:4}} value={customType} onChange={e=>setCustomType(e.target.value)} placeholder="e.g. The Rebels" />}
         </div>
       </div>
-      <div className="field"><label>Portrait Image</label>
+      <div className="field"><label style={{ color: tabColor }}>Portrait Image</label>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           {image && <img src={image} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',border:'1px solid var(--brd)'}} />}
           <label style={{cursor:'pointer',fontSize: '0.85em',color:'var(--cc)',textDecoration:'underline'}}>
@@ -1019,7 +1019,7 @@ function NodeForm({ node, onSave, onCancel, db, nodeTypes, onAddNodeType }) {
           {image && <button style={{background:'none',border:'none',color:'#ff3355',cursor:'pointer',fontSize: '0.85em'}} onClick={()=>setImage(null)}>Remove</button>}
         </div>
       </div>
-      <div className="field"><label>Notes</label><textarea value={form.notes} onChange={s('notes')} /></div>
+      <div className="field"><label style={{ color: tabColor }}>Notes</label><textarea value={form.notes} onChange={s('notes')} /></div>
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
         <button className="btn btn-primary" style={{background:tabColor,color:'#000'}} onClick={handleSave}>{node.id?'Save Changes':'Add Person'}</button>

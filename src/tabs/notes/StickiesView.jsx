@@ -30,7 +30,7 @@ const SEND_GROUPS = [
   { label: 'TRACKING', items: [['flags', 'Flags'], ['questions', 'Questions'], ['journal', 'Journal']] },
 ]
 
-function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
+function QuickCapture({ tags, onAddSticky, onOpenLongForm, onSaveIdea }) {
   const [text, setText] = useState('')
   const [tag, setTag] = useState('unsorted')
   const [color, setColor] = useState('yellow')
@@ -66,10 +66,16 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
   }
 
   function submitQuickCapture() {
-    if (!text.trim()) return
+    const trimmed = text.trim()
+    if (!trimmed) return
+    if (quickMode === 'idea') {
+      onSaveIdea?.({ id: uid(), category: 'names', value: trimmed, created_at: new Date().toISOString() })
+      setText('')
+      return
+    }
     if (quickMode === 'sticky') submitSticky()
     else {
-      onOpenLongForm(text.trim())
+      onOpenLongForm(trimmed)
       setText('')
     }
   }
@@ -86,7 +92,7 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
     }
   }
 
-  const quickLabel = quickMode === 'sticky' ? '📌 Sticky' : '📝 Long-form note'
+  const quickLabel = quickMode === 'sticky' ? '📌 Sticky' : quickMode === 'longform' ? '📝 Long-form note' : '💡 Idea'
 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--rl)', padding: 12, marginBottom: 12 }}>
@@ -120,11 +126,17 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
             <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 160 }}>
               <button onClick={() => selectMode('longform')} style={{ width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: '0.77em', background: quickMode === 'longform' ? 'rgba(56,176,0,.15)' : 'none', border: 'none', color: 'var(--tx)', cursor: 'pointer' }}>📝 Long-form note</button>
               <button onClick={() => selectMode('sticky')} style={{ width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: '0.77em', background: quickMode === 'sticky' ? 'rgba(56,176,0,.15)' : 'none', border: 'none', color: 'var(--tx)', cursor: 'pointer' }}>📌 Sticky</button>
+              <button onClick={() => selectMode('idea')} style={{ width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: '0.77em', background: quickMode === 'idea' ? 'rgba(56,176,0,.15)' : 'none', border: 'none', color: 'var(--tx)', cursor: 'pointer' }}>💡 Idea</button>
             </div>
           )}
         </div>
         <span style={{ fontSize: '0.62em', color: 'var(--mut)', marginLeft: 'auto' }}>Ctrl+Q</span>
       </div>
+      {quickMode === 'idea' && (
+        <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 4 }}>
+          💡 This will save as an Idea (default category: Names).
+        </div>
+      )}
       {charCount > 900 && charCount <= 1000 && (
         <div style={{ fontSize: '0.77em', color: 'var(--sp)', marginTop: 4 }}>
           Approaching sticky size limit ({1000 - charCount} chars left). Past this, content will convert to a Journal entry.

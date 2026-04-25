@@ -296,6 +296,7 @@ function ArticleEditor({ article, onSave, onCancel }) {
 // ── Main Wiki Tab ───────────────────────────────────────────────
 export default function Wiki({ db, navSearch }) {
   const articles = db.db.wiki || []
+  const [search, setSearch] = useState(navSearch || '')
   const [catFilter, setCatFilter] = useState('all')
   const [colSize, setColSize] = useState(() => {
     try { return localStorage.getItem('colsize_wiki') || 'M' } catch { return 'M' }
@@ -306,6 +307,8 @@ export default function Wiki({ db, navSearch }) {
   const [confirmId, setConfirmId] = useState(null)
   const [autoOnly, setAutoOnly] = useState(false)
   const autoCount = articles.filter(a => a.auto_imported === true).length
+
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
   useEffect(() => {
     function onExpand(e) {
@@ -321,7 +324,7 @@ export default function Wiki({ db, navSearch }) {
   }, [articles])
 
   const filtered = articles.filter(a => {
-    const ms = !(navSearch||'') || JSON.stringify(a).toLowerCase().includes((navSearch||'').toLowerCase())
+    const ms = !search || JSON.stringify(a).toLowerCase().includes(search.toLowerCase())
     const mc = catFilter === 'all' || a.category === catFilter
     // Extra popup filters
     const selCats = filterValues['category'] || []
@@ -353,6 +356,9 @@ export default function Wiki({ db, navSearch }) {
           ))}
         </div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>📖 Wiki</div>
+        <input className="sx" placeholder="Search articles..." value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: 180, maxWidth: 280 }} />
         <FilterPopup
           color={tabColor}
           filters={[{ key: 'category', label: 'Category', options: WIKI_CATS.map(c => ({ value: c, label: c })) }]}
