@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
+import EntryPreviewModal from '../components/common/EntryPreviewModal'
 import { TAB_RAINBOW } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
@@ -104,15 +105,15 @@ function FlatTable({ locations, onEdit, onDelete, onAddChild, navSearch }) {
         <tbody>
           {visible.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: 'var(--mut)', fontStyle: 'italic' }}>No locations found.</td></tr>}
           {visible.map((l, idx) => (
-            <tr key={l.id} id={`gcomp-entry-${l.id}`} style={{ background: idx % 2 === 0 ? 'var(--card)' : 'transparent' }}>
+            <tr key={l.id} id={`gcomp-entry-${l.id}`} style={{ background: idx % 2 === 0 ? 'var(--card)' : 'transparent', cursor: 'pointer' }} onClick={() => onEdit(l)}>
               <td style={tdStyle(0)}><span style={{ fontWeight: 600 }}>{l.name}</span></td>
               <td style={tdStyle(1)}><span style={{ color: tabColor, fontSize: '0.85em' }}>{l.loc_type || '—'}</span></td>
               <td style={{ ...tdStyle(2), color: 'var(--dim)' }}>{locPath(l.id, locations) || '—'}</td>
               <td style={{ ...tdStyle(3), color: 'var(--dim)' }}>{l.description || '—'}</td>
               <td style={{ ...tdStyle(4), whiteSpace: 'nowrap' }}>
-                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={() => onEdit(l)}>✎</button>
-                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={() => onAddChild(l.id)}>+</button>
-                <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => onDelete(l.id)}>✕</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={e => { e.stopPropagation(); onEdit(l) }}>👁</button>
+                <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, marginRight: 3 }} onClick={e => { e.stopPropagation(); onAddChild(l.id) }}>+</button>
+                <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); onDelete(l.id) }}>✕</button>
               </td>
             </tr>
           ))}
@@ -130,12 +131,21 @@ export default function Locations({ db, navSearch }) {
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [autoOnly, setAutoOnly] = useState(false)
+  const [previewEntry, setPreviewEntry] = useState(null)
   const [cols, setCols] = useState(() => {
     try { return localStorage.getItem('locations_cols') || 'M' } catch { return 'M' }
   })
+  const [sortMode, setSortMode] = useState(() => {
+    try { return localStorage.getItem('locations_sort') || 'name' } catch { return 'name' }
+  })
+  const [filterType, setFilterType] = useState('all')
   function setColsPersist(v) {
     setCols(v)
     try { localStorage.setItem('locations_cols', v) } catch {}
+  }
+  function setSortPersist(v) {
+    setSortMode(v)
+    try { localStorage.setItem('locations_sort', v) } catch {}
   }
 
   const search = (navSearch || '').toLowerCase()
@@ -147,8 +157,7 @@ export default function Locations({ db, navSearch }) {
       if (!targetId) return
       const entry = locations.find(x => x.id === targetId)
       if (!entry) return
-      setEditing(entry)
-      setModalOpen(true)
+      setPreviewEntry(entry)
       setExpanded(prev => new Set(prev).add(targetId))
       window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
     }
@@ -164,9 +173,27 @@ export default function Locations({ db, navSearch }) {
     ;(db.db.locations || []).filter(l => l.parent_id === id).forEach(l => db.upsertEntry('locations', { ...l, parent_id: '' }))
     setConfirmId(null)
   }
+  const typeOptions = useMemo(() => {
+    const types = new Set()
+    locations.forEach(l => { if (l.loc_type) types.add(l.loc_type) })
+    return ['all', ...Array.from(types).sort()]
+  }, [locations])
 
-  const roots = locations.filter(l => !l.parent_id)
-  const filtered = (search ? locations.filter(l => l.name?.toLowerCase().includes(search) || l.loc_type?.toLowerCase().includes(search)) : roots).filter(l => !autoOnly || l.auto_imported === true)
+  const displayLocations = useMemo(() => {
+    let list = locations.filter(l => {
+      const matchSearch = !search || l.name?.toLowerCase().includes(search) || l.loc_type?.toLowerCase().includes(search) || l.description?.toLowerCase().includes(search)
+      const matchAuto = !autoOnly || l.auto_imported === true
+      const matchType = filterType === 'all' || l.loc_type === filterType
+      return matchSearch && matchAuto && matchType
+    })
+    if (sortMode === 'recent') list = [...list].sort((a, b) => new Date(b.updated || b.updated_at || b.created || 0) - new Date(a.updated || a.updated_at || a.created || 0))
+    else if (sortMode === 'type') list = [...list].sort((a, b) => (a.loc_type || '').localeCompare(b.loc_type || '') || (a.name || '').localeCompare(b.name || ''))
+    else list = [...list].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    return list
+  }, [locations, search, autoOnly, filterType, sortMode])
+
+  const roots = displayLocations.filter(l => !l.parent_id)
+  const orphans = displayLocations.filter(l => l.parent_id && !displayLocations.find(p => p.id === l.parent_id))
 
   const btnStyle = active => ({ fontSize: '0.77em', padding: '3px 10px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${active ? tabColor : 'var(--brd)'}`, background: active ? `${tabColor}22` : 'none', color: active ? tabColor : 'var(--dim)' })
 
@@ -178,37 +205,56 @@ export default function Locations({ db, navSearch }) {
           <button style={btnStyle(view === 'tree')} onClick={() => setView('tree')}>🌳 Tree</button>
           <button style={btnStyle(view === 'table')} onClick={() => setView('table')}>☰ Table</button>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {['XS','S','M','L','XL'].map(l => (
-            <button key={l} onClick={() => setColsPersist(l)}
-              style={{ fontSize: '0.77em', padding: '2px 7px',
-                borderRadius: 4, border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`,
-                background: cols === l ? `${tabColor}22` : 'transparent',
-                color: cols === l ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
-              {l}
-            </button>
-          ))}
-        </div>
+        {view === 'tree' && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            {['XS','S','M','L','XL'].map(l => (
+              <button key={l} onClick={() => setColsPersist(l)}
+                style={{ fontSize: '0.77em', padding: '2px 7px',
+                  borderRadius: 4, border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`,
+                  background: cols === l ? `${tabColor}22` : 'transparent',
+                  color: cols === l ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
+        <select value={sortMode} onChange={e => setSortPersist(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+          <option value="name">Sort: A-Z</option>
+          <option value="recent">Sort: Recent</option>
+          <option value="type">Sort: Type</option>
+        </select>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+          {typeOptions.map(t => <option key={t} value={t}>{t === 'all' ? 'All types' : t}</option>)}
+        </select>
         {autoCount > 0 && <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? '#ffcc00' : 'var(--brd)'}`, background: autoOnly ? '#ffcc0022' : 'none', color: autoOnly ? '#ffcc00' : 'var(--dim)', cursor: 'pointer' }}>📥 Auto-imported ({autoCount})</button>}
         <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => openAdd()}>+ Add</button>
       </div>
 
-      <AlphabetJumpBar entries={locations.filter(l => !autoOnly || l.auto_imported === true)} getName={e => e.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
+      <AlphabetJumpBar entries={displayLocations} getName={e => e.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
 
       {!locations.length && <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>}
 
       {view === 'tree' && (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols]}, 1fr)`, gap: 8, alignItems: 'start' }}>
-          {filtered.map(l => <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
-          {locations.filter(l => l.parent_id && !locations.find(p => p.id === l.parent_id)).map(l => <LocNode key={l.id} loc={l} locations={locations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
+          {roots.map(l => <LocNode key={l.id} loc={l} locations={displayLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
+          {orphans.map(l => <LocNode key={l.id} loc={l} locations={displayLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
         </div>
       )}
 
-      {view === 'table' && <FlatTable locations={locations.filter(l => !autoOnly || l.auto_imported === true)} navSearch={navSearch} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />}
+      {view === 'table' && <FlatTable locations={displayLocations} navSearch={navSearch} onEdit={e => setPreviewEntry(e)} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color={tabColor}>
         <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color={tabColor} db={db} />
       </Modal>
+
+      <EntryPreviewModal
+        open={!!previewEntry}
+        entry={previewEntry}
+        category="locations"
+        color={tabColor}
+        onClose={() => setPreviewEntry(null)}
+        onEdit={() => { setEditing(previewEntry); setPreviewEntry(null); setModalOpen(true) }}
+      />
 
       {confirmId && (
         <div className="confirm-overlay open">

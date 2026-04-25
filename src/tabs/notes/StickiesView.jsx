@@ -47,9 +47,9 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
   const charCount = text.length
 
   function inferredSize() {
-    if (charCount > 600) return 'large'
-    if (charCount > 300) return 'normal'
-    return 'small'
+    if (charCount > 600) return 'xl'
+    if (charCount > 300) return 'large'
+    return 'normal'
   }
 
   function submitSticky() {
@@ -324,6 +324,9 @@ function StickyBoard({
   const [showPresetInput, setShowPresetInput] = useState(false)
   const [presets, setPresets] = useState(() => lsGet('journal_presets', []))
   const [sendOpenId, setSendOpenId] = useState(null)
+  const [boardCols, setBoardCols] = useState(() => {
+    try { return localStorage.getItem('stickies_cols') || 'M' } catch { return 'M' }
+  })
   const sendMenuRef = useRef(null)
 
   useEffect(() => {
@@ -418,9 +421,21 @@ function StickyBoard({
     lsSet('journal_presets', updated)
   }
 
+  function setBoardColsPersist(v) {
+    setBoardCols(v)
+    try { localStorage.setItem('stickies_cols', v) } catch {}
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {['XS', 'S', 'M', 'L', 'XL'].map(l => (
+            <button key={l} onClick={() => setBoardColsPersist(l)} style={{ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: boardCols === l ? JOURNAL_COLOR : 'none', color: boardCols === l ? '#000' : 'var(--dim)', border: `1px solid ${boardCols === l ? JOURNAL_COLOR : 'var(--brd)'}`, cursor: 'pointer' }}>
+              {l}
+            </button>
+          ))}
+        </div>
         <input className="sx" placeholder="Search stickies..." value={searchQ} onChange={e => setSearchQ(e.target.value)} style={{ flex: 1, minWidth: 140 }} />
         <select value={sortMode} onChange={e => setSortMode(e.target.value)} style={{ fontSize: '0.77em', padding: '3px 6px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="manual">Manual order</option>
@@ -474,14 +489,13 @@ function StickyBoard({
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${STICKY_COLS[boardCols]}, minmax(0, 1fr))`, gap: 10, alignItems: 'start' }}>
         {displayed.map(c => {
           const sc = STICKY_COLORS.find(x => x.id === c.color) || STICKY_COLORS[0]
           const tag = tags.find(t => t.id === c.tag) || DEFAULT_TAGS[DEFAULT_TAGS.length - 1]
           const tilt = stickyTilt(c.id)
           const isEditing = editId === c.id
           const size = c.size || 'normal'
-          const width = size === 'small' ? 140 : size === 'large' ? 260 : size === 'xl' ? 340 : 190
           const bgColor = c.customBg || sc.bg
           const textColor = c.customText || sc.text
           const fontSize = c.fontSize || '0.92em'
@@ -496,7 +510,7 @@ function StickyBoard({
               onDragOver={e => e.preventDefault()}
               onDrop={() => handleDrop(c)}
               style={{
-                width,
+                width: '100%',
                 minHeight: size === 'small' ? 100 : size === 'large' ? 180 : size === 'xl' ? 240 : 140,
                 background: bgColor,
                 border: `1px solid ${c.customBorder || sc.border}`,
@@ -507,7 +521,6 @@ function StickyBoard({
                 transition: 'transform .15s, box-shadow .15s',
                 position: 'relative',
                 cursor: sortMode === 'manual' && !c.archived ? 'grab' : 'default',
-                flexShrink: 0,
                 boxSizing: 'border-box',
                 opacity: archivedOnly ? 1 : archivedDim ? 0.5 : 1,
               }}
@@ -634,8 +647,20 @@ export default function StickiesView({ db, pendingExpandId, clearPendingExpandId
   }
 
   function addCapture(item) {
-    const entry = normalizeSticky({ id: uid(), ...item, created: new Date().toISOString() }, captures.length)
-    const updated = sortStickies([entry, ...captures])
+    const nextSort = captures.reduce((max, capture) => Math.max(max, Number(capture.sort_order) || 0), -1) + 1
+    const nextJournalSort = captures.reduce((max, capture) => Math.max(max, Number(capture.journal_sort_order) || 0), -1) + 1
+    const now = new Date().toISOString()
+    const entry = normalizeSticky({
+      id: uid(),
+      ...item,
+      created: now,
+      updated_at: now,
+      archived: false,
+      sort_order: nextSort,
+      journal_sort_order: nextJournalSort,
+      size: item.size || 'normal',
+    }, captures.length)
+    const updated = sortStickies([...captures, entry])
     saveCaptures(updated)
     db.upsertEntry('journal_captures', entry)
   }

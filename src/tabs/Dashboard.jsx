@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CATS, TAB_RAINBOW } from '../constants'
+import EntryPreviewModal from '../components/common/EntryPreviewModal'
 
 const TAB_LIST = [
   'wiki', 'glossary', 'characters', 'familytree', 'world', 'locations', 'map',
@@ -43,6 +44,8 @@ export default function Dashboard({ db, goTo, crossLink }) {
   const data = db.db
   const [searchScope, setSearchScope] = useState('all')
   const [dashSearch, setDashSearch] = useState('')
+  const [previewEntry, setPreviewEntry] = useState(null)
+  const [previewCategory, setPreviewCategory] = useState(null)
 
   let tot = 0
   let lk = 0
@@ -141,6 +144,20 @@ export default function Dashboard({ db, goTo, crossLink }) {
     </div>
   )
 
+  function openPreview(cat, id) {
+    const entry = getCategoryEntries(data, cat).find(e => e.id === id)
+    if (!entry) return
+    setPreviewEntry(entry)
+    setPreviewCategory(cat)
+  }
+
+  function openInTabForEdit() {
+    if (!previewCategory || !previewEntry) return
+    crossLink(previewCategory, previewEntry.id)
+    setPreviewEntry(null)
+    setPreviewCategory(null)
+  }
+
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {searchResults.length === 0 && dashSearch && (
@@ -170,34 +187,34 @@ export default function Dashboard({ db, goTo, crossLink }) {
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
         <div className="dash-card" style={{ minWidth: 80, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: 'var(--so)' }}>{op}</div>
-          <div className="dash-label">Open</div>
+          <div className="dash-label" style={{ color: '#fff' }}>Open</div>
         </div>
         <div className="dash-card" style={{ minWidth: 80, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: 'var(--sp)' }}>{pv}</div>
-          <div className="dash-label">Provisional</div>
+          <div className="dash-label" style={{ color: '#fff' }}>Provisional</div>
         </div>
         <div className="dash-card" style={{ minWidth: 80, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: 'var(--sl)' }}>{lk}</div>
-          <div className="dash-label">Locked</div>
+          <div className="dash-label" style={{ color: '#fff' }}>Locked</div>
         </div>
         <div className="dash-card" style={{ minWidth: 80, textAlign: 'center' }}>
-          <div className="dash-num" style={{ color: 'var(--cc)' }}>= {tot}</div>
-          <div className="dash-label">Total</div>
+          <div className="dash-num" style={{ color: '#fff' }}>= {tot}</div>
+          <div className="dash-label" style={{ color: '#fff' }}>Total</div>
         </div>
 
         <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', margin: '0 8px', minHeight: 50 }} />
 
         <div className="dash-card" style={{ minWidth: 100, textAlign: 'center' }}>
-          <div className="dash-num" style={{ color: 'var(--cc)' }}>{reviewCount}</div>
-          <div className="dash-label">🔍 Review Queue</div>
+          <div className="dash-num" style={{ color: '#fff' }}>{reviewCount}</div>
+          <div className="dash-label" style={{ color: '#fff' }}>🔍 Review</div>
         </div>
         <div className="dash-card" onClick={() => goTo('flags')} style={{ cursor: 'pointer', minWidth: 100, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: TAB_RAINBOW.flags }}>{fl}</div>
-          <div className="dash-label">🚩 Flags</div>
+          <div className="dash-label" style={{ color: '#fff' }}>🚩 Flags</div>
         </div>
         <div className="dash-card" onClick={() => goTo('questions')} style={{ cursor: 'pointer', minWidth: 100, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: TAB_RAINBOW.questions }}>{(data.questions || []).filter(q => q.status === 'open').length}</div>
-          <div className="dash-label">❓ Questions</div>
+          <div className="dash-label" style={{ color: '#fff' }}>❓ Questions</div>
         </div>
       </div>
 
@@ -227,23 +244,32 @@ export default function Dashboard({ db, goTo, crossLink }) {
           {panelHead('⏱', 'Recent', 'var(--tx)', null)}
           {recent.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No recent entries</div>
-            : recent.slice(0, 14).map((r, i) => panelRow({ ...r, detail: null }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => crossLink(r.cat, r.id)))}
+            : recent.slice(0, 14).map((r, i) => panelRow({ ...r, detail: null }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id)))}
         </div>
 
         <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
-          {panelHead('🔍', 'Review Queue', 'var(--cc)', reviewCount)}
+          {panelHead('🔍', 'Review Queue', '#fff', reviewCount)}
           {reviewItems.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>Nothing to review</div>
-            : reviewItems.slice(0, 14).map((r, i) => panelRow({ ...r, detail: r.source === 'sticky' ? '📌 from sticky' : '📥 from session import' }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => crossLink(r.cat, r.id)))}
+            : reviewItems.slice(0, 14).map((r, i) => panelRow({ ...r, detail: r.source === 'sticky' ? '📌 from sticky' : '📥 from session import' }, i, TAB_RAINBOW[r.cat] || 'var(--cc)', () => openPreview(r.cat, r.id)))}
         </div>
 
         <div style={{ flex: '1 1 0', minWidth: 140, overflow: 'hidden' }}>
           {panelHead('🚩', 'Flags', TAB_RAINBOW.flags, fl)}
           {flags.length === 0
             ? <div style={{ fontSize: '0.85em', color: 'var(--mut)', fontStyle: 'italic' }}>No flags</div>
-            : flags.map((f, i) => panelRow({ ...f, detail: f.detail }, i, TAB_RAINBOW.flags, () => crossLink('flags', f.id)))}
+            : flags.map((f, i) => panelRow({ ...f, detail: f.detail }, i, TAB_RAINBOW.flags, () => openPreview('flags', f.id)))}
         </div>
       </div>
+
+      <EntryPreviewModal
+        open={!!previewEntry}
+        entry={previewEntry}
+        category={previewCategory}
+        color={previewCategory ? (TAB_RAINBOW[previewCategory] || '#fff') : '#fff'}
+        onClose={() => { setPreviewEntry(null); setPreviewCategory(null) }}
+        onEdit={openInTabForEdit}
+      />
     </div>
   )
 }

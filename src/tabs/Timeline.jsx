@@ -23,13 +23,24 @@ const ERA_BANDS = {
   'Future':              'rgba(122,204,122,.08)',
 }
 const DOT_COLS = ['var(--ct)','var(--cc)','var(--ccn)','var(--cl)','var(--ci)','var(--cw)','var(--cq)']
+const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
+
+function getColLabel(saved) {
+  if (COLS_MAP[saved]) return saved
+  if (String(saved) === '8') return 'XS'
+  if (String(saved) === '5') return 'S'
+  if (String(saved) === '3') return 'M'
+  if (String(saved) === '2') return 'L'
+  return 'XL'
+}
 
 export default function Timeline({ db, crossLink, clearCrossLink }) {
   const tabColor = TAB_RAINBOW['timeline'] || '#aaaaaa'
   const events = db.db.timeline || []
   const [search, setSearch] = useState('')
-  const [colCount, setColCount] = useState(() => parseInt(db.getSetting?.('tl_cols') || '2'))
-  function saveColCount(n) { setColCount(n); db.saveSetting?.('tl_cols', String(n)) }
+  const [cols, setCols] = useState(() => getColLabel(db.getSetting?.('tl_cols') || 'L'))
+  const colCount = COLS_MAP[cols]
+  function saveColCount(label) { setCols(label); db.saveSetting?.('tl_cols', label) }
   const [dividers, setDividers] = useState(() => db.getSetting?.('tl_cols_div') !== 'off')
   function toggleDividers() { const next = !dividers; setDividers(next); db.saveSetting?.('tl_cols_div', next ? 'on' : 'off') }
   const [filterEra, setFilterEra] = useState('all')
@@ -171,12 +182,12 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
     <div>
       <div className="tbar">
         <div style={{ display:'flex', gap:3 }}>
-          {[['XS',8],['S',5],['M',3],['L',2],['XL',1]].map(([l,n]) => (
-            <button key={l} onClick={() => saveColCount(n)}
+          {['XS','S','M','L','XL'].map(l => (
+            <button key={l} onClick={() => saveColCount(l)}
               style={{ fontSize: '0.69em', padding:'2px 7px', borderRadius:8,
-                background: colCount===n ? tabColor : 'none',
-                color: colCount===n ? '#000' : 'var(--dim)',
-                border: `1px solid ${colCount===n ? tabColor : 'var(--brd)'}`,
+                background: cols === l ? tabColor : 'none',
+                color: cols === l ? '#000' : 'var(--dim)',
+                border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`,
                 cursor:'pointer' }}>{l}</button>
           ))}
           <button onClick={toggleDividers}
@@ -363,7 +374,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
       </div>
 
       {/* List */}
-      <div className="cg" style={{ marginTop: 4, columns: colCount, columnGap: 12, columnRule: '1px solid var(--brd)' }}>
+      <div className="cg" style={{ marginTop: 4, display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols]}, minmax(0, 1fr))`, gap: 12 }}>
         {!sorted.length && (
           <div className="empty"><div className="empty-icon">⏳</div><p>No events yet.</p>
             <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Event</button>

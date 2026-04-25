@@ -101,7 +101,9 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
   const [notes, setNotes] = useState(chapter.notes || '')
-  const [view, setView] = useState('edit')
+  const [view, setView] = useState(() => {
+    try { return localStorage.getItem('manuscript_view') || 'read' } catch { return 'read' }
+  })
   const [annotations, setAnnotations] = useState(chapter.annotations || [])
   const [showAnnotations, setShowAnnotations] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -140,10 +142,15 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
   function changeFontSize(delta) {
     setFontSize(s => {
-      const next = Math.max(0.9, Math.min(2.0, s + delta))
+      const next = Math.max(0.8, Math.min(1.7, s + delta))
       try { localStorage.setItem('manuscript_fontsize', String(next)) } catch {}
       return next
     })
+  }
+
+  function changeView(v) {
+    setView(v)
+    try { localStorage.setItem('manuscript_view', v) } catch {}
   }
 
   function toggleIndent() {
@@ -207,7 +214,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         <button onClick={toggleIndent} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{indentParas ? '⇥ Indent: ON' : '⇥ Indent: OFF'}</button>
         <div style={{ display: 'flex', gap: 3 }}>
           {[['edit', '✎'], ['preview', '👁'], ['split', '⧉'], ['read', '📖']].map(([v, l]) => (
-            <button key={v} onClick={() => setView(v)} title={v} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: view === v ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{l}</button>
+            <button key={v} onClick={() => changeView(v)} title={v} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: view === v ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
@@ -216,7 +223,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', fontSize: '0.85em' }}>
         <button onClick={onHome} title="Home" style={navBtn}>🏠</button>
         <button onClick={onBackToShelf} title="Shelf" style={navBtn}>📚</button>
-        <button onClick={() => onBackToTOC(chapter.book)} title="Contents" style={navBtn}>📖</button>
+        <button onClick={() => onBackToTOC(chapter.book)} title="Contents" style={navBtn}>📑</button>
         <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
         <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtn, opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>←</button>
         <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtn, opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>→</button>
@@ -250,7 +257,6 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
             <style>{`
               .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
               .ms-preview p + p { margin-top: 0; }
-              .ms-preview p:first-of-type { text-indent: 0; }
             `}</style>
             <div className="ms-preview" dangerouslySetInnerHTML={{ __html: toHTML(text) || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
           </div>
@@ -261,7 +267,6 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
             <style>{`
               .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
               .ms-preview p + p { margin-top: 0; }
-              .ms-preview p:first-of-type { text-indent: 0; }
             `}</style>
             <div className="ms-preview" dangerouslySetInnerHTML={{ __html: toHTML(text) || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
           </div>
@@ -302,11 +307,19 @@ export default function Manuscript({ db, navSearch, goTo }) {
   const chars = db.db.characters || []
   const [search, setSearch] = useState('')
   const [filterBook, setFilterBook] = useState('all')
-  const [tocBook, setTocBook] = useState(null)
+  const [tocBook, setTocBook] = useState(() => {
+    try { return localStorage.getItem('manuscript_toc_book') || null } catch { return null }
+  })
   const [coverLightbox, setCoverLightbox] = useState(null)
   const [editCovers, setEditCovers] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [editingChapter, setEditingChapter] = useState(null)
+  const [editingChapter, setEditingChapter] = useState(() => {
+    try {
+      const id = localStorage.getItem('manuscript_editing_id')
+      if (!id) return null
+      return null
+    } catch { return null }
+  })
   const [addingChapter, setAddingChapter] = useState(false)
   const [newForm, setNewForm] = useState({ book: 'Book 1', chapter_num: '', title: '' })
   const [shelfSize, setShelfSize] = useState(() => {
@@ -317,6 +330,16 @@ export default function Manuscript({ db, navSearch, goTo }) {
   })
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
+
+  useEffect(() => {
+    try {
+      const id = localStorage.getItem('manuscript_editing_id')
+      if (id && chapters.length > 0 && !editingChapter) {
+        const ch = chapters.find(c => c.id === id)
+        if (ch) setEditingChapterPersist(ch)
+      }
+    } catch {}
+  }, [chapters, editingChapter])
 
   useEffect(() => {
     function onKey(e) {
@@ -332,7 +355,8 @@ export default function Manuscript({ db, navSearch, goTo }) {
       if (!targetId) return
       const entry = chapters.find(x => x.id === targetId)
       if (!entry) return
-      setEditingChapter(entry)
+      setEditingChapterPersist(entry)
+      setTocBookPersist(entry.book)
     }
     window.addEventListener('gcomp_expand', onExpand)
     return () => window.removeEventListener('gcomp_expand', onExpand)
@@ -362,29 +386,48 @@ export default function Manuscript({ db, navSearch, goTo }) {
     try { localStorage.setItem('manuscript_toc_size', sz) } catch {}
   }
 
+  function setEditingChapterPersist(ch) {
+    setEditingChapter(ch)
+    try {
+      if (ch) localStorage.setItem('manuscript_editing_id', ch.id)
+      else localStorage.removeItem('manuscript_editing_id')
+    } catch {}
+  }
+
+  function setTocBookPersist(book) {
+    setTocBook(book)
+    try {
+      if (book) localStorage.setItem('manuscript_toc_book', book)
+      else localStorage.removeItem('manuscript_toc_book')
+    } catch {}
+  }
+
   function saveChapter(ch) {
     db.upsertEntry('manuscript', ch)
-    setEditingChapter(null)
+    setEditingChapterPersist(null)
   }
 
   function navigateToChapter(chId) {
     const ch = chapters.find(c => c.id === chId)
-    if (ch) setEditingChapter(ch)
+    if (ch) {
+      setEditingChapterPersist(ch)
+      setTocBookPersist(ch.book)
+    }
   }
 
   function backToShelf() {
-    setEditingChapter(null)
-    setTocBook(null)
+    setEditingChapterPersist(null)
+    setTocBookPersist(null)
   }
 
   function backToTOC(book) {
-    setEditingChapter(null)
-    setTocBook(book)
+    setEditingChapterPersist(null)
+    setTocBookPersist(book)
   }
 
   function goHome() {
-    setEditingChapter(null)
-    setTocBook(null)
+    setEditingChapterPersist(null)
+    setTocBookPersist(null)
     goTo?.('dashboard')
   }
 
@@ -404,7 +447,8 @@ export default function Manuscript({ db, navSearch, goTo }) {
     db.upsertEntry('manuscript', ch)
     setAddingChapter(false)
     setNewForm({ book: 'Book 1', chapter_num: '', title: '' })
-    setEditingChapter(ch)
+    setTocBookPersist(ch.book)
+    setEditingChapterPersist(ch)
   }
 
   return (
@@ -415,12 +459,23 @@ export default function Manuscript({ db, navSearch, goTo }) {
             <div style={{ display: 'flex', gap: 3 }}>
               {['XS', 'S', 'M', 'L', 'XL'].map(l => <button key={l} onClick={() => changeShelfSize(l)} style={sizeBtn(shelfSize === l)}>{l}</button>)}
             </div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <select value={filterBook} onChange={e => setFilterBook(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+                <option value="all">Filter: All books</option>
+                {BOOKS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+                <option value="all">All statuses</option>
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <button className="btn btn-primary btn-sm" style={{ background: MS_COLOR }} onClick={() => setAddingChapter(true)}>+ Add Chapter</button>
+            </div>
             <button onClick={() => setEditCovers(e => !e)} style={{ fontSize: '0.77em', padding: '3px 12px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${editCovers ? MS_COLOR : 'var(--brd)'}`, background: editCovers ? '#aacc0022' : 'none', color: editCovers ? MS_COLOR : 'var(--dim)' }}>
               {editCovers ? '✓ Done' : '✎ Edit covers'}
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SHELF_COLS[shelfSize]}, minmax(0, 1fr))`, gap: 20, marginBottom: 24 }}>
-            {byBook.map(({ book, chapters: bookChapters, words }) => {
+            {byBook.filter(({ book }) => filterBook === 'all' || book === filterBook).map(({ book, chapters: bookChapters, words }) => {
               const meta = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g, '_')}`])
               const cover = meta.cover || ''
               const accent = meta.accent || MS_COLOR
@@ -430,7 +485,7 @@ export default function Manuscript({ db, navSearch, goTo }) {
                     const meta2 = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g, '_')}`])
                     const cover2 = meta2?.cover || ''
                     if (cover2) setCoverLightbox({ book, cover: cover2 })
-                    else { setTocBook(book); setFilterBook(book) }
+                    else { setTocBookPersist(book); setFilterBook(book) }
                   }}>
                     {cover
                       ? <img src={cover} alt={book} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -506,24 +561,6 @@ export default function Manuscript({ db, navSearch, goTo }) {
         </>
       )}
 
-      <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
-        {tocBook && (
-          <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
-            {['XS', 'S', 'M', 'L', 'XL'].map(l => <button key={l} onClick={() => changeTocSize(l)} style={sizeBtn(tocSize === l)}>{l}</button>)}
-          </div>
-        )}
-        {!tocBook && <div style={{ marginRight: 'auto' }} />}
-        <select value={filterBook} onChange={e => setFilterBook(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
-          <option value="all">All books</option>
-          {BOOKS.map(b => <option key={b} value={b}>{b}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
-          <option value="all">All statuses</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <button className="btn btn-primary btn-sm" style={{ background: MS_COLOR }} onClick={() => setAddingChapter(true)}>+ Add Chapter</button>
-      </div>
-
       {addingChapter && (
         <div style={{ padding: '10px 14px', background: 'var(--card)', border: '1px solid var(--csc)', borderRadius: 8, marginBottom: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="field" style={{ margin: 0 }}>
@@ -546,9 +583,22 @@ export default function Manuscript({ db, navSearch, goTo }) {
       {tocBook && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--brd)', flexWrap: 'wrap' }}>
-            <button onClick={() => { setTocBook(null); setFilterBook('all'); setCoverLightbox(null) }} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>← Back to Shelf</button>
+            <button onClick={() => { setTocBookPersist(null); setFilterBook('all'); setCoverLightbox(null) }} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>← Back to Shelf</button>
             <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: MS_COLOR, fontWeight: 700 }}>{tocBook}</div>
             <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 'auto' }}>{chapters.filter(c => c.book === tocBook).length} chapters · {chapters.filter(c => c.book === tocBook).reduce((sum, c) => sum + (c.word_count || wordCount(c.text || '')), 0).toLocaleString()} words</div>
+          </div>
+          <div className="tbar" style={{ flexWrap: 'wrap', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 3, marginRight: 'auto' }}>
+              {['XS', 'S', 'M', 'L', 'XL'].map(l => <button key={l} onClick={() => changeTocSize(l)} style={sizeBtn(tocSize === l)}>{l}</button>)}
+            </div>
+            <select value={tocBook || BOOKS[0]} onChange={e => { setFilterBook(e.target.value); setTocBookPersist(e.target.value) }} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+              {BOOKS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+              <option value="all">All statuses</option>
+              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <button className="btn btn-primary btn-sm" style={{ background: MS_COLOR }} onClick={() => setAddingChapter(true)}>+ Add Chapter</button>
           </div>
 
           {filtered.length === 0 && (
@@ -561,7 +611,7 @@ export default function Manuscript({ db, navSearch, goTo }) {
           {tocSize === 'XL' ? (
             <div style={{ maxWidth: '65ch', margin: '0 auto', padding: '20px 40px' }}>
               {filtered.filter(ch => ch.book === tocBook).map(ch => (
-                <div key={ch.id} onClick={() => setEditingChapter(ch)}
+                <div key={ch.id} onClick={() => setEditingChapterPersist(ch)}
                   style={{ display: 'flex', alignItems: 'baseline', cursor: 'pointer', padding: '10px 0', borderBottom: '1px dotted var(--brd)', fontFamily: 'Georgia, serif' }}>
                   <span style={{ fontSize: '1em', color: MS_COLOR, minWidth: 60 }}>Ch {ch.chapter_num}</span>
                   <span style={{ flex: 1, fontSize: '1.08em' }}>{ch.title || '(Untitled)'}</span>
@@ -575,7 +625,7 @@ export default function Manuscript({ db, navSearch, goTo }) {
               const wc = ch.word_count || wordCount(ch.text || '')
               const sc = STATUS_COLORS[ch.status] || '#6b7280'
               return (
-                <div key={ch.id} id={`gcomp-entry-${ch.id}`} style={{ padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--brd)' }} onClick={() => setEditingChapter(ch)}>
+                <div key={ch.id} id={`gcomp-entry-${ch.id}`} style={{ padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--brd)' }} onClick={() => setEditingChapterPersist(ch)}>
                   <div style={{ fontSize: '0.75em', color: MS_COLOR, letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 4 }}>Chapter {ch.chapter_num}</div>
                   <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.02em', color: 'var(--tx)' }}>{ch.title || <span style={{ color: 'var(--mut)', fontStyle: 'italic' }}>Untitled</span>}</div>
                   <div style={{ fontSize: '0.75em', color: 'var(--mut)', marginTop: 6 }}>{wc.toLocaleString()} words · <span style={{ color: sc }}>{ch.status || 'Draft'}</span></div>
@@ -594,7 +644,7 @@ export default function Manuscript({ db, navSearch, goTo }) {
               e.stopPropagation()
               const book = coverLightbox.book
               setCoverLightbox(null)
-              setTocBook(book)
+              setTocBookPersist(book)
               setFilterBook(book)
             }} />
             <div style={{ position: 'absolute', bottom: -40, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontSize: '0.85em' }}>Click image to open book · Click outside or ✕ to close</div>
@@ -604,7 +654,7 @@ export default function Manuscript({ db, navSearch, goTo }) {
       )}
 
       {editingChapter && (
-        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapter(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} />
+        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} />
       )}
     </div>
   )

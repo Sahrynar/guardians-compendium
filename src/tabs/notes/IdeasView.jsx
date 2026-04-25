@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TAB_RAINBOW, uid } from '../../constants'
-import { supabase, hasSupabase } from '../../supabase'
 import { IDEAS_CATEGORIES, IDEAS_LS_KEY, lsGet, lsSet } from './stickyShared'
 
 const NOTES_COLOR = TAB_RAINBOW.notes
@@ -8,7 +7,6 @@ const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 const CAT_COLORS = { names: '#ff6b6b', words: '#44aaff', phrases: '#44bb44' }
 
 export default function IdeasView({ db, pendingExpandId, clearPendingExpandId }) {
-  const [ideas, setIdeas] = useState(() => db.db.ideas_list || lsGet(IDEAS_LS_KEY, []))
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState('newest')
   const [catFilter, setCatFilter] = useState('all')
@@ -19,8 +17,8 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
   const [cols, setCols] = useState(() => {
     try { return localStorage.getItem('ideas_list_cols') || 'M' } catch { return 'M' }
   })
+  const ideas = db.db.ideas_list || lsGet(IDEAS_LS_KEY, [])
 
-  useEffect(() => { setIdeas(db.db.ideas_list || []) }, [db.db.ideas_list])
   useEffect(() => { lsSet(IDEAS_LS_KEY, ideas) }, [ideas])
 
   useEffect(() => {
@@ -41,10 +39,8 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
     const value = draftValue.trim()
     if (!value) return
     const entry = { id: uid(), category: draftCategory, value, created_at: new Date().toISOString() }
-    setIdeas(prev => [entry, ...prev])
+    db.upsertEntry('ideas_list', entry)
     setDraftValue('')
-    if (!hasSupabase || !supabase) return
-    try { await supabase.from('ideas_list').insert(entry) } catch {}
   }
 
   async function saveIdea(id) {
@@ -53,16 +49,12 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
     const entry = ideas.find(i => i.id === id)
     if (!entry) return
     const updated = { ...entry, value }
-    setIdeas(prev => prev.map(i => i.id === id ? updated : i))
+    db.upsertEntry('ideas_list', updated)
     setEditingId(null)
-    if (!hasSupabase || !supabase) return
-    try { await supabase.from('ideas_list').upsert(updated, { onConflict: 'id' }) } catch {}
   }
 
   async function deleteIdea(id) {
-    setIdeas(prev => prev.filter(i => i.id !== id))
-    if (!hasSupabase || !supabase) return
-    try { await supabase.from('ideas_list').delete().eq('id', id) } catch {}
+    db.deleteEntry('ideas_list', id)
   }
 
   const filtered = useMemo(() => {

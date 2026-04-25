@@ -9,7 +9,7 @@ const CATEGORIES = [
   'characters','wardrobe','items','locations','timeline',
   'scenes','canon','world','questions','spellings',
   'calendar_entries','flags','maps','wiki','notes','family_tree',
-  'images','manuscript','inventory','eras','journal',
+  'images','manuscript','inventory','eras','journal','ideas_list',
   'journal_captures','journal_tags'
 ]
 

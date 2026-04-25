@@ -146,7 +146,7 @@ export default function App() {
 
   const adjFont = useCallback((d) => {
     setFontSize(prev => {
-      const next = Math.max(11, Math.min(22, prev + d))
+      const next = Math.max(10, Math.min(20, prev + d))
       try { localStorage.setItem('gcomp_font_size', String(next)) } catch {}
       return next
     })

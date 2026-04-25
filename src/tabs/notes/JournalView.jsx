@@ -6,7 +6,7 @@ import { normalizeSticky, scrollAndFlashEntry, sortJournalPins, STICKY_COLORS, s
 
 const NOTES_COLOR = TAB_RAINBOW.notes
 
-const SIZE_COLS_N = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
+const SIZE_COLS_N = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 const SIZE_LABELS_N = ['XS', 'S', 'M', 'L', 'XL']
 const NOTE_CATS = ['General', 'Canon', 'Brainstorm', 'Research', 'Todo', 'Quote', 'Other']
 
@@ -47,6 +47,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
   const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_notes') || 'M' } catch { return 'M' } })
   const [viewNote, setViewNote] = useState(null)
   const [sidebarEdit, setSidebarEdit] = useState(null)
+  const [sidebarPreview, setSidebarPreview] = useState(null)
   const [dragId, setDragId] = useState(null)
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
@@ -180,7 +181,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => handleSidebarDrop(sticky.id)}
                   style={{ width: 120, minHeight: 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer' }}
-                  onClick={() => setSidebarEdit(sticky)}
+                  onClick={() => setSidebarPreview(sticky)}
                   title={sticky.text}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
@@ -234,6 +235,27 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
         onClose={() => setSidebarEdit(null)}
         showJournalUnpin
       />
+
+      <Modal open={!!sidebarPreview} onClose={() => setSidebarPreview(null)} title="Pinned Sticky" color={NOTES_COLOR} maxWidth={480}>
+        {sidebarPreview && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontSize: '0.95em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {sidebarPreview.text}
+            </div>
+            <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
+              {sidebarPreview.created ? new Date(sidebarPreview.created).toLocaleString() : ''}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--brd)' }}>
+              <button onClick={() => setSidebarPreview(null)} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
+                Close
+              </button>
+              <button onClick={() => { setSidebarEdit(sidebarPreview); setSidebarPreview(null) }} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: `1px solid ${NOTES_COLOR}`, background: NOTES_COLOR, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
+                ✎ Edit
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {confirmId && (
         <div className="confirm-overlay open">
