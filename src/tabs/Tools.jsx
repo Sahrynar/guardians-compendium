@@ -1041,6 +1041,7 @@ function ScotsDialogueTool() {
 const IMG_LIB_CATS = ['All','Characters','Wardrobe','Items','Locations','Maps','Manuscript','Other']
 
 function ImageLibraryTool({ db }) {
+  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('All')
   const [lightbox, setLightbox] = useState(null)

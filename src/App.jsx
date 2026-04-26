@@ -49,8 +49,8 @@ export default function App() {
   const db = useDB()
   const backup = useAutoBackup(db.db)
   const [tab, setTab] = useState(getSavedTab)
-  const [history, setHistory] = useState([])
-  const [histIdx, setHistIdx] = useState(-1)
+  const [history, setHistory] = useState(() => [getSavedTab()])
+  const [histIdx, setHistIdx] = useState(0)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
   const [navSearch, setNavSearch] = useState('')
   const [crumbs, setCrumbs] = useState([])
@@ -82,6 +82,12 @@ export default function App() {
   }, [tab])
 
   useEffect(() => {
+    if (histIdx < 0 || histIdx >= history.length) {
+      console.warn('History index out of bounds', { histIdx, historyLength: history.length })
+    }
+  }, [histIdx, history.length])
+
+  useEffect(() => {
     const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
     const tabIconMap = {
       dashboard: { icon: '🏠', label: 'Dashboard' },
@@ -94,18 +100,6 @@ export default function App() {
   // Focus quick capture input when opened
   useEffect(() => {
     if (quickCapOpen) setTimeout(() => quickCapRef.current?.focus(), 50)
-  }, [quickCapOpen])
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    function onKey(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'q') { e.preventDefault(); setQuickCapOpen(o => !o) }
-      if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i > 0 ? TAB_ORDER[i-1] : t }) }
-      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i < TAB_ORDER.length-1 ? TAB_ORDER[i+1] : t }) }
-      if (e.key === 'Escape' && quickCapOpen) setQuickCapOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
   }, [quickCapOpen])
 
   useEffect(() => {
@@ -127,19 +121,48 @@ export default function App() {
 
   const goTo = useCallback((t) => {
     if (t === tab) return
-    setHistory(prev => [...prev.slice(0, histIdx + 1), tab])
-    setHistIdx(prev => prev + 1)
+    const nextHistory = [...history.slice(0, histIdx + 1), t]
+    setHistory(nextHistory)
+    setHistIdx(nextHistory.length - 1)
     setTab(t)
     setNavSearch('') // clear search on tab change
-  }, [tab, histIdx])
+  }, [history, histIdx, tab])
 
   const goBack = useCallback(() => {
-    if (histIdx >= 0) { setTab(history[histIdx]); setHistIdx(prev => prev - 1); setNavSearch('') }
+    if (histIdx <= 0) return
+    const nextIdx = histIdx - 1
+    setHistIdx(nextIdx)
+    setTab(history[nextIdx])
+    setNavSearch('')
   }, [history, histIdx])
 
   const goFwd = useCallback(() => {
-    if (histIdx < history.length - 1) { setHistIdx(prev => prev + 1); setTab(history[histIdx + 1]); setNavSearch('') }
+    if (histIdx >= history.length - 1) return
+    const nextIdx = histIdx + 1
+    setHistIdx(nextIdx)
+    setTab(history[nextIdx])
+    setNavSearch('')
   }, [history, histIdx])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'q') { e.preventDefault(); setQuickCapOpen(o => !o) }
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const i = TAB_ORDER.indexOf(tab)
+        if (i > 0) goTo(TAB_ORDER[i - 1])
+      }
+      if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault()
+        const i = TAB_ORDER.indexOf(tab)
+        if (i < TAB_ORDER.length - 1) goTo(TAB_ORDER[i + 1])
+      }
+      if (e.key === 'Escape' && quickCapOpen) setQuickCapOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [goTo, quickCapOpen, tab])
 
 
   const crossLink = useCallback((tabName, entryId) => {
