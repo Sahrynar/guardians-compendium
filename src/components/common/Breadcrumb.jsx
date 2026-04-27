@@ -7,11 +7,13 @@ export default function Breadcrumb({ crumbs }) {
         alignItems: 'center',
         gap: 6,
         flexWrap: 'wrap',
-        padding: '4px 14px',
-        fontSize: '0.77em',
+        padding: '6px 16px',
+        fontSize: '0.8em',
         color: 'var(--dim)',
+        background: 'var(--bg)',
         borderBottom: '1px solid var(--brd)',
-        background: 'var(--sf)',
+        overflowX: 'auto',
+        whiteSpace: 'nowrap',
       }}
     >
       {crumbs.map((c, i) => (

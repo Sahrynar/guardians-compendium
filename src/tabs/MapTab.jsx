@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import Modal from '../components/common/Modal'
 import { TAB_RAINBOW, uid } from '../constants'
 
-export default function MapTab({ db }) {
+export default function MapTab({ db, crossLink }) {
   const tabColor = TAB_RAINBOW['map'] || '#aaaaaa'
   const maps = (db.db.maps || []).slice().sort((a, b) => {
     const ao = a.sort_order != null ? Number(a.sort_order) : 9999
@@ -151,7 +151,14 @@ export default function MapTab({ db }) {
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1em', color: tabColor, marginBottom: 8 }}>Locations for Reference</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {(db.db.locations || []).map(l => (
-              <span key={l.id} style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: `1px solid ${tabColor}44`, color: tabColor, background: `${tabColor}11` }}>{l.name}</span>
+              <button
+                key={l.id}
+                onClick={() => crossLink?.('locations', l.id)}
+                title={`Open ${l.name} in Locations`}
+                style={{ padding: '2px 8px', borderRadius: 10, fontSize: 'var(--fs-xs)', border: `1px solid ${tabColor}44`, color: tabColor, background: `${tabColor}11`, cursor: 'pointer' }}
+              >
+                {l.name}
+              </button>
             ))}
           </div>
         </div>

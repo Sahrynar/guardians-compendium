@@ -254,6 +254,11 @@ export default function Locations({ db, navSearch }) {
         category="locations"
         color={tabColor}
         onClose={() => setPreviewEntry(null)}
+        onGoToEntry={() => {
+          const id = previewEntry?.id
+          setPreviewEntry(null)
+          if (id) window.setTimeout(() => scrollAndFlashEntry(id), 50)
+        }}
         onEdit={() => { setEditing(previewEntry); setPreviewEntry(null); setModalOpen(true) }}
       />
 

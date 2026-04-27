@@ -45,41 +45,26 @@ export const WEEKDAYS = ['Onesday', 'Twosday', 'Threesday', 'Foursday', 'Fivesda
 // Winter: deep navy → true mid-blue → icy periwinkle
 // Spring: deep forest green → bright lime → aqua-teal (wider spread for contrast)
 export const SEASON_COLORS = {
-  Summer:  ['#9d4edd', '#b940b0', '#d63384'],
-  Harvest: ['#ffb700', '#d46c00', '#aa2200'],
-  Winter:  ['#1a3a8f', '#4488cc', '#99ccee'],
-  Spring:  ['#1a7a2e', '#5cd65c', '#00c4b0'],
+  Summer: '#ffcc00',
+  Harvest: '#ff7040',
+  Winter: '#66bbff',
+  Spring: '#7acc7a',
 }
 
 // Per-month hex colors for calendar display
-export const MONTH_COLORS = [
-  '#9d4edd', // 1 Akatriluna — violet
-  '#b940b0', // 2 Zacharlune — magenta-purple (midpoint)
-  '#d63384', // 3 Sofiluna   — deep pink
-  '#ffb700', // 4 Trgilune   — amber
-  '#d46c00', // 5 Sachaluna  — burnt orange (midpoint)
-  '#aa2200', // 6 Rhamilune  — almost-red dark orange
-  '#1a3a8f', // 7 Mailuna    — deep navy
-  '#4488cc', // 8 Iahlune    — true mid-blue (midpoint)
-  '#99ccee', // 9 Liweluna   — icy periwinkle
-  '#1a7a2e', // 10 Valolune  — deep forest green
-  '#5cd65c', // 11 Sraoluna  — bright lime (midpoint)
-  '#00c4b0', // 12 Elemilune — aqua-teal
-]
+export const MONTH_COLORS = MONTHS.map(month => SEASON_COLORS[month.ssn] || '#888888')
 
-export const SEASON_TAG_COLORS = {
-  Summer: '#d63384', Harvest: '#ffb700', Winter: '#4488cc', Spring: '#5cd65c'
-}
+export const SEASON_TAG_COLORS = { ...SEASON_COLORS }
 
 // ── Category config — locked 24-tab order ─────────────────────
 // Eras & Dating is a sub-tab within Calendar, not a standalone nav tab
 export const CATS = {
   dashboard:  { l: 'Dashboard',    i: '⊞',  c: '#ff69b4' },  // Pink
-  wiki:       { l: 'Wiki',         i: '📖', c: '#ff6b6b' },  // Coral
-  glossary:   { l: 'Glossary',     i: '📚', c: '#ff4433' },  // Red
+  wiki:       { l: 'Wiki',         i: '\uD83D\uDCD6', c: '#ff69b4' },  // Hot Pink
+  glossary:   { l: 'Glossary',     i: '\uD83D\uDCDA', c: '#ee2244' },  // Red
   characters: { l: 'Characters',   i: '👤', c: '#ff5533' },  // Red-Orange
-  familytree: { l: 'Family Tree',  i: '🌳', c: '#ff7040' },  // Orange
-  world:      { l: 'World',        i: '🌐', c: '#ffaa33' },  // Amber
+  familytree: { l: 'Family Tree',  i: '\uD83C\uDF33', c: '#22aa22' },  // Forest Green
+  world:      { l: 'World',        i: '\uD83C\uDF10', c: '#ff7040' },  // Orange
   locations:  { l: 'Locations',    i: '🗺',  c: '#ffcc00' },  // Yellow
   map:        { l: 'Maps',         i: '🌍', c: '#aacc44' },  // Yellow-Green
   manuscript: { l: 'Manuscript',   i: '📜', c: '#44bb44' },  // Green
@@ -104,7 +89,7 @@ export const CATS = {
 export const RAINBOW = ['#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040','#ffaa33','#ffcc00','#aacc44','#44bb44','#00ccaa','#00ddff','#44aaff','#3388ff','#6655ff','#8844ff','#aa44ff','#cc44ff','#ff44cc']
 
 export const RAINBOW_HEX = [
-  '#ff69b4', '#ff6b6b', '#ff4433', '#ff5533', '#ff7040', '#ffaa33',
+  '#ff69b4', '#ee2244', '#ff5533', '#22aa22', '#ff7040', '#ffaa33',
   '#ffcc00', '#aacc44', '#44bb44', '#00ccaa', '#00ddff', '#44aaff',
   '#3388ff', '#6655ff', '#8844ff', '#aa44ff', '#cc44ff', '#ff44cc',
 ]
@@ -220,3 +205,4 @@ export function highlight(text, q) {
   const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi')
   return text.replace(re, '<mark style="background:rgba(201,102,255,.35);color:inherit;border-radius:2px;padding:0 1px">$1</mark>')
 }
+

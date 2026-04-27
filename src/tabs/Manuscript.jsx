@@ -659,6 +659,10 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
 
       {tocBook && (
         <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', flexWrap: 'wrap', marginBottom: 16 }}>
+            <button onClick={goHome} title="Home" style={navBtnStyle(MS_COLOR)}>Home</button>
+            <button onClick={backToShelf} title="Back to Shelf" style={navBtnStyle(MS_COLOR)}>Shelf</button>
+          </div>
           {(() => {
             const meta = parseSetting(db.settings?.[`manuscript_book_${tocBook.replace(/ /g, '_')}`])
             const coverUrl = meta?.cover || ''
