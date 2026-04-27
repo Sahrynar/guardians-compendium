@@ -1041,6 +1041,7 @@ function ScotsDialogueTool() {
 const IMG_LIB_CATS = ['All','Characters','Wardrobe','Items','Locations','Maps','Manuscript','Other']
 
 function ImageLibraryTool({ db }) {
+  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('All')
   const [lightbox, setLightbox] = useState(null)
@@ -1124,7 +1125,7 @@ function ImageLibraryTool({ db }) {
           reader.readAsDataURL(file)
         })
       }
-      const existing = JSON.parse(db.db.settings?.image_library || '[]')
+      const existing = JSON.parse(db.settings?.image_library || '[]')
       const newEntry = { id: Date.now().toString(36), url, name: uploadName.trim(), cat: uploadCat, direct: true }
       db.saveSetting('image_library', JSON.stringify([...existing, newEntry]))
       setUploadName('')
@@ -1135,7 +1136,7 @@ function ImageLibraryTool({ db }) {
 
   function deleteDirectImage(id) {
     try {
-      const existing = JSON.parse(db.db.settings?.image_library || '[]')
+      const existing = JSON.parse(db.settings?.image_library || '[]')
       db.saveSetting('image_library', JSON.stringify(existing.filter(i => i.id !== id)))
     } catch {}
   }

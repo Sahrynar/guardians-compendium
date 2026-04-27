@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+﻿import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
 import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid } from './constants'
@@ -45,16 +45,21 @@ function getSavedFontSize() {
   try { return parseInt(localStorage.getItem('gcomp_font_size') || '13') } catch { return 13 }
 }
 
+function getSavedSessionLogCount() {
+  try { return JSON.parse(localStorage.getItem('gcomp_session_log') || '[]').length || 0 } catch { return 0 }
+}
+
 export default function App() {
   const db = useDB()
   const backup = useAutoBackup(db.db)
   const [tab, setTab] = useState(getSavedTab)
-  const [history, setHistory] = useState([])
-  const [histIdx, setHistIdx] = useState(-1)
+  const [history, setHistory] = useState(() => [getSavedTab()])
+  const [histIdx, setHistIdx] = useState(0)
   const [fontSize, setFontSize] = useState(getSavedFontSize)
   const [navSearch, setNavSearch] = useState('')
   const [crumbs, setCrumbs] = useState([])
   const [headerImg, setHeaderImg] = useState('')
+  const [sessionLogCount, setSessionLogCount] = useState(getSavedSessionLogCount)
   const [quickCapOpen, setQuickCapOpen] = useState(false)
   const [quickCapText, setQuickCapText] = useState('')
   const [conflictQueue, setConflictQueue] = useState([])
@@ -71,6 +76,15 @@ export default function App() {
   }, [db.loading])
 
   useEffect(() => {
+    function syncSessionCount(e) {
+      if (typeof e?.detail?.count === 'number') setSessionLogCount(e.detail.count)
+      else setSessionLogCount(getSavedSessionLogCount())
+    }
+    window.addEventListener('gcomp_sessionlog_changed', syncSessionCount)
+    return () => window.removeEventListener('gcomp_sessionlog_changed', syncSessionCount)
+  }, [])
+
+  useEffect(() => {
     const fs = fontSize + 'px'
     document.documentElement.style.setProperty('--fs', fs)
     document.documentElement.style.fontSize = fs
@@ -82,30 +96,24 @@ export default function App() {
   }, [tab])
 
   useEffect(() => {
-    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    if (histIdx < 0 || histIdx >= history.length) {
+      console.warn('History index out of bounds', { histIdx, historyLength: history.length })
+    }
+  }, [histIdx, history.length])
+
+  useEffect(() => {
+    const root = { icon: 'ðŸŒ³', label: 'The Guardians of Lajen Worldbuilding Compendium' }
     const tabIconMap = {
-      dashboard: { icon: '🏠', label: 'Dashboard' },
+      dashboard: { icon: 'ðŸ ', label: 'Dashboard' },
     }
     const cat = CATS[tab]
-    const tabCrumb = tabIconMap[tab] || (cat ? { icon: cat.i, label: cat.l } : { icon: '·', label: tab })
+    const tabCrumb = tabIconMap[tab] || (cat ? { icon: cat.i, label: cat.l } : { icon: 'Â·', label: tab })
     setCrumbs([root, tabCrumb])
   }, [tab])
 
   // Focus quick capture input when opened
   useEffect(() => {
     if (quickCapOpen) setTimeout(() => quickCapRef.current?.focus(), 50)
-  }, [quickCapOpen])
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    function onKey(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'q') { e.preventDefault(); setQuickCapOpen(o => !o) }
-      if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i > 0 ? TAB_ORDER[i-1] : t }) }
-      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setTab(t => { const i = TAB_ORDER.indexOf(t); return i < TAB_ORDER.length-1 ? TAB_ORDER[i+1] : t }) }
-      if (e.key === 'Escape' && quickCapOpen) setQuickCapOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
   }, [quickCapOpen])
 
   useEffect(() => {
@@ -127,19 +135,48 @@ export default function App() {
 
   const goTo = useCallback((t) => {
     if (t === tab) return
-    setHistory(prev => [...prev.slice(0, histIdx + 1), tab])
-    setHistIdx(prev => prev + 1)
+    const nextHistory = [...history.slice(0, histIdx + 1), t]
+    setHistory(nextHistory)
+    setHistIdx(nextHistory.length - 1)
     setTab(t)
     setNavSearch('') // clear search on tab change
-  }, [tab, histIdx])
+  }, [history, histIdx, tab])
 
   const goBack = useCallback(() => {
-    if (histIdx >= 0) { setTab(history[histIdx]); setHistIdx(prev => prev - 1); setNavSearch('') }
+    if (histIdx <= 0) return
+    const nextIdx = histIdx - 1
+    setHistIdx(nextIdx)
+    setTab(history[nextIdx])
+    setNavSearch('')
   }, [history, histIdx])
 
   const goFwd = useCallback(() => {
-    if (histIdx < history.length - 1) { setHistIdx(prev => prev + 1); setTab(history[histIdx + 1]); setNavSearch('') }
+    if (histIdx >= history.length - 1) return
+    const nextIdx = histIdx + 1
+    setHistIdx(nextIdx)
+    setTab(history[nextIdx])
+    setNavSearch('')
   }, [history, histIdx])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'q') { e.preventDefault(); setQuickCapOpen(o => !o) }
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const i = TAB_ORDER.indexOf(tab)
+        if (i > 0) goTo(TAB_ORDER[i - 1])
+      }
+      if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault()
+        const i = TAB_ORDER.indexOf(tab)
+        if (i < TAB_ORDER.length - 1) goTo(TAB_ORDER[i + 1])
+      }
+      if (e.key === 'Escape' && quickCapOpen) setQuickCapOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [goTo, quickCapOpen, tab])
 
 
   const crossLink = useCallback((tabName, entryId) => {
@@ -225,14 +262,14 @@ export default function App() {
 
   const clearCrossLink = useCallback(() => {}, [])
 
-  const tabProps = { db, goTo, goToWithSearch, crossLink, clearCrossLink, tab, navSearch, setNavSearch, setCrumbs }
+  const tabProps = { db, goTo, goToWithSearch, crossLink, clearCrossLink, tab, navSearch, setNavSearch, setCrumbs, sessionLogCount }
 
   function renderTab() {
     if (db.loading) return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--dim)' }}>
-        <div style={{ fontSize: '3.69em', marginBottom: 12 }}>✦</div>
+        <div style={{ fontSize: '3.69em', marginBottom: 12 }}>âœ¦</div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em' }}>
-          {db.hasSupabase ? 'Connecting to cloud…' : 'Loading…'}
+          {db.hasSupabase ? 'Connecting to cloudâ€¦' : 'Loadingâ€¦'}
         </div>
       </div>
     )
@@ -263,14 +300,16 @@ export default function App() {
 
   return (
     <div>
+      <Breadcrumb crumbs={crumbs} />
+
       {/* Header */}
       <div className="site-header" onClick={() => goTo('dashboard')} style={{ cursor: 'pointer', position: 'relative' }}>
         {headerImg ? (
           <div style={{ position: 'relative' }}>
             <img src={headerImg} alt="header" style={{ width: '100%', height: 'auto', display: 'block' }} />
             <div className="header-corner-zone">
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Change header image">✎</button>
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); removeHeaderImg() }} title="Remove image">✕</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Change header image">âœŽ</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); removeHeaderImg() }} title="Remove image">âœ•</button>
             </div>
           </div>
         ) : (
@@ -282,10 +321,10 @@ export default function App() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               letterSpacing: '.02em', display: 'inline-block', lineHeight: 1.2,
             }}>
-              The Guardians of Lajen — Worldbuilding Compendium
+              The Guardians of Lajen â€” Worldbuilding Compendium
             </span>
             <div className="header-corner-zone">
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Upload header image">✎</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Upload header image">âœŽ</button>
             </div>
           </div>
         )}
@@ -301,6 +340,25 @@ export default function App() {
             <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
             <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
           </div>
+          <input
+            type="text"
+            className="global-top-search"
+            value={navSearch}
+            onChange={e => setNavSearch(e.target.value)}
+            placeholder="Search..."
+            style={{
+              flex: 1,
+              maxWidth: 480,
+              minWidth: 0,
+              margin: '0 16px',
+              padding: '6px 12px',
+              fontSize: '0.9em',
+              background: 'var(--card)',
+              border: '1px solid var(--brd)',
+              borderRadius: 6,
+              color: 'var(--tx)',
+            }}
+          />
           <div className="nav-btns">
             <span className={`sync-dot ${db.syncStatus}`} title={`Sync: ${db.syncStatus}`} style={{ marginRight: 4 }} />
             <button className="nav-btn" onClick={() => adjFont(-1)} title="Smaller text">A−</button>
@@ -309,7 +367,7 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>◀</button>
+          <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>â—€</button>
           <div className="tabs-bar" id="tabBar" ref={tabBarRef}>
             {TAB_ORDER.map(k => {
               const c = CATS[k]
@@ -332,11 +390,9 @@ export default function App() {
               )
             })}
           </div>
-          <button className="nav-btn" onClick={() => scrollTabs(1)} style={{ flexShrink: 0 }}>▶</button>
+          <button className="nav-btn" onClick={() => scrollTabs(1)} style={{ flexShrink: 0 }}>â–¶</button>
         </div>
       </nav>
-
-      <Breadcrumb crumbs={crumbs} />
 
       <div className="area">{renderTab()}</div>
 
@@ -355,7 +411,7 @@ export default function App() {
         }}
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-      >✦</button>
+      >âœ¦</button>
 
       {/* Quick Capture popup */}
       {quickCapOpen && (
@@ -366,14 +422,14 @@ export default function App() {
           boxShadow: '0 4px 24px rgba(0,0,0,.5)',
         }}>
           <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.85em', color: '#9d4edd', marginBottom: 8 }}>
-            ✦ Quick Capture → Journal
+            âœ¦ Quick Capture â†’ Journal
           </div>
           <textarea
             ref={quickCapRef}
             value={quickCapText}
             onChange={e => setQuickCapText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitQuickCap() }}
-            placeholder="Capture a thought…"
+            placeholder="Capture a thoughtâ€¦"
             style={{
               width: '100%', minHeight: 70, padding: '6px 8px',
               background: 'var(--card)', border: '1px solid var(--brd)',
@@ -384,7 +440,7 @@ export default function App() {
           <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
             <button className="btn btn-outline btn-sm" onClick={() => { setQuickCapOpen(false); setQuickCapText('') }}>Cancel</button>
             <button className="btn btn-sm" style={{ background: '#9d4edd', color: '#fff' }} onClick={submitQuickCap}>
-              Save (Ctrl+↵)
+              Save (Ctrl+â†µ)
             </button>
           </div>
         </div>
@@ -392,7 +448,7 @@ export default function App() {
 
       <IOBar db={db} backup={backup} onImport={handleImportWithConflicts} />
 
-      {/* Floating undo indicator — 5 min window */}
+      {/* Floating undo indicator â€” 5 min window */}
       {db.lastUndoable && (
         <button onClick={() => db.undoAction(db.lastUndoable)}
           style={{ position:'fixed', bottom:108, right:68, zIndex:122,
@@ -400,11 +456,11 @@ export default function App() {
             background:'rgba(17,17,20,.95)', border:'1px solid #ffaa33',
             color:'#ffaa33', fontSize:'0.77em', cursor:'pointer',
             boxShadow:'0 2px 12px rgba(0,0,0,.5)' }}>
-          ⟲ Undo last
+          âŸ² Undo last
         </button>
       )}
 
-      {/* Toast notification — 12s */}
+      {/* Toast notification â€” 12s */}
       {db.toast && (
         <div style={{ position:'fixed', bottom:108, left:'50%', transform:'translateX(-50%)',
           background:'rgba(17,17,20,.97)', border:'1px solid var(--brd)', borderRadius:10,
@@ -414,11 +470,11 @@ export default function App() {
           <button onClick={() => db.undoAction(db.toast)}
             style={{ padding:'4px 12px', borderRadius:6, border:'1px solid #9d4edd',
               background:'none', color:'#9d4edd', fontSize:'0.85em', cursor:'pointer', fontWeight:700, whiteSpace:'nowrap' }}>
-            ⟲ Undo
+            âŸ² Undo
           </button>
           <button onClick={db.dismissToast}
             style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize:'1.08em', padding:'0 2px' }}>
-            ✕
+            âœ•
           </button>
         </div>
       )}
@@ -428,10 +484,10 @@ export default function App() {
         <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,.85)',
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:480, width:'100%' }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>⚠ Import Conflict</div>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>âš  Import Conflict</div>
             <div style={{ fontSize:'0.77em', color:'var(--dim)', marginBottom:14 }}>
               {conflictQueue.length} conflict{conflictQueue.length !== 1 ? 's' : ''} remaining
-              {importSummary && ` · ${importSummary.added} entries already added`}
+              {importSummary && ` Â· ${importSummary.added} entries already added`}
             </div>
             <div style={{ fontSize:'0.85em', color:'var(--tx)', marginBottom:8 }}>
               Category: <span style={{ color:'var(--cc)' }}>{conflictQueue[0].category}</span>
@@ -457,9 +513,9 @@ export default function App() {
               </div>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-              <button onClick={() => resolveNext('keep_existing')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #ff888844', background:'none', color:'#ff8888', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep existing — ignore incoming</button>
-              <button onClick={() => resolveNext('use_incoming')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #88ff8844', background:'none', color:'#88ff88', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Use incoming — replace existing</button>
-              <button onClick={() => resolveNext('keep_both')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid var(--brd)', background:'none', color:'var(--dim)', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep both — save as new entry</button>
+              <button onClick={() => resolveNext('keep_existing')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #ff888844', background:'none', color:'#ff8888', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep existing â€” ignore incoming</button>
+              <button onClick={() => resolveNext('use_incoming')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #88ff8844', background:'none', color:'#88ff88', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Use incoming â€” replace existing</button>
+              <button onClick={() => resolveNext('keep_both')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid var(--brd)', background:'none', color:'var(--dim)', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep both â€” save as new entry</button>
             </div>
           </div>
         </div>
@@ -471,7 +527,7 @@ export default function App() {
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:360, width:'100%', textAlign:'center' }}>
             <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:importSummary.error?'#ff4444':'#44bb44', marginBottom:10 }}>
-              {importSummary.error ? '✗ Import Failed' : '✓ Import Complete'}
+              {importSummary.error ? 'âœ— Import Failed' : 'âœ“ Import Complete'}
             </div>
             {importSummary.error
               ? <p style={{ fontSize:'0.85em', color:'var(--dim)', marginBottom:14 }}>{importSummary.error}</p>
@@ -491,3 +547,4 @@ export default function App() {
     </div>
   )
 }
+

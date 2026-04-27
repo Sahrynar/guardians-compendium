@@ -695,17 +695,17 @@ export default function Inventory({ db, setCrumbs }) {
               <div key={e.id} id={`gcomp-entry-${e.id}`} className="entry-card"
                 style={{ '--card-color': tileColor, borderTop: `2px solid ${tileColor}` }}
                 onClick={() => setViewPopup({ entry: e, bubbleColor })}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0, flex: '1 1 220px', flexWrap: 'wrap' }}>
                     <div className="entry-title"
                       dangerouslySetInnerHTML={{ __html: highlight(e.name || '', search) }} />
                     {e.significance && (
-                      <span style={{ fontSize: '0.77em', padding: '1px 6px', borderRadius: 8, background: `${tabColor}22`, color: tabColor, flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 8, background: `${tabColor}33`, border: `1px solid ${tabColor}55`, color: tabColor, flexShrink: 0, whiteSpace: 'nowrap' }}>
                         📖 sig
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.69em', color: tileColor, flexShrink: 0, marginLeft: 6 }}>
+                  <div style={{ fontSize: '0.69em', color: tileColor, flexShrink: 0, marginLeft: 'auto' }}>
                     {cat?.icon} {e.category}
                   </div>
                 </div>

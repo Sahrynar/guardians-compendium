@@ -106,7 +106,7 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
                   const editing = editingId === idea.id
                   return (
                     <div key={idea.id} id={`gcomp-entry-${idea.id}`}
-                      style={{ padding: '5px 7px', fontSize: '0.9em', borderBottom: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      style={{ padding: '5px 7px', fontSize: '0.9em', borderBottom: '1px solid var(--div)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {editing ? (
                         <>
                           <textarea value={editValue} onChange={e => setEditValue(e.target.value)}

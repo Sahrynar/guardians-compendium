@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { BOOK_TITLES, TAB_RAINBOW, uid } from '../constants'
 import { parseSetting } from '../hooks/useDB'
 
@@ -8,9 +8,18 @@ const STATUSES = ['Draft', 'Revision', 'Polishing', 'Done']
 const STATUS_COLORS = { Draft: '#6b7280', Revision: '#f59e0b', Polishing: '#8b5cf6', Done: '#10b981' }
 const SHELF_COLS = { XS: 6, S: 4, M: 3, L: 2, XL: 1 }
 const TOC_COLS = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
-const navBtn = { fontSize: '0.85em', padding: '3px 10px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }
 const sizeBtn = active => ({ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: active ? MS_COLOR : 'none', color: active ? '#000' : 'var(--dim)', border: `1px solid ${active ? MS_COLOR : 'var(--brd)'}`, cursor: 'pointer' })
 const bookLabel = (book) => BOOK_TITLES[book] || book
+const navBtnStyle = color => ({
+  fontSize: '0.85em',
+  padding: '6px 12px',
+  borderRadius: 6,
+  background: 'var(--sf)',
+  border: `1px solid ${color}`,
+  color,
+  cursor: 'pointer',
+  fontWeight: 500,
+})
 
 function toHTML(text) {
   if (!text) return ''
@@ -104,8 +113,6 @@ function FormatBar({ textareaRef, onUpdate }) {
     </div>
   )
 }
-
-const navSelect = { fontSize: '0.85em', padding: '3px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', minWidth: 280, maxWidth: 420 }
 
 function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink }) {
   const [text, setText] = useState(chapter.text || '')
@@ -256,18 +263,18 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', fontSize: '0.85em' }}>
-        <button onClick={onHome} title="Home" style={navBtn}>🏠</button>
-        <button onClick={onBackToShelf} title="Shelf" style={navBtn}>📚</button>
-        <button onClick={() => onBackToTOC(chapter.book)} title="Contents" style={navBtn}>📑</button>
-        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={navSelect}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', flexWrap: 'wrap' }}>
+        <button onClick={onHome} title="Home" style={navBtnStyle(MS_COLOR)}>Home</button>
+        <button onClick={onBackToShelf} title="Back to Shelf" style={navBtnStyle(MS_COLOR)}>Shelf</button>
+        <button onClick={() => onBackToTOC(chapter.book)} title="Back to TOC" style={navBtnStyle(MS_COLOR)}>TOC</button>
+        <span style={{ color: 'var(--brd)', margin: '0 4px' }}>|</span>
+        <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtnStyle(MS_COLOR), opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>{'<'} Prev</button>
+        <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtnStyle(MS_COLOR), opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>Next {'>'}</button>
+        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={{ minWidth: 280, marginLeft: 12, padding: '6px 10px', fontSize: '0.85em', background: 'var(--sf)', border: `1px solid ${MS_COLOR}`, borderRadius: 6, color: 'var(--tx)' }}>
           {allChapters.map(c => (
-            <option key={c.id} value={c.id}>{bookLabel(c.book)} · Ch {c.chapter_num}{c.title ? ` · ${c.title}` : ''}</option>
+            <option key={c.id} value={c.id}>{c.book} - Ch {c.chapter_num} {c.title || '(untitled)'}</option>
           ))}
         </select>
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
-        <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtn, opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>←</button>
-        <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtn, opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>→</button>
       </div>
 
       {detectedChars.length > 0 && (
@@ -299,18 +306,18 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {(view === 'preview' || view === 'split') && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.08}em`, lineHeight: 1.9, padding: '20px 40px' }}>
             <style>{`
-              .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0; }
               .ms-preview p + p { margin-top: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
-            <div className="ms-preview" dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
+            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
           </div>
         )}
 
         {view === 'read' && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.2}em`, lineHeight: 2, padding: '40px 60px' }}>
             <style>{`
-              .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0; }
               .ms-preview p + p { margin-top: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
@@ -322,7 +329,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
                 {title || '(untitled)'}
               </div>
             </div>
-            <div className="ms-preview" dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
+            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
           </div>
         )}
 
@@ -652,6 +659,10 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
 
       {tocBook && (
         <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', flexWrap: 'wrap', marginBottom: 16 }}>
+            <button onClick={goHome} title="Home" style={navBtnStyle(MS_COLOR)}>Home</button>
+            <button onClick={backToShelf} title="Back to Shelf" style={navBtnStyle(MS_COLOR)}>Shelf</button>
+          </div>
           {(() => {
             const meta = parseSetting(db.settings?.[`manuscript_book_${tocBook.replace(/ /g, '_')}`])
             const coverUrl = meta?.cover || ''

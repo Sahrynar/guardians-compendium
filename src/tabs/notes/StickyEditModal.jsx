@@ -91,13 +91,17 @@ export default function StickyEditModal({ open, sticky, tags, onSave, onClose, s
           </button>
         )}
         {form.archived && onUnarchive && (
-          <button
-            className="btn btn-sm btn-outline"
-            style={{ justifySelf: 'flex-start' }}
-            onClick={() => onUnarchive(form)}
-          >
-            Un-archive
-          </button>
+          <div style={{ marginTop: 12, padding: 12, background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6 }}>
+            <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 6 }}>
+              Archived{form.archived_destination ? ` and sent to ${form.archived_destination}` : ''}.
+            </div>
+            <button
+              onClick={() => onUnarchive(form)}
+              style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, background: 'transparent', border: '1px solid var(--cl)', color: 'var(--cl)', cursor: 'pointer' }}
+            >
+              Un-archive
+            </button>
+          </div>
         )}
       </div>
       <div className="modal-actions">
