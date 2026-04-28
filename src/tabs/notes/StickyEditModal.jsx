@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Modal from '../../components/common/Modal'
-import { DEFAULT_TAGS, STICKY_COLORS } from './stickyShared'
+import { DEFAULT_TAGS, NOTES_COLOR, STICKY_COLORS } from './stickyShared'
 
 export default function StickyEditModal({ open, sticky, tags, onSave, onClose, showJournalUnpin = false, onUnarchive }) {
   const [form, setForm] = useState(sticky || null)
@@ -18,7 +18,7 @@ export default function StickyEditModal({ open, sticky, tags, onSave, onClose, s
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Edit Sticky" color="#ffcc00">
+    <Modal open={open} onClose={onClose} title="Edit Sticky" color={NOTES_COLOR}>
       <div className="field">
         <label>Text</label>
         <textarea
@@ -62,15 +62,26 @@ export default function StickyEditModal({ open, sticky, tags, onSave, onClose, s
             <option value="1.23em">XL</option>
           </select>
         </div>
-        <div className="field">
-          <label>Card Size</label>
-          <select value={form.size || 'normal'} onChange={e => patch({ size: e.target.value })}>
-            <option value="small">Small</option>
-            <option value="normal">Normal</option>
-            <option value="large">Large</option>
-            <option value="xl">XL</option>
-          </select>
-        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', margin: '8px 0' }}>
+        <span style={{ fontSize: '0.77em', color: 'var(--dim)' }}>Size:</span>
+        {['S', 'M', 'L', 'XL'].map(size => (
+          <button
+            key={size}
+            onClick={() => patch({ size })}
+            style={{
+              fontSize: '0.77em',
+              padding: '3px 8px',
+              borderRadius: 4,
+              background: form.size === size ? NOTES_COLOR : 'transparent',
+              border: '1px solid var(--brd)',
+              color: form.size === size ? '#000' : 'var(--tx)',
+              cursor: 'pointer',
+            }}
+          >
+            {size}
+          </button>
+        ))}
       </div>
       <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.85em', color: 'var(--tx)' }}>
@@ -91,18 +102,22 @@ export default function StickyEditModal({ open, sticky, tags, onSave, onClose, s
           </button>
         )}
         {form.archived && onUnarchive && (
-          <button
-            className="btn btn-sm btn-outline"
-            style={{ justifySelf: 'flex-start' }}
-            onClick={() => onUnarchive(form)}
-          >
-            Un-archive
-          </button>
+          <div style={{ marginTop: 12, padding: 12, background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6 }}>
+            <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 6 }}>
+              Archived{form.archived_destination ? ` and sent to ${form.archived_destination}` : ''}.
+            </div>
+            <button
+              onClick={() => onUnarchive(form)}
+              style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, background: 'transparent', border: '1px solid var(--cl)', color: 'var(--cl)', cursor: 'pointer' }}
+            >
+              Un-archive
+            </button>
+          </div>
         )}
       </div>
       <div className="modal-actions">
         <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" style={{ background: '#ffcc00', color: '#000' }} onClick={() => onSave(form)}>
+        <button className="btn btn-primary" style={{ background: NOTES_COLOR, color: '#000' }} onClick={() => onSave(form)}>
           Save Sticky
         </button>
       </div>

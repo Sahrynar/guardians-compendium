@@ -45,41 +45,26 @@ export const WEEKDAYS = ['Onesday', 'Twosday', 'Threesday', 'Foursday', 'Fivesda
 // Winter: deep navy → true mid-blue → icy periwinkle
 // Spring: deep forest green → bright lime → aqua-teal (wider spread for contrast)
 export const SEASON_COLORS = {
-  Summer:  ['#9d4edd', '#b940b0', '#d63384'],
-  Harvest: ['#ffb700', '#d46c00', '#aa2200'],
-  Winter:  ['#1a3a8f', '#4488cc', '#99ccee'],
-  Spring:  ['#1a7a2e', '#5cd65c', '#00c4b0'],
+  Summer: '#ffcc00',
+  Harvest: '#ff7040',
+  Winter: '#66bbff',
+  Spring: '#7acc7a',
 }
 
 // Per-month hex colors for calendar display
-export const MONTH_COLORS = [
-  '#9d4edd', // 1 Akatriluna — violet
-  '#b940b0', // 2 Zacharlune — magenta-purple (midpoint)
-  '#d63384', // 3 Sofiluna   — deep pink
-  '#ffb700', // 4 Trgilune   — amber
-  '#d46c00', // 5 Sachaluna  — burnt orange (midpoint)
-  '#aa2200', // 6 Rhamilune  — almost-red dark orange
-  '#1a3a8f', // 7 Mailuna    — deep navy
-  '#4488cc', // 8 Iahlune    — true mid-blue (midpoint)
-  '#99ccee', // 9 Liweluna   — icy periwinkle
-  '#1a7a2e', // 10 Valolune  — deep forest green
-  '#5cd65c', // 11 Sraoluna  — bright lime (midpoint)
-  '#00c4b0', // 12 Elemilune — aqua-teal
-]
+export const MONTH_COLORS = MONTHS.map(month => SEASON_COLORS[month.ssn] || '#888888')
 
-export const SEASON_TAG_COLORS = {
-  Summer: '#d63384', Harvest: '#ffb700', Winter: '#4488cc', Spring: '#5cd65c'
-}
+export const SEASON_TAG_COLORS = { ...SEASON_COLORS }
 
 // ── Category config — locked 24-tab order ─────────────────────
 // Eras & Dating is a sub-tab within Calendar, not a standalone nav tab
 export const CATS = {
   dashboard:  { l: 'Dashboard',    i: '⊞',  c: '#ff69b4' },  // Pink
-  wiki:       { l: 'Wiki',         i: '📖', c: '#ff6b6b' },  // Coral
-  glossary:   { l: 'Glossary',     i: '📚', c: '#ff4433' },  // Red
+  wiki:       { l: 'Wiki',         i: '\uD83D\uDCD6', c: '#ff69b4' },  // Hot Pink
+  glossary:   { l: 'Glossary',     i: '\uD83D\uDCDA', c: '#ee2244' },  // Red
   characters: { l: 'Characters',   i: '👤', c: '#ff5533' },  // Red-Orange
-  familytree: { l: 'Family Tree',  i: '🌳', c: '#ff7040' },  // Orange
-  world:      { l: 'World',        i: '🌐', c: '#ffaa33' },  // Amber
+  familytree: { l: 'Family Tree',  i: '\uD83C\uDF33', c: '#22aa22' },  // Forest Green
+  world:      { l: 'World',        i: '\uD83C\uDF10', c: '#ff7040' },  // Orange
   locations:  { l: 'Locations',    i: '🗺',  c: '#ffcc00' },  // Yellow
   map:        { l: 'Maps',         i: '🌍', c: '#aacc44' },  // Yellow-Green
   manuscript: { l: 'Manuscript',   i: '📜', c: '#44bb44' },  // Green
@@ -101,18 +86,97 @@ export const CATS = {
   eras:       { l: 'Eras & Dating',i: '⧖',  c: '#44aaff' },  // same as Calendar (sub-tab)
 }
 
-export const RAINBOW = ['#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040','#ffaa33','#ffcc00','#aacc44','#44bb44','#00ccaa','#00ddff','#44aaff','#3388ff','#6655ff','#8844ff','#aa44ff','#cc44ff','#ff44cc']
-
-export const RAINBOW_HEX = [
-  '#ff69b4', '#ff6b6b', '#ff4433', '#ff5533', '#ff7040', '#ffaa33',
-  '#ffcc00', '#aacc44', '#44bb44', '#00ccaa', '#00ddff', '#44aaff',
-  '#3388ff', '#6655ff', '#8844ff', '#aa44ff', '#cc44ff', '#ff44cc',
+// 8 pure-color anchors evenly spaced across the spectrum.
+// Pink leads (warm-start), violet tails (cool-end), with full ROYGBIV in between.
+export const RAINBOW_ANCHORS = [
+  '#ff44aa', // pink
+  '#ee2244', // red
+  '#ff8800', // orange
+  '#ffd700', // yellow
+  '#22cc44', // green
+  '#2266ff', // blue
+  '#5544cc', // indigo
+  '#aa44ee', // violet
 ]
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '')
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  }
+}
+
+function rgbToHex(r, g, b) {
+  const toHex = (n) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+function blend(c1, c2, t) {
+  return {
+    r: c1.r + (c2.r - c1.r) * t,
+    g: c1.g + (c2.g - c1.g) * t,
+    b: c1.b + (c2.b - c1.b) * t,
+  }
+}
+
+export function generateRainbow(n) {
+  if (n <= 0) return []
+  if (n === 1) return [RAINBOW_ANCHORS[0]]
+  const anchors = RAINBOW_ANCHORS.map(hexToRgb)
+
+  if (n <= anchors.length) {
+    return RAINBOW_ANCHORS.slice(0, n)
+  }
+
+  const anchorTabIndices = anchors.map((_, a) =>
+    Math.round((a / (anchors.length - 1)) * (n - 1))
+  )
+
+  const result = []
+  for (let i = 0; i < n; i++) {
+    let lowAnchorIdx = 0
+    for (let a = 0; a < anchors.length - 1; a++) {
+      if (i >= anchorTabIndices[a] && i <= anchorTabIndices[a + 1]) {
+        lowAnchorIdx = a
+        break
+      }
+    }
+    const highAnchorIdx = Math.min(lowAnchorIdx + 1, anchors.length - 1)
+
+    const lowTab = anchorTabIndices[lowAnchorIdx]
+    const highTab = anchorTabIndices[highAnchorIdx]
+
+    if (i === lowTab) {
+      result.push(RAINBOW_ANCHORS[lowAnchorIdx])
+      continue
+    }
+    if (i === highTab) {
+      result.push(RAINBOW_ANCHORS[highAnchorIdx])
+      continue
+    }
+
+    const range = highTab - lowTab
+    const t = range === 0 ? 0 : (i - lowTab) / range
+    const blended = blend(anchors[lowAnchorIdx], anchors[highAnchorIdx], t)
+    result.push(rgbToHex(blended.r, blended.g, blended.b))
+  }
+
+  return result
+}
+
+// Backward-compat: export a static 18-color RAINBOW_HEX for any code still importing it
+export const RAINBOW_HEX = generateRainbow(18)
+
+// Backward-compat: keep the legacy RAINBOW name too
+export const RAINBOW = RAINBOW_HEX
 
 export function buildTabRainbow(tabOrder) {
   const map = { dashboard: '#ffffff' }
   const cyclable = tabOrder.filter(t => t !== 'dashboard')
-  cyclable.forEach((k, i) => { map[k] = RAINBOW_HEX[i % RAINBOW_HEX.length] })
+  const colors = generateRainbow(cyclable.length)
+  cyclable.forEach((k, i) => { map[k] = colors[i] })
   return map
 }
 
@@ -220,3 +284,4 @@ export function highlight(text, q) {
   const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi')
   return text.replace(re, '<mark style="background:rgba(201,102,255,.35);color:inherit;border-radius:2px;padding:0 1px">$1</mark>')
 }
+

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '../components/common/Modal'
-import { MONTHS, WEEKDAYS, SEASON_TAG_COLORS, TAB_RAINBOW, ERA_TIMELINE, ERA_SPANS, uid } from '../constants'
-
-const MC = ['#00ffcc','#66cc99','#ff3366','#f4c430','#cc6622','#990000','#4477cc','#7799cc','#a9c0d3','#7fff00','#bb77cc','#9400d3']
+import { MONTHS, WEEKDAYS, SEASON_COLORS, SEASON_TAG_COLORS, TAB_RAINBOW, ERA_TIMELINE, ERA_SPANS, uid } from '../constants'
 const CAL_COLOR = TAB_RAINBOW['calendar'] || '#aaaaaa'
 const ERA_TABLE = [
   { cat: 'EARLY HUMANITY', rows: [
@@ -332,7 +330,7 @@ export default function CalendarTab({ db }) {
 
           <div className="cal-grid" style={{ gridTemplateColumns: `repeat(${GRID_COLS[gridSize]}, 1fr)` }}>
             {MONTHS.map((m, mi) => {
-              const mc = MC[mi]
+              const mc = SEASON_COLORS[m.ssn] || CAL_COLOR
               const stc = SEASON_TAG_COLORS[m.ssn] || '#888'
               const isExp = expandAll || openMonths.has(mi)
               const birthdays = getCharBirthdays(m.n)
@@ -342,6 +340,7 @@ export default function CalendarTab({ db }) {
               return (
                 <div key={mi} className="cal-month" style={{ borderTop: `2px solid ${mc}`, userSelect: 'none', border: `1px solid ${mc}`, background: isExp ? mc : 'transparent', color: isExp ? '#fff' : 'var(--dim)' }}
                   onClick={() => toggleMonth(mi)}>
+                  <div style={{ height: 4, borderRadius: 999, background: mc, marginBottom: 8, opacity: isExp ? 0.95 : 0.8 }} />
                   <div style={{ fontFamily: "'Cinzel', serif", fontSize: isExp ? '1.1em' : '0.85em', fontWeight: 600, color: isExp ? '#fff' : mc }}>{m.num}. {m.n}</div>
                   <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{m.s} → {m.inc}</div>
                   <div style={{ fontSize: '0.69em', padding: '1px 5px', borderRadius: 6, display: 'inline-block', margin: '3px 0', background: isExp ? 'rgba(255,255,255,.18)' : `${stc}18`, color: isExp ? '#fff' : stc, border: `1px solid ${isExp ? 'rgba(255,255,255,.35)' : `${stc}33`}` }}>{m.ssn}</div>
@@ -362,7 +361,7 @@ export default function CalendarTab({ db }) {
                   )}
 
                   {isExp && (
-                    <div style={{ marginTop: 6, borderTop: '1px solid var(--brd)', paddingTop: 6 }}
+                    <div style={{ marginTop: 6, borderTop: '1px solid var(--div)', paddingTop: 6 }}
                       onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 1, marginBottom: 4 }}>
                         {WEEKDAYS.map(d => (

@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import Modal from '../../components/common/Modal'
 import { TAB_RAINBOW, uid } from '../../constants'
-import QuickIdeaModal from '../../components/common/QuickIdeaModal'
 import StickyEditModal from './StickyEditModal'
 import { normalizeSticky, scrollAndFlashEntry, sortJournalPins, STICKY_COLORS, stickyTilt } from './stickyShared'
 
@@ -48,9 +47,9 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
   const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_notes') || 'M' } catch { return 'M' } })
   const [viewNote, setViewNote] = useState(null)
   const [sidebarEdit, setSidebarEdit] = useState(null)
-  const [sidebarPreview, setSidebarPreview] = useState(null)
+  const [magnifiedSticky, setMagnifiedSticky] = useState(null)
   const [dragId, setDragId] = useState(null)
-  const [showIdeaModal, setShowIdeaModal] = useState(false)
+  const [expandedIds, setExpandedIds] = useState(() => new Set())
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
@@ -102,6 +101,15 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
     setDragId(null)
   }
 
+  function toggleExpanded(id) {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
     <div>
       <div className="tbar">
@@ -111,12 +119,8 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: NOTES_COLOR }}>📝 Journal</div>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: NOTES_COLOR }}>ðŸ“ Journal</div>
         </div>
-        <button onClick={() => setShowIdeaModal(true)} title="Quick idea"
-          style={{ fontSize: '0.85em', padding: '3px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-          💡 Quick idea
-        </button>
         <button className="btn btn-primary btn-sm" style={{ background: NOTES_COLOR, color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
       </div>
 
@@ -135,7 +139,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
 
           {!filtered.length && (
             <div className="empty">
-              <div className="empty-icon">📝</div>
+              <div className="empty-icon">ðŸ“</div>
               <p>No notes yet.</p>
               <p style={{ fontSize: '0.85em', color: 'var(--mut)', maxWidth: 300, margin: '8px auto' }}>For quick notes, brainstorms, canon reminders, research snippets, and anything that doesn't fit elsewhere.</p>
               <button className="btn btn-primary" style={{ background: NOTES_COLOR, color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Note</button>
@@ -148,7 +152,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                 key={n.id}
                 id={`gcomp-entry-${n.id}`}
                 className="entry-card"
-                style={{ '--card-color': 'var(--cw)', background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, cursor: 'pointer' }}
+                style={{ '--card-color': NOTES_COLOR, background: i % 2 === 1 ? 'rgba(255,255,255,.01)' : undefined, cursor: 'pointer' }}
                 onClick={() => setViewNote(n)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -162,8 +166,8 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                   {n.updated ? new Date(n.updated).toLocaleString() : ''}
                 </div>
                 <div className="entry-actions">
-                  <button className="btn btn-sm btn-outline" style={{ color: NOTES_COLOR, borderColor: NOTES_COLOR }} onClick={e => { e.stopPropagation(); setEditing(n); setModalOpen(true) }}>✎ Edit</button>
-                  <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); setConfirmId(n.id) }}>✕</button>
+                  <button className="btn btn-sm btn-outline" style={{ color: NOTES_COLOR, borderColor: NOTES_COLOR }} onClick={e => { e.stopPropagation(); setEditing(n); setModalOpen(true) }}>âœŽ Edit</button>
+                  <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={e => { e.stopPropagation(); setConfirmId(n.id) }}>âœ•</button>
                 </div>
               </div>
             ))}
@@ -172,13 +176,15 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
 
         <div style={{ width: isMobile ? '100%' : 240, flexShrink: 0 }}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 10, padding: 10 }}>
-            <div style={{ fontSize: '1.1em', color: NOTES_COLOR, marginBottom: 8, textAlign: 'center' }}>📌</div>
+            <div style={{ fontSize: '1.1em', color: NOTES_COLOR, marginBottom: 8, textAlign: 'center' }}>ðŸ“Œ</div>
             {!pinnedStickies.length && (
               <div style={{ fontSize: '0.8em', color: 'var(--mut)', fontStyle: 'italic' }}>No pinned stickies. Pin from the Stickies sub-tab.</div>
             )}
             {pinnedStickies.map(sticky => {
               const sc = STICKY_COLORS.find(c => c.id === sticky.color) || STICKY_COLORS[0]
               const tilt = stickyTilt(sticky.id)
+              const isLarge = sticky.size === 'L' || sticky.size === 'XL'
+              const isExpanded = expandedIds.has(sticky.id)
               return (
                 <div
                   key={sticky.id}
@@ -186,23 +192,38 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                   onDragStart={() => setDragId(sticky.id)}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => handleSidebarDrop(sticky.id)}
-                  style={{ width: 120, minHeight: 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer' }}
-                  onClick={() => setSidebarPreview(sticky)}
+                  style={{ width: 120, minHeight: isLarge && !isExpanded ? 60 : 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer', position: 'relative' }}
                   title={sticky.text}
                 >
-                  <div style={{ position: 'absolute', top: 4, right: 6, fontSize: '0.85em' }}>📌</div>
+                  <div style={{ position: 'absolute', top: 4, right: 6, fontSize: '0.85em' }}>ðŸ“Œ</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
                     <span style={{ width: 10, height: 10, borderRadius: '50%', background: sc.border, flexShrink: 0 }} />
-                    <button className="btn btn-sm btn-outline" onClick={e => { e.stopPropagation(); setSidebarEdit(sticky) }}>✎</button>
+                    <button className="btn btn-sm btn-outline" onClick={e => { e.stopPropagation(); setSidebarEdit(sticky) }}>âœŽ</button>
                   </div>
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: '0.8em', color: sticky.customText || sc.text, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {isLarge && !isExpanded ? (
+                    <div style={{ minHeight: 60, paddingTop: 8 }}>
+                      <button onClick={e => { e.stopPropagation(); setMagnifiedSticky(sticky) }} style={{ fontSize: '0.77em', color: sticky.customText || sc.text, lineHeight: 1.35, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+                        {(sticky.text || '').slice(0, 80)}{(sticky.text || '').length > 80 ? '...' : ''}
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); toggleExpanded(sticky.id) }} style={{ fontSize: '0.69em', color: NOTES_COLOR, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
+                        Expand
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={e => { e.stopPropagation(); setMagnifiedSticky(sticky) }} style={{ fontSize: '0.8em', color: sticky.customText || sc.text, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: isLarge ? 'unset' : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
                         {sticky.text}
+                      </button>
+                      <div style={{ fontSize: '0.69em', color: sticky.customText || sc.text, opacity: 0.65, marginTop: 6 }}>
+                        {sticky.created ? new Date(sticky.created).toLocaleDateString() : ''}
+                      </div>
+                      {isLarge && (
+                        <button onClick={e => { e.stopPropagation(); toggleExpanded(sticky.id) }} style={{ fontSize: '0.69em', color: 'var(--dim)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
+                          Collapse
+                        </button>
+                      )}
                     </div>
-                    <div style={{ fontSize: '0.69em', color: sticky.customText || sc.text, opacity: 0.65, marginTop: 6 }}>
-                      {sticky.created ? new Date(sticky.created).toLocaleDateString() : ''}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )
             })}
@@ -213,24 +234,29 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
       {viewNote && (
         <div className="modal-overlay open" onClick={() => setViewNote(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 640 }}>
-            <button className="modal-close" onClick={() => setViewNote(null)}>✕</button>
+            <button className="modal-close" onClick={() => setViewNote(null)}>âœ•</button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
               {viewNote.title && <div className="modal-title" style={{ color: NOTES_COLOR }}>{viewNote.title}</div>}
-              {viewNote.category && <span className="badge" style={{ color: NOTES_COLOR, borderColor: 'rgba(255,204,0,.3)' }}>{viewNote.category}</span>}
+              {viewNote.category && <span className="badge" style={{ color: NOTES_COLOR, borderColor: `${NOTES_COLOR}55` }}>{viewNote.category}</span>}
             </div>
             <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 12 }}>{viewNote.content}</div>
             <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 12 }}>
               {viewNote.updated ? new Date(viewNote.updated).toLocaleString() : ''}
             </div>
             <div className="modal-actions">
-              <button className="btn btn-outline" onClick={() => { setViewNote(null); setEditing(viewNote); setModalOpen(true) }}>✎ Edit</button>
               <button className="btn btn-outline" onClick={() => setViewNote(null)}>Close</button>
+              <button className="btn btn-outline" onClick={() => {
+                const id = viewNote?.id
+                setViewNote(null)
+                if (id) window.setTimeout(() => scrollAndFlashEntry(id), 50)
+              }}>↗ Go to entry</button>
+              <button className="btn btn-outline" onClick={() => { setViewNote(null); setEditing(viewNote); setModalOpen(true) }}>✎ Edit</button>
             </div>
           </div>
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={editing?.id ? 'Edit Note' : 'Add Note'} color="var(--cw)">
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={editing?.id ? 'Edit Note' : 'Add Note'} color={NOTES_COLOR}>
         {(editing !== null) && <NoteForm note={editing} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} cats={NOTE_CATS} />}
       </Modal>
 
@@ -243,28 +269,44 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
         showJournalUnpin
       />
 
-      <QuickIdeaModal open={showIdeaModal} onClose={() => setShowIdeaModal(false)} db={db} color={NOTES_COLOR} />
-
-      <Modal open={!!sidebarPreview} onClose={() => setSidebarPreview(null)} title="Pinned Sticky" color={NOTES_COLOR} maxWidth={480}>
-        {sidebarPreview && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontSize: '0.95em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-              {sidebarPreview.text}
+      {magnifiedSticky && (
+        <div onClick={() => setMagnifiedSticky(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              background: magnifiedSticky.customBg || (STICKY_COLORS.find(c => c.id === magnifiedSticky.color) || STICKY_COLORS[0]).bg,
+              color: magnifiedSticky.customText || '#222',
+              width: 'min(90vw, 600px)',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              padding: 32,
+              borderRadius: 12,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              position: 'relative',
+              fontFamily: magnifiedSticky.font || 'inherit',
+              fontSize: '1.15em',
+              lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+            }}>
+            <button onClick={() => setMagnifiedSticky(null)}
+              style={{ position: 'absolute', top: 8, right: 8, fontSize: '1.2em', background: 'none', border: 'none', cursor: 'pointer', color: magnifiedSticky.customText || '#222' }}>
+              ✕
+            </button>
+            <div>{magnifiedSticky.text}</div>
+            {magnifiedSticky.tags && magnifiedSticky.tags.length > 0 && (
+              <div style={{ marginTop: 16, fontSize: '0.85em', color: '#555' }}>
+                Tags: {magnifiedSticky.tags.join(', ')}
+              </div>
+            )}
+            <div style={{ marginTop: 16, fontSize: '0.77em', color: '#555' }}>
+              Created: {new Date(magnifiedSticky.created || magnifiedSticky.created_at || Date.now()).toLocaleDateString()}
             </div>
-            <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
-              {sidebarPreview.created ? new Date(sidebarPreview.created).toLocaleString() : ''}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--brd)' }}>
-              <button onClick={() => setSidebarPreview(null)} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-                Close
-              </button>
-              <button onClick={() => { setSidebarEdit(sidebarPreview); setSidebarPreview(null) }} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: `1px solid ${NOTES_COLOR}`, background: NOTES_COLOR, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
-                ✎ Edit
-              </button>
+            <div style={{ marginTop: 12, fontSize: '0.77em', color: '#777', fontStyle: 'italic' }}>
+              Click outside or ✕ to close. Click pencil on the original to edit.
             </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
 
       {confirmId && (
         <div className="confirm-overlay open">

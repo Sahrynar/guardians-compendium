@@ -32,7 +32,7 @@ function getEntryName(e) {
 }
 
 function getCategoryEntries(data, cat) {
-  if (cat === 'glossary') return (data.wiki || []).filter(e => e.is_glossary)
+  if (cat === 'glossary') return data.glossary || (data.wiki || []).filter(e => e.is_glossary)
   if (cat === 'familytree') return data.family_tree || []
   if (cat === 'map') return data.maps || []
   if (cat === 'calendar') return data.calendar_entries || []
@@ -40,12 +40,14 @@ function getCategoryEntries(data, cat) {
   return data[cat] || []
 }
 
-function getCategoryCount(data, cat) {
+function getCategoryCount(data, cat, sessionLogCount = 0) {
   if (cat === 'tools') return null
+  if (cat === 'notes') return (data.journal_captures || []).length + (data.notes || []).length + (data.ideas_list || []).length
+  if (cat === 'sessionlog') return sessionLogCount
   return getCategoryEntries(data, cat).length
 }
 
-export default function Dashboard({ db, goTo, crossLink }) {
+export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) {
   const data = db.db
   const [searchScope, setSearchScope] = useState('all')
   const [dashSearch, setDashSearch] = useState('')
@@ -149,8 +151,15 @@ export default function Dashboard({ db, goTo, crossLink }) {
     setPreviewCategory(null)
   }
 
+  function goToPreviewEntry() {
+    if (!previewCategory || !previewEntry) return
+    crossLink(previewCategory, previewEntry.id)
+    setPreviewEntry(null)
+    setPreviewCategory(null)
+  }
+
   const panelHead = (icon, label, color, count) => (
-    <div style={{ fontSize: '0.77em', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--brd)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
+    <div style={{ fontSize: '0.77em', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--div)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
       <span style={{ whiteSpace: 'nowrap' }}>{icon} {label}</span>
       {count != null && <span style={{ color: 'var(--mut)', fontWeight: 400, flexShrink: 0 }}>{count}</span>}
     </div>
@@ -187,7 +196,7 @@ export default function Dashboard({ db, goTo, crossLink }) {
       {searchResults.length > 0 && (
         <div style={{ marginBottom: 14, maxHeight: 300, overflowY: 'auto', border: '1px solid var(--brd)', borderRadius: 6, padding: 8, background: 'var(--card)' }}>
           {searchResults.map((r, i) => (
-            <div key={`${r.cat}-${r.id}-${i}`} onClick={() => { crossLink(r.cat, r.id); setDashSearch('') }}
+            <div key={`${r.cat}-${r.id}-${i}`} onClick={() => openPreview(r.cat, r.id)}
               style={{ padding: '4px 8px', fontSize: '0.85em', cursor: 'pointer', borderLeft: `3px solid ${TAB_RAINBOW[r.cat] || 'var(--cc)'}`, marginBottom: 2 }}>
               <span style={{ color: TAB_RAINBOW[r.cat] }}>{CATS[r.cat]?.i}</span> {r.name}
               <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>({r.cat})</span>
@@ -214,7 +223,7 @@ export default function Dashboard({ db, goTo, crossLink }) {
           <div className="dash-label" style={{ color: '#fff' }}>Total</div>
         </div>
 
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)', margin: '0 8px', minHeight: 50 }} />
+        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--div)', margin: '0 8px', minHeight: 50 }} />
 
         <div className="dash-card" style={{ minWidth: 100, textAlign: 'center' }}>
           <div className="dash-num" style={{ color: '#fff' }}>{reviewCount}</div>
@@ -231,11 +240,11 @@ export default function Dashboard({ db, goTo, crossLink }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', width: '100%', minWidth: 0 }}>
-        <div style={{ flexShrink: 0, minWidth: 140, width: 'max-content', maxWidth: 220, borderRight: '2px solid var(--brd)', paddingRight: 10, marginRight: 2 }}>
+        <div style={{ flexShrink: 0, minWidth: 140, width: 'max-content', maxWidth: 220, borderRight: '2px solid var(--div)', paddingRight: 10, marginRight: 2 }}>
           {TAB_LIST.map(k => {
             const c = CATS[k]
             if (!c) return null
-            const count = k === 'flags' ? fl : getCategoryCount(data, k)
+            const count = k === 'flags' ? fl : getCategoryCount(data, k, sessionLogCount)
             const color = TAB_RAINBOW[k] || 'var(--cc)'
             return (
               <div
@@ -246,7 +255,7 @@ export default function Dashboard({ db, goTo, crossLink }) {
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)' }}
               >
                 <span style={{ fontSize: '0.85em', color: 'var(--tx)', whiteSpace: 'nowrap' }}>{c.i} {c.l}</span>
-                {count ? <span style={{ fontSize: '0.92em', fontFamily: "'Cinzel',serif", color }}>{count}</span> : null}
+                {count !== null && count !== undefined ? <span style={{ fontSize: '0.92em', fontFamily: "'Cinzel',serif", color }}>{count}</span> : null}
               </div>
             )
           })}
@@ -293,6 +302,7 @@ export default function Dashboard({ db, goTo, crossLink }) {
         category={previewCategory}
         color={previewCategory ? (TAB_RAINBOW[previewCategory] || '#fff') : '#fff'}
         onClose={() => { setPreviewEntry(null); setPreviewCategory(null) }}
+        onGoToEntry={goToPreviewEntry}
         onEdit={openInTabForEdit}
       />
     </div>

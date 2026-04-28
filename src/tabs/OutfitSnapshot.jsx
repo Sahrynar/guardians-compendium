@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { TAB_RAINBOW } from '../constants'
 
 const OUTFIT_SLOTS = [
@@ -25,7 +25,7 @@ const OUTFIT_SLOTS = [
 function SlotPicker({ slot, charItems, value, onChange, tabColor }) {
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ fontSize: '0.69em', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{slot.label}</div>
+      <div style={{ fontSize: '0.69em', fontWeight: 700, color: tabColor, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{slot.label}</div>
       <select value={value || ''} onChange={e => onChange(slot.id, e.target.value)}
         style={{ width: '100%', fontSize: '0.77em', padding: '4px 8px', background: 'var(--sf)', border: `1px solid ${value ? tabColor : 'var(--brd)'}`, borderRadius: 6, color: 'var(--tx)' }}>
         <option value="">- empty -</option>
@@ -44,7 +44,7 @@ function SlotPicker({ slot, charItems, value, onChange, tabColor }) {
 }
 
 export default function OutfitSnapshot({ db, chars, allEntries }) {
-  const tabColor = TAB_RAINBOW.items || '#aaaaaa'
+  const tabColor = TAB_RAINBOW.inventory || '#aaaaaa'
   const [selectedChar, setSelectedChar] = useState('')
   const [slots, setSlots] = useState({})
   const [snapshotName, setSnapshotName] = useState('')
@@ -52,13 +52,14 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
   const [savedSnapshots, setSavedSnapshots] = useState(() => {
     try { return JSON.parse(db.getSetting?.('outfit_snapshots') || '[]') } catch { return [] }
   })
-  const [showSaved, setShowSaved] = useState(false)
+  const [showSaved, setShowSaved] = useState(true)
 
   const charObj = chars.find(c => c.id === selectedChar)
   const charItems = useMemo(() => {
     if (!selectedChar) return []
     return allEntries.filter(e => (e.character || e.holder) === selectedChar)
   }, [allEntries, selectedChar])
+  const sortedCharItems = useMemo(() => [...charItems].sort((a, b) => (a.name || '').localeCompare(b.name || '')), [charItems])
 
   function setSlot(slotId, itemId) {
     setSlots(prev => ({ ...prev, [slotId]: itemId }))
@@ -106,7 +107,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
 
       {showSaved && (
         <div style={{ marginBottom: 14, padding: '10px 14px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8 }}>
-          <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 8 }}>All saved outfit snapshots</div>
+          <div style={{ fontSize: '0.77em', color: tabColor, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>All saved outfit snapshots</div>
           {savedSnapshots.length === 0 && <div style={{ fontSize: '0.85em', color: 'var(--mut)' }}>No snapshots saved yet.</div>}
           {savedSnapshots.map(snap => {
             const filledSlots = OUTFIT_SLOTS.filter(slot => snap.slots && snap.slots[slot.id])
@@ -115,17 +116,17 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.85em', fontWeight: 600 }}>{snap.name}</div>
-                    <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` · ${snap.scene}` : ''}</div>
+                    <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` Â· ${snap.scene}` : ''}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <button onClick={() => loadSnapshot(snap)}
-                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none', border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>↻ Load</button>
+                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: `${tabColor}22`, border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>↻ Load</button>
                     <button onClick={() => deleteSnapshot(snap.id)}
-                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none', border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>✕</button>
+                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none', border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>âœ•</button>
                   </div>
                 </div>
                 {filledSlots.length > 0 && (
-                  <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--brd)', fontSize: '0.77em', color: 'var(--dim)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2px 8px' }}>
+                  <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--div)', fontSize: '0.77em', color: 'var(--dim)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2px 8px' }}>
                     {filledSlots.map(slot => {
                       const itemId = snap.slots[slot.id]
                       const item = (allEntries || []).find(e => e.id === itemId)
@@ -157,7 +158,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, marginBottom: 14 }}>
             {OUTFIT_SLOTS.map(slot => (
-              <SlotPicker key={slot.id} slot={slot} charItems={charItems} value={slots[slot.id] || ''} onChange={setSlot} tabColor={tabColor} />
+              <SlotPicker key={slot.id} slot={slot} charItems={sortedCharItems} value={slots[slot.id] || ''} onChange={setSlot} tabColor={tabColor} />
             ))}
           </div>
 
@@ -168,7 +169,7 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
               style={{ width: '100%', fontSize: '0.85em', padding: '6px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', padding: '10px 0', borderTop: '1px solid var(--brd)' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', padding: '10px 0', borderTop: '1px solid var(--div)' }}>
             <div className="field" style={{ flex: 1, minWidth: 160, margin: 0 }}>
               <label>Snapshot name</label>
               <input value={snapshotName} onChange={e => setSnapshotName(e.target.value)} placeholder="e.g. Lila at Book 1 opening" />

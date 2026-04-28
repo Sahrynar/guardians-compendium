@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { BOOK_TITLES, TAB_RAINBOW, uid } from '../constants'
 import { parseSetting } from '../hooks/useDB'
 
@@ -8,9 +8,21 @@ const STATUSES = ['Draft', 'Revision', 'Polishing', 'Done']
 const STATUS_COLORS = { Draft: '#6b7280', Revision: '#f59e0b', Polishing: '#8b5cf6', Done: '#10b981' }
 const SHELF_COLS = { XS: 6, S: 4, M: 3, L: 2, XL: 1 }
 const TOC_COLS = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
-const navBtn = { fontSize: '0.85em', padding: '3px 10px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }
+const FONT_MIN = 0.75
+const FONT_MAX = 1.4
+const FONT_STEP = 0.1
 const sizeBtn = active => ({ fontSize: '0.69em', padding: '2px 7px', borderRadius: 8, background: active ? MS_COLOR : 'none', color: active ? '#000' : 'var(--dim)', border: `1px solid ${active ? MS_COLOR : 'var(--brd)'}`, cursor: 'pointer' })
 const bookLabel = (book) => BOOK_TITLES[book] || book
+const navBtnStyle = color => ({
+  fontSize: '0.85em',
+  padding: '6px 12px',
+  borderRadius: 6,
+  background: 'var(--sf)',
+  border: `1px solid ${color}`,
+  color,
+  cursor: 'pointer',
+  fontWeight: 500,
+})
 
 function toHTML(text) {
   if (!text) return ''
@@ -105,9 +117,7 @@ function FormatBar({ textareaRef, onUpdate }) {
   )
 }
 
-const navSelect = { fontSize: '0.85em', padding: '3px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', minWidth: 280, maxWidth: 420 }
-
-function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink }) {
+function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink, bookColor }) {
   const [text, setText] = useState(chapter.text || '')
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
@@ -172,7 +182,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
   function changeFontSize(delta) {
     setFontSize(s => {
-      const next = Math.max(0.8, Math.min(1.7, s + delta))
+      const next = Math.max(FONT_MIN, Math.min(FONT_MAX, s + delta))
       try { localStorage.setItem('manuscript_fontsize', String(next)) } catch {}
       return next
     })
@@ -244,8 +254,8 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--sf)', flexWrap: 'wrap' }}>
-        <button onClick={() => changeFontSize(-0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A−</button>
-        <button onClick={() => changeFontSize(0.1)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A+</button>
+        <button onClick={() => changeFontSize(-FONT_STEP)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A−</button>
+        <button onClick={() => changeFontSize(FONT_STEP)} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>A+</button>
         <span style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{Math.round(fontSize * 100)}%</span>
         <button onClick={toggleIndent} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{indentParas ? '⇥ Indent: ON' : '⇥ Indent: OFF'}</button>
         <div style={{ display: 'flex', gap: 3 }}>
@@ -256,18 +266,18 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', fontSize: '0.85em' }}>
-        <button onClick={onHome} title="Home" style={navBtn}>🏠</button>
-        <button onClick={onBackToShelf} title="Shelf" style={navBtn}>📚</button>
-        <button onClick={() => onBackToTOC(chapter.book)} title="Contents" style={navBtn}>📑</button>
-        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={navSelect}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', flexWrap: 'wrap' }}>
+        <button onClick={onHome} title="Home" style={navBtnStyle(MS_COLOR)}>Home</button>
+        <button onClick={onBackToShelf} title="Back to Shelf" style={navBtnStyle(MS_COLOR)}>Shelf</button>
+        <button onClick={() => onBackToTOC(chapter.book)} title="Back to TOC" style={navBtnStyle(MS_COLOR)}>TOC</button>
+        <span style={{ color: 'var(--brd)', margin: '0 4px' }}>|</span>
+        <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtnStyle(MS_COLOR), opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>{'<'} Prev</button>
+        <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtnStyle(MS_COLOR), opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>Next {'>'}</button>
+        <select value={chapter.id} onChange={e => onNavigateToChapter(e.target.value)} style={{ minWidth: 280, marginLeft: 12, padding: '6px 10px', fontSize: '0.85em', background: 'var(--sf)', border: `1px solid ${MS_COLOR}`, borderRadius: 6, color: 'var(--tx)' }}>
           {allChapters.map(c => (
-            <option key={c.id} value={c.id}>{bookLabel(c.book)} · Ch {c.chapter_num}{c.title ? ` · ${c.title}` : ''}</option>
+            <option key={c.id} value={c.id}>{c.book} - Ch {c.chapter_num} {c.title || '(untitled)'}</option>
           ))}
         </select>
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--brd)' }} />
-        <button onClick={navPrev} disabled={!prevChapter} title="Previous chapter" style={{ ...navBtn, opacity: prevChapter ? 1 : 0.5, cursor: prevChapter ? 'pointer' : 'default' }}>←</button>
-        <button onClick={navNext} disabled={!nextChapter} title="Next chapter" style={{ ...navBtn, opacity: nextChapter ? 1 : 0.5, cursor: nextChapter ? 'pointer' : 'default' }}>→</button>
       </div>
 
       {detectedChars.length > 0 && (
@@ -283,10 +293,10 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {showFind && (
-          <div style={{ position: 'sticky', top: 0, zIndex: 10, padding: 6, background: 'var(--card)', borderBottom: '1px solid var(--brd)', display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
-            <input autoFocus value={findQuery} onChange={e => setFindQuery(e.target.value)} placeholder="Find in chapter..." style={{ flex: 1 }} />
-            <span style={{ fontSize: '0.77em', color: 'var(--dim)' }}>{findCount > 0 ? `${findCount} matches` : findQuery ? 'no matches' : ''}</span>
-            <button className="btn btn-outline btn-sm" onClick={() => setShowFind(false)}>✕</button>
+          <div style={{ position: 'sticky', top: 8, zIndex: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, padding: '6px 10px', display: 'flex', gap: 8, alignItems: 'center', maxWidth: 360, marginLeft: 'auto', marginRight: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+            <input autoFocus value={findQuery} onChange={e => setFindQuery(e.target.value)} placeholder="Find in chapter..." style={{ flex: 1, minWidth: 0, padding: '4px 8px', fontSize: '0.9em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--tx)' }} />
+            <span style={{ fontSize: '0.77em', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{findCount > 0 ? `${findCount} matches` : findQuery ? 'no matches' : ''}</span>
+            <button onClick={() => setShowFind(false)} style={{ fontSize: '0.85em', background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', padding: '0 4px' }}>✕</button>
           </div>
         )}
         {(view === 'edit' || view === 'split') && (
@@ -299,30 +309,30 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {(view === 'preview' || view === 'split') && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.08}em`, lineHeight: 1.9, padding: '20px 40px' }}>
             <style>{`
-              .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0; }
               .ms-preview p + p { margin-top: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
-            <div className="ms-preview" dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
+            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
           </div>
         )}
 
         {view === 'read' && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.2}em`, lineHeight: 2, padding: '40px 60px' }}>
             <style>{`
-              .ms-preview p { text-indent: var(--p-indent, 2em); margin: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0; }
               .ms-preview p + p { margin-top: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.85em', color: 'var(--dim)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                {bookLabel(chapter.book)} · Ch {chapter.chapter_num}
+                <span style={{ color: bookColor }}>{bookLabel(chapter.book)}</span> · Ch {chapter.chapter_num}
               </div>
               <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.5em', color: MS_COLOR, marginTop: 8 }}>
                 {title || '(untitled)'}
               </div>
             </div>
-            <div className="ms-preview" dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
+            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
           </div>
         )}
 
@@ -390,15 +400,15 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
     const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
     const tabCrumb = { icon: '📚', label: 'Manuscript' }
     if (editingChapter) {
-      setCrumbs([root, tabCrumb, { icon: '📑', label: bookLabel(editingChapter.book) }, { icon: '📄', label: `Ch ${editingChapter.chapter_num}${editingChapter.title ? ` ${editingChapter.title}` : ''}` }])
+      setCrumbs([root, tabCrumb, { icon: '📑', label: bookLabel(editingChapter.book), color: bookTitleColor(editingChapter.book) }, { icon: '📄', label: `Ch ${editingChapter.chapter_num}${editingChapter.title ? ` ${editingChapter.title}` : ''}` }])
       return
     }
     if (tocBook) {
-      setCrumbs([root, tabCrumb, { icon: '📑', label: bookLabel(tocBook) }])
+      setCrumbs([root, tabCrumb, { icon: '📑', label: bookLabel(tocBook), color: bookTitleColor(tocBook) }])
       return
     }
     setCrumbs([root, tabCrumb])
-  }, [setCrumbs, tocBook, editingChapter])
+  }, [setCrumbs, tocBook, editingChapter, db.settings])
 
   useEffect(() => {
     try {
@@ -444,6 +454,10 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
     chapters: chapters.filter(ch => ch.book === book),
     words: chapters.filter(ch => ch.book === book).reduce((sum, ch) => sum + (ch.word_count || wordCount(ch.text || '')), 0),
   }))
+
+  function bookTitleColor(book) {
+    return db.getSetting?.(`manuscript_title_color_${book}`, '') || MS_COLOR
+  }
 
   function changeShelfSize(sz) {
     setShelfSize(sz)
@@ -541,7 +555,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
               <button className="btn btn-primary btn-sm" style={{ background: MS_COLOR }} onClick={() => setAddingChapter(true)}>+ Add Chapter</button>
             </div>
             <button onClick={() => setEditCovers(e => !e)} style={{ fontSize: '0.77em', padding: '3px 12px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${editCovers ? MS_COLOR : 'var(--brd)'}`, background: editCovers ? '#aacc0022' : 'none', color: editCovers ? MS_COLOR : 'var(--dim)' }}>
-              {editCovers ? '✓ Done' : '✎ Edit covers'}
+              {editCovers ? '✓ Done' : '✎ Edit book'}
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${SHELF_COLS[shelfSize]}, minmax(0, 1fr))`, gap: 20, marginBottom: 24 }}>
@@ -549,6 +563,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
               const meta = parseSetting(db.settings?.[`manuscript_book_${book.replace(/ /g, '_')}`])
               const cover = meta.cover || ''
               const accent = meta.accent || MS_COLOR
+              const titleColor = bookTitleColor(book)
               return (
                 <div key={book} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: '100%', maxWidth: 200, aspectRatio: '2 / 3', borderRadius: '4px 10px 10px 4px', overflow: 'hidden', border: `3px solid ${accent}`, background: cover ? 'transparent' : `${accent}22`, boxShadow: '4px 6px 18px rgba(0,0,0,.55)', cursor: 'pointer' }} onClick={() => {
@@ -592,8 +607,17 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
                       )}
                     </div>
                   )}
-                  <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
-                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.95em', lineHeight: 1.3, color: accent, fontWeight: 700 }}>{bookLabel(book)}</div>
+                    <div style={{ marginTop: editCovers ? 4 : 8, textAlign: 'center', width: '100%' }}>
+                    {editCovers && (
+                      <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.77em', color: 'var(--dim)' }}>Title color:</span>
+                        <input type="color" value={titleColor} onChange={ev => db.saveSetting(`manuscript_title_color_${book}`, ev.target.value)} style={{ width: 40, height: 28, border: 'none', cursor: 'pointer', verticalAlign: 'middle' }} />
+                        <button onClick={() => db.saveSetting(`manuscript_title_color_${book}`, '')} style={{ fontSize: '0.77em', color: 'var(--dim)', background: 'none', border: '1px solid var(--brd)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}>
+                          Reset to default
+                        </button>
+                      </div>
+                    )}
+                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.95em', lineHeight: 1.3, color: titleColor, fontWeight: 700 }}>{bookLabel(book)}</div>
                     <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 2 }}>{bookChapters.length} chapters · {words.toLocaleString()} words</div>
                     {bookChapters.length > 0 && (
                       <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 6, background: 'var(--brd)' }}>
@@ -652,6 +676,10 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
 
       {tocBook && (
         <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--brd)', background: 'var(--card)', flexWrap: 'wrap', marginBottom: 16 }}>
+            <button onClick={goHome} title="Home" style={navBtnStyle(MS_COLOR)}>Home</button>
+            <button onClick={backToShelf} title="Back to Shelf" style={navBtnStyle(MS_COLOR)}>Shelf</button>
+          </div>
           {(() => {
             const meta = parseSetting(db.settings?.[`manuscript_book_${tocBook.replace(/ /g, '_')}`])
             const coverUrl = meta?.cover || ''
@@ -661,7 +689,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
               <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16, padding: '12px 14px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
                 {coverUrl && <img src={coverUrl} alt="" style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 4 }} />}
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.4em', color: MS_COLOR }}>{bookLabel(tocBook)}</div>
+                  <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.4em', color: bookTitleColor(tocBook) }}>{bookLabel(tocBook)}</div>
                   <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 4 }}>
                     {chaptersInBook.length} chapters · {totalBookWords.toLocaleString()} words
                   </div>
@@ -737,7 +765,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
       )}
 
       {editingChapter && (
-        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} />
+        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} bookColor={bookTitleColor(editingChapter.book)} />
       )}
     </div>
   )

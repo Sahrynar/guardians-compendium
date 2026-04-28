@@ -56,6 +56,7 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
     list.sort((a, b) => {
       if (sortMode === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
       if (sortMode === 'alpha') return (a.value || '').localeCompare(b.value || '')
+      if (sortMode === 'alpha_desc') return (b.value || '').localeCompare(a.value || '')
       return new Date(b.created_at || 0) - new Date(a.created_at || 0)
     })
     return list
@@ -68,7 +69,8 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
         <select value={sortMode} onChange={e => setSortMode(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
-          <option value="alpha">A-Z</option>
+          <option value="alpha">A → Z</option>
+          <option value="alpha_desc">Z → A</option>
         </select>
         <select value={catFilter} onChange={e => setCatFilter(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="all">All</option>
@@ -106,7 +108,7 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
                   const editing = editingId === idea.id
                   return (
                     <div key={idea.id} id={`gcomp-entry-${idea.id}`}
-                      style={{ padding: '5px 7px', fontSize: '0.9em', borderBottom: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      style={{ padding: '5px 7px', fontSize: '0.9em', borderBottom: '1px solid var(--div)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {editing ? (
                         <>
                           <textarea value={editValue} onChange={e => setEditValue(e.target.value)}

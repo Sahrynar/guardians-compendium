@@ -6,7 +6,7 @@ import EntryPreviewModal from '../components/common/EntryPreviewModal'
 import { TAB_RAINBOW } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
-const tabColor = TAB_RAINBOW['locations'] || '#aaaaaa'
+const tabColor = TAB_RAINBOW.locations || '#aaaaaa'
 const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
 
 const LOC_FIELDS = [
@@ -15,6 +15,17 @@ const LOC_FIELDS = [
   { k: 'parent_id', l: 'Inside / Part of', t: 'locsel' },
   { k: 'description', l: 'Description', t: 'ta' },
 ]
+
+function getLocationRealm(loc) {
+  const raw = (loc?.realm || loc?.world || loc?.dimension || '').toString().trim().toLowerCase()
+  if (raw === 'lajen') return 'Lajen'
+  if (raw === 'mnaerah') return 'Mnaerah'
+  return 'Other'
+}
+
+function getLocationThumb(loc) {
+  return loc?.thumbnail_url || loc?.image_url || loc?.image || null
+}
 
 function locPath(id, locations) {
   const parts = []
@@ -32,7 +43,11 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
   return (
     <div style={{ marginBottom: 2 }}>
       <div id={`gcomp-entry-${loc.id}`} className="loc-node" onClick={() => onToggle(loc.id)}>
-        {kids.length > 0 ? <span style={{ fontSize: '0.69em', color: tabColor, transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>►</span> : <span style={{ width: 12 }} />}
+        {kids.length > 0 ? <span style={{ fontSize: '0.69em', color: tabColor, transition: '.2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▶</span> : <span style={{ width: 12 }} />}
+        {getLocationThumb(loc)
+          ? <img src={getLocationThumb(loc)} alt={loc.name} style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: 4, marginRight: 8, flexShrink: 0 }} />
+          : <span style={{ width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginRight: 8, flexShrink: 0, color: 'var(--mut)', fontSize: '0.85em' }}>📍</span>
+        }
         <span style={{ fontSize: '0.92em', fontWeight: 600 }}>{loc.name}</span>
         {loc.status && <span className={`badge badge-${loc.status}`} style={{ marginLeft: 4 }}>{loc.status}</span>}
         {loc.auto_imported && <span style={{ marginLeft: 6, fontSize: '0.69em', color: '#ffcc00' }}>📥</span>}
@@ -58,9 +73,7 @@ function LocNode({ loc, locations, expanded, onToggle, onEdit, onDelete, onAddCh
   )
 }
 
-function FlatTable({ locations, onEdit, onDelete, onAddChild, navSearch }) {
-  const search = (navSearch || '').toLowerCase()
-  const visible = locations.filter(l => !search || l.name?.toLowerCase().includes(search) || l.loc_type?.toLowerCase().includes(search) || l.description?.toLowerCase().includes(search))
+function FlatTable({ locations, onEdit, onDelete, onAddChild }) {
   const [colWidths, setColWidths] = useState([220, 140, 200, 160, 80])
   const dragging = useRef(null)
 
@@ -103,10 +116,12 @@ function FlatTable({ locations, onEdit, onDelete, onAddChild, navSearch }) {
           </tr>
         </thead>
         <tbody>
-          {visible.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: 'var(--mut)', fontStyle: 'italic' }}>No locations found.</td></tr>}
-          {visible.map((l, idx) => (
+          {locations.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: 'var(--mut)', fontStyle: 'italic' }}>No locations found.</td></tr>}
+          {locations.map((l, idx) => (
             <tr key={l.id} id={`gcomp-entry-${l.id}`} style={{ background: idx % 2 === 0 ? 'var(--card)' : 'transparent', cursor: 'pointer' }} onClick={() => onEdit(l)}>
-              <td style={tdStyle(0)}><span style={{ fontWeight: 600 }}>{l.name}</span></td>
+              <td style={tdStyle(0)}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{getLocationThumb(l)
+                  ? <img src={getLocationThumb(l)} alt={l.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+                  : <span style={{ width: 48, height: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, background: 'var(--sf)', color: 'var(--mut)', flexShrink: 0 }}>📍</span>}<span style={{ fontWeight: 600 }}>{l.name}</span></div></td>
               <td style={tdStyle(1)}><span style={{ color: tabColor, fontSize: '0.85em' }}>{l.loc_type || '—'}</span></td>
               <td style={{ ...tdStyle(2), color: 'var(--dim)' }}>{locPath(l.id, locations) || '—'}</td>
               <td style={{ ...tdStyle(3), color: 'var(--dim)' }}>{l.description || '—'}</td>
@@ -139,17 +154,23 @@ export default function Locations({ db, navSearch }) {
     try { return localStorage.getItem('locations_sort') || 'name' } catch { return 'name' }
   })
   const [filterType, setFilterType] = useState('all')
+  const [search, setSearch] = useState(navSearch || '')
+
   function setColsPersist(v) {
     setCols(v)
     try { localStorage.setItem('locations_cols', v) } catch {}
   }
+
   function setSortPersist(v) {
     setSortMode(v)
     try { localStorage.setItem('locations_sort', v) } catch {}
   }
 
-  const search = (navSearch || '').toLowerCase()
   const autoCount = locations.filter(l => l.auto_imported === true).length
+
+  useEffect(() => {
+    setSearch(navSearch || '')
+  }, [navSearch])
 
   useEffect(() => {
     function onExpand(e) {
@@ -173,6 +194,7 @@ export default function Locations({ db, navSearch }) {
     ;(db.db.locations || []).filter(l => l.parent_id === id).forEach(l => db.upsertEntry('locations', { ...l, parent_id: '' }))
     setConfirmId(null)
   }
+
   const typeOptions = useMemo(() => {
     const types = new Set()
     locations.forEach(l => { if (l.loc_type) types.add(l.loc_type) })
@@ -180,39 +202,65 @@ export default function Locations({ db, navSearch }) {
   }, [locations])
 
   const displayLocations = useMemo(() => {
-    let list = locations.filter(l => {
-      const matchSearch = !search || l.name?.toLowerCase().includes(search) || l.loc_type?.toLowerCase().includes(search) || l.description?.toLowerCase().includes(search)
-      const matchAuto = !autoOnly || l.auto_imported === true
-      const matchType = filterType === 'all' || l.loc_type === filterType
-      return matchSearch && matchAuto && matchType
-    })
+    let list = locations.filter(l => !autoOnly || l.auto_imported === true)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(l => JSON.stringify(l).toLowerCase().includes(q))
+    }
+    if (filterType !== 'all') list = list.filter(l => l.loc_type === filterType)
     if (sortMode === 'recent') list = [...list].sort((a, b) => new Date(b.updated || b.updated_at || b.created || 0) - new Date(a.updated || a.updated_at || a.created || 0))
+    else if (sortMode === 'za') list = [...list].sort((a, b) => (b.name || '').localeCompare(a.name || ''))
     else if (sortMode === 'type') list = [...list].sort((a, b) => (a.loc_type || '').localeCompare(b.loc_type || '') || (a.name || '').localeCompare(b.name || ''))
     else list = [...list].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     return list
   }, [locations, search, autoOnly, filterType, sortMode])
 
-  const roots = displayLocations.filter(l => !l.parent_id)
-  const orphans = displayLocations.filter(l => l.parent_id && !displayLocations.find(p => p.id === l.parent_id))
-
+  const groupedLocations = useMemo(() => {
+    const groups = { Lajen: [], Mnaerah: [], Other: [] }
+    displayLocations.forEach(loc => { groups[getLocationRealm(loc)].push(loc) })
+    return groups
+  }, [displayLocations])
   const btnStyle = active => ({ fontSize: '0.77em', padding: '3px 10px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${active ? tabColor : 'var(--brd)'}`, background: active ? `${tabColor}22` : 'none', color: active ? tabColor : 'var(--dim)' })
+
+  function renderTreeGroup(groupLocations) {
+    const roots = groupLocations.filter(l => !l.parent_id)
+    const orphans = groupLocations.filter(l => l.parent_id && !groupLocations.find(p => p.id === l.parent_id))
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols]}, 1fr)`, gap: 8, alignItems: 'start' }}>
+        {roots.map(l => <LocNode key={l.id} loc={l} locations={groupLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
+        {orphans.map(l => <LocNode key={l.id} loc={l} locations={groupLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
+      </div>
+    )
+  }
+
+  function renderRealmSection(label, groupLocations, dim = false) {
+    if (!groupLocations.length) return null
+    return (
+      <div key={label} style={{ marginBottom: 16 }}>
+        <h3 style={{ color: dim ? 'var(--dim)' : tabColor, fontSize: '0.95em', margin: '12px 0 6px', borderBottom: `1px solid ${dim ? 'var(--div)' : `${tabColor}55`}`, paddingBottom: 4 }}>
+          {label} ({groupLocations.length})
+        </h3>
+        {view === 'tree'
+          ? renderTreeGroup(groupLocations)
+          : <FlatTable locations={groupLocations} onEdit={e => setPreviewEntry(e)} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />
+        }
+      </div>
+    )
+  }
 
   return (
     <div>
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>🗺 Locations</div>
+        <input className="sx" placeholder="Search locations..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 180, maxWidth: 280 }} />
         <div style={{ display: 'flex', gap: 4 }}>
           <button style={btnStyle(view === 'tree')} onClick={() => setView('tree')}>🌳 Tree</button>
           <button style={btnStyle(view === 'table')} onClick={() => setView('table')}>☰ Table</button>
         </div>
         {view === 'tree' && (
           <div style={{ display: 'flex', gap: 4 }}>
-            {['XS','S','M','L','XL'].map(l => (
-              <button key={l} onClick={() => setColsPersist(l)}
-                style={{ fontSize: '0.77em', padding: '2px 7px',
-                  borderRadius: 4, border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`,
-                  background: cols === l ? `${tabColor}22` : 'transparent',
-                  color: cols === l ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
+            {['XS', 'S', 'M', 'L', 'XL'].map(l => (
+              <button key={l} onClick={() => setColsPersist(l)} style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 4, border: `1px solid ${cols === l ? tabColor : 'var(--brd)'}`, background: cols === l ? `${tabColor}22` : 'transparent', color: cols === l ? tabColor : 'var(--dim)', cursor: 'pointer' }}>
                 {l}
               </button>
             ))}
@@ -220,6 +268,7 @@ export default function Locations({ db, navSearch }) {
         )}
         <select value={sortMode} onChange={e => setSortPersist(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
           <option value="name">Sort: A-Z</option>
+          <option value="za">Sort: Z-A</option>
           <option value="recent">Sort: Recent</option>
           <option value="type">Sort: Type</option>
         </select>
@@ -234,14 +283,9 @@ export default function Locations({ db, navSearch }) {
 
       {!locations.length && <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>}
 
-      {view === 'tree' && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS_MAP[cols]}, 1fr)`, gap: 8, alignItems: 'start' }}>
-          {roots.map(l => <LocNode key={l.id} loc={l} locations={displayLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
-          {orphans.map(l => <LocNode key={l.id} loc={l} locations={displayLocations} expanded={expanded} onToggle={toggle} onEdit={e => { setEditing(e); setModalOpen(true) }} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />)}
-        </div>
-      )}
-
-      {view === 'table' && <FlatTable locations={displayLocations} navSearch={navSearch} onEdit={e => setPreviewEntry(e)} onDelete={id => setConfirmId(id)} onAddChild={openAdd} />}
+      {renderRealmSection('Lajen', groupedLocations.Lajen)}
+      {renderRealmSection('Mnaerah', groupedLocations.Mnaerah)}
+      {renderRealmSection('Other', groupedLocations.Other, true)}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id ? 'Edit' : 'Add'} Location`} color={tabColor}>
         <EntryForm fields={LOC_FIELDS} entry={editing || {}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color={tabColor} db={db} />
@@ -253,6 +297,11 @@ export default function Locations({ db, navSearch }) {
         category="locations"
         color={tabColor}
         onClose={() => setPreviewEntry(null)}
+        onGoToEntry={() => {
+          const id = previewEntry?.id
+          setPreviewEntry(null)
+          if (id) window.setTimeout(() => scrollAndFlashEntry(id), 50)
+        }}
         onEdit={() => { setEditing(previewEntry); setPreviewEntry(null); setModalOpen(true) }}
       />
 
