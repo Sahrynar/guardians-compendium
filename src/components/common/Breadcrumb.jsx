@@ -20,7 +20,7 @@ export default function Breadcrumb({ crumbs }) {
         <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           {i > 0 && <span style={{ opacity: 0.5 }}>›</span>}
           {c.icon && <span>{c.icon}</span>}
-          <span style={{ color: i === crumbs.length - 1 ? '#fff' : 'var(--dim)', fontWeight: i === crumbs.length - 1 ? 600 : 400 }}>
+          <span style={{ color: c.color || (i === crumbs.length - 1 ? '#fff' : 'var(--dim)'), fontWeight: i === crumbs.length - 1 ? 600 : 400 }}>
             {c.label}
           </span>
         </span>

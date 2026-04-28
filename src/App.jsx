@@ -201,6 +201,29 @@ export default function App() {
     })
   }, [])
 
+  function getTabCount(tabKey) {
+    if (tabKey === 'dashboard' || tabKey === 'tools') return null
+    if (tabKey === 'wiki') return (db.db.wiki || []).length
+    if (tabKey === 'glossary') return (db.db.glossary || []).length
+    if (tabKey === 'characters') return (db.db.characters || []).length
+    if (tabKey === 'familytree') return (db.db.family_tree || []).length
+    if (tabKey === 'world') return (db.db.world || []).length
+    if (tabKey === 'locations') return (db.db.locations || []).length
+    if (tabKey === 'map') return (db.db.maps || []).length
+    if (tabKey === 'manuscript') return (db.db.manuscript || []).length
+    if (tabKey === 'scenes') return (db.db.scenes || []).length
+    if (tabKey === 'timeline') return (db.db.timeline || []).length
+    if (tabKey === 'calendar') return (db.db.calendar_entries || []).length
+    if (tabKey === 'inventory') return (db.db.inventory || []).length
+    if (tabKey === 'flags') return (db.db.flags || []).length
+    if (tabKey === 'questions') return (db.db.questions || []).length
+    if (tabKey === 'canon') return (db.db.canon || []).length
+    if (tabKey === 'spellings') return (db.db.spellings || []).length
+    if (tabKey === 'notes') return (db.db.journal_captures || []).length + (db.db.notes || []).length + (db.db.ideas_list || []).length
+    if (tabKey === 'sessionlog') return typeof sessionLogCount === 'number' ? sessionLogCount : 0
+    return 0
+  }
+
   function scrollTabs(dir) {
     const bar = tabBarRef.current
     if (bar) bar.scrollBy({ left: dir * 150, behavior: 'smooth' })
@@ -232,7 +255,7 @@ export default function App() {
       tag: 'unsorted',
       created: new Date().toISOString(),
       color: 'yellow',
-      size: 'normal',
+      size: 'M',
       pinned: false,
     })
     setQuickCapText('')
@@ -374,6 +397,7 @@ export default function App() {
               if (!c) return null
               const tabHex = TAB_RAINBOW[k] || '#aaaaaa'
               const isActive = tab === k
+              const count = getTabCount(k)
               return (
                 <button key={k} className="tab-btn"
                   style={{
@@ -385,7 +409,7 @@ export default function App() {
                   }}
                   onClick={() => goTo(k)}
                 >
-                  {c.i} {c.l}
+                  {c.i} {c.l}{count === null ? '' : ` (${count})`}
                 </button>
               )
             })}

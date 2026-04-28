@@ -1,4 +1,6 @@
-export const NOTES_COLOR = '#ffcc00'
+import { TAB_RAINBOW } from '../../constants'
+
+export const NOTES_COLOR = TAB_RAINBOW.notes || '#ffcc00'
 
 export const STICKY_COLORS = [
   { id: 'yellow', bg: '#fffde7', border: '#f9a825', text: '#5d4037', label: 'Yellow' },
@@ -48,14 +50,25 @@ export function stickyTilt(id) {
 export function normalizeSticky(sticky, index = 0) {
   const pinnedStickies = sticky.pinned_stickies ?? sticky.pinned ?? false
   const pinnedJournal = sticky.pinned_journal ?? false
+  const legacySize = sticky.size
+  const normalizedSize = legacySize === 'small'
+    ? 'S'
+    : legacySize === 'large'
+      ? 'L'
+      : legacySize === 'xl'
+        ? 'XL'
+        : legacySize === 'normal' || !legacySize
+          ? 'M'
+          : legacySize
   return {
-    size: 'normal',
+    size: 'M',
     color: 'yellow',
     fontSize: '0.92em',
     archived: false,
     sort_order: index,
     journal_sort_order: index,
     ...sticky,
+    size: normalizedSize,
     pinned_stickies: pinnedStickies,
     pinned_journal: pinnedJournal,
     sort_order: Number.isFinite(Number(sticky.sort_order)) ? Number(sticky.sort_order) : index,

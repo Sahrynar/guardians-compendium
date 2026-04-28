@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import Modal from '../../components/common/Modal'
 import { TAB_RAINBOW, uid } from '../../constants'
-import QuickIdeaModal from '../../components/common/QuickIdeaModal'
 import StickyEditModal from './StickyEditModal'
 import { normalizeSticky, scrollAndFlashEntry, sortJournalPins, STICKY_COLORS, stickyTilt } from './stickyShared'
 
@@ -48,9 +47,9 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
   const [colSize, setColSize] = useState(() => { try { return localStorage.getItem('colsize_notes') || 'M' } catch { return 'M' } })
   const [viewNote, setViewNote] = useState(null)
   const [sidebarEdit, setSidebarEdit] = useState(null)
-  const [sidebarPreview, setSidebarPreview] = useState(null)
+  const [magnifiedSticky, setMagnifiedSticky] = useState(null)
   const [dragId, setDragId] = useState(null)
-  const [showIdeaModal, setShowIdeaModal] = useState(false)
+  const [expandedIds, setExpandedIds] = useState(() => new Set())
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
@@ -102,6 +101,15 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
     setDragId(null)
   }
 
+  function toggleExpanded(id) {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
     <div>
       <div className="tbar">
@@ -113,10 +121,6 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
         <div style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em', color: NOTES_COLOR }}>ðŸ“ Journal</div>
         </div>
-        <button onClick={() => setShowIdeaModal(true)} title="Quick idea"
-          style={{ fontSize: '0.85em', padding: '3px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-          ðŸ’¡ Quick idea
-        </button>
         <button className="btn btn-primary btn-sm" style={{ background: NOTES_COLOR, color: '#000' }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ New Note</button>
       </div>
 
@@ -179,6 +183,8 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
             {pinnedStickies.map(sticky => {
               const sc = STICKY_COLORS.find(c => c.id === sticky.color) || STICKY_COLORS[0]
               const tilt = stickyTilt(sticky.id)
+              const isLarge = sticky.size === 'L' || sticky.size === 'XL'
+              const isExpanded = expandedIds.has(sticky.id)
               return (
                 <div
                   key={sticky.id}
@@ -186,8 +192,7 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                   onDragStart={() => setDragId(sticky.id)}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => handleSidebarDrop(sticky.id)}
-                  style={{ width: 120, minHeight: 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer' }}
-                  onClick={() => setSidebarPreview(sticky)}
+                  style={{ width: 120, minHeight: isLarge && !isExpanded ? 60 : 120, padding: 10, borderRadius: 6, background: sticky.customBg || sc.bg, border: `1px solid ${sticky.customBorder || sc.border}`, marginBottom: 8, transform: `rotate(${tilt}deg)`, boxShadow: '2px 4px 10px rgba(0,0,0,.16)', cursor: 'pointer', position: 'relative' }}
                   title={sticky.text}
                 >
                   <div style={{ position: 'absolute', top: 4, right: 6, fontSize: '0.85em' }}>ðŸ“Œ</div>
@@ -195,14 +200,30 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
                     <span style={{ width: 10, height: 10, borderRadius: '50%', background: sc.border, flexShrink: 0 }} />
                     <button className="btn btn-sm btn-outline" onClick={e => { e.stopPropagation(); setSidebarEdit(sticky) }}>âœŽ</button>
                   </div>
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: '0.8em', color: sticky.customText || sc.text, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {isLarge && !isExpanded ? (
+                    <div style={{ minHeight: 60, paddingTop: 8 }}>
+                      <button onClick={e => { e.stopPropagation(); setMagnifiedSticky(sticky) }} style={{ fontSize: '0.77em', color: sticky.customText || sc.text, lineHeight: 1.35, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+                        {(sticky.text || '').slice(0, 80)}{(sticky.text || '').length > 80 ? '...' : ''}
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); toggleExpanded(sticky.id) }} style={{ fontSize: '0.69em', color: NOTES_COLOR, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
+                        Expand
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={e => { e.stopPropagation(); setMagnifiedSticky(sticky) }} style={{ fontSize: '0.8em', color: sticky.customText || sc.text, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: isLarge ? 'unset' : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
                         {sticky.text}
+                      </button>
+                      <div style={{ fontSize: '0.69em', color: sticky.customText || sc.text, opacity: 0.65, marginTop: 6 }}>
+                        {sticky.created ? new Date(sticky.created).toLocaleDateString() : ''}
+                      </div>
+                      {isLarge && (
+                        <button onClick={e => { e.stopPropagation(); toggleExpanded(sticky.id) }} style={{ fontSize: '0.69em', color: 'var(--dim)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
+                          Collapse
+                        </button>
+                      )}
                     </div>
-                    <div style={{ fontSize: '0.69em', color: sticky.customText || sc.text, opacity: 0.65, marginTop: 6 }}>
-                      {sticky.created ? new Date(sticky.created).toLocaleDateString() : ''}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )
             })}
@@ -248,28 +269,44 @@ export default function JournalView({ db, navSearch, pendingExpandId, clearPendi
         showJournalUnpin
       />
 
-      <QuickIdeaModal open={showIdeaModal} onClose={() => setShowIdeaModal(false)} db={db} color={NOTES_COLOR} />
-
-      <Modal open={!!sidebarPreview} onClose={() => setSidebarPreview(null)} title="Pinned Sticky" color={NOTES_COLOR} maxWidth={480}>
-        {sidebarPreview && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontSize: '0.95em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-              {sidebarPreview.text}
+      {magnifiedSticky && (
+        <div onClick={() => setMagnifiedSticky(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              background: magnifiedSticky.customBg || (STICKY_COLORS.find(c => c.id === magnifiedSticky.color) || STICKY_COLORS[0]).bg,
+              color: magnifiedSticky.customText || '#222',
+              width: 'min(90vw, 600px)',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              padding: 32,
+              borderRadius: 12,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              position: 'relative',
+              fontFamily: magnifiedSticky.font || 'inherit',
+              fontSize: '1.15em',
+              lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+            }}>
+            <button onClick={() => setMagnifiedSticky(null)}
+              style={{ position: 'absolute', top: 8, right: 8, fontSize: '1.2em', background: 'none', border: 'none', cursor: 'pointer', color: magnifiedSticky.customText || '#222' }}>
+              ✕
+            </button>
+            <div>{magnifiedSticky.text}</div>
+            {magnifiedSticky.tags && magnifiedSticky.tags.length > 0 && (
+              <div style={{ marginTop: 16, fontSize: '0.85em', color: '#555' }}>
+                Tags: {magnifiedSticky.tags.join(', ')}
+              </div>
+            )}
+            <div style={{ marginTop: 16, fontSize: '0.77em', color: '#555' }}>
+              Created: {new Date(magnifiedSticky.created || magnifiedSticky.created_at || Date.now()).toLocaleDateString()}
             </div>
-            <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>
-              {sidebarPreview.created ? new Date(sidebarPreview.created).toLocaleString() : ''}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--div)' }}>
-              <button onClick={() => setSidebarPreview(null)} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>
-                Close
-              </button>
-              <button onClick={() => { setSidebarEdit(sidebarPreview); setSidebarPreview(null) }} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: `1px solid ${NOTES_COLOR}`, background: NOTES_COLOR, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
-                âœŽ Edit
-              </button>
+            <div style={{ marginTop: 12, fontSize: '0.77em', color: '#777', fontStyle: 'italic' }}>
+              Click outside or ✕ to close. Click pencil on the original to edit.
             </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
 
       {confirmId && (
         <div className="confirm-overlay open">
