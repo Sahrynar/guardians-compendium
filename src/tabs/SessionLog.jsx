@@ -163,7 +163,7 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
             style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}66`, background: 'none', color: col, cursor: 'pointer' }}>Edit</button>
           <button onClick={e => { e.stopPropagation(); onDelete(session.id) }}
             style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}>✕</button>
-          <span style={{ color: 'var(--dim)', fontSize: '1.08em' }}>{expanded ? 'â–²' : 'â–¼'}</span>
+          <span style={{ color: 'var(--dim)', fontSize: '1.08em' }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 

@@ -414,7 +414,7 @@ export default function App() {
               )
             })}
           </div>
-          <button className="nav-btn" onClick={() => scrollTabs(1)} style={{ flexShrink: 0 }}>â–¶</button>
+          <button className="nav-btn" onClick={() => scrollTabs(1)} style={{ flexShrink: 0 }}>▶</button>
         </div>
       </nav>
 

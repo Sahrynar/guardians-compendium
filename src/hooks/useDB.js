@@ -23,7 +23,15 @@ function lsLoad() {
     return db
   } catch { return makeEmpty() }
 }
-function lsSave(db) { try { localStorage.setItem(LS_KEY, JSON.stringify(db)) } catch {} }
+function lsSave(db) {
+  try {
+    // Skip heavy categories (manuscript/images) in the local mirror —
+    // full chapters exceeded the ~5MB localStorage quota, which made this
+    // save fail silently for months and froze the mirror at a stale state.
+    const slim = { ...db, manuscript: [], images: [] }
+    localStorage.setItem(LS_KEY, JSON.stringify(slim))
+  } catch {}
+}
 function makeEmpty() { const db = {}; CATEGORIES.forEach(k => { db[k] = [] }); return db }
 
 function activityLoad() { try { return JSON.parse(localStorage.getItem(LS_ACTIVITY_KEY)) || [] } catch { return [] } }
@@ -31,7 +39,7 @@ function activitySave(log) { try { localStorage.setItem(LS_ACTIVITY_KEY, JSON.st
 
 async function sbLoad() {
   if (!hasSupabase) return null
-  const { data, error } = await supabase.from('entries').select('*')
+  const { data, error } = await supabase.from('entries').select('*').range(0, 9999)
   if (error) { console.error('Supabase load error:', error); return null }
   const db = makeEmpty()
   data.forEach(row => { if (db[row.category] !== undefined) db[row.category].push({ id: row.id, ...row.data }) })
@@ -253,8 +261,20 @@ export function useDB() {
     const val = settings[key]; return (val === undefined || val === null) ? fallback : val
   }, [settings])
 
-  const exportJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' })
+  const exportJSON = useCallback(async () => {
+    // Always export FRESH cloud data, never a possibly-stale in-memory
+    // or localStorage snapshot. Falls back to in-memory only if the
+    // cloud fetch fails — and says so, loudly.
+    let source = db
+    if (hasSupabase) {
+      const fresh = await sbLoad()
+      if (fresh) {
+        source = fresh
+      } else {
+        alert('⚠ Could not reach the cloud — this export is a LOCAL snapshot and may be stale. Retry when online for a true backup.')
+      }
+    }
+    const blob = new Blob([JSON.stringify(source, null, 2)], { type: 'application/json' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `guardians_backup_${new Date().toISOString().slice(0,10)}.json`; a.click()
   }, [db])
