@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
 import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid } from './constants'
@@ -102,12 +102,12 @@ export default function App() {
   }, [histIdx, history.length])
 
   useEffect(() => {
-    const root = { icon: 'ðŸŒ³', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
     const tabIconMap = {
-      dashboard: { icon: 'ðŸ ', label: 'Dashboard' },
+      dashboard: { icon: '🏠', label: 'Dashboard' },
     }
     const cat = CATS[tab]
-    const tabCrumb = tabIconMap[tab] || (cat ? { icon: cat.i, label: cat.l } : { icon: 'Â·', label: tab })
+    const tabCrumb = tabIconMap[tab] || (cat ? { icon: cat.i, label: cat.l } : { icon: '·', label: tab })
     setCrumbs([root, tabCrumb])
   }, [tab])
 
@@ -290,9 +290,9 @@ export default function App() {
   function renderTab() {
     if (db.loading) return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--dim)' }}>
-        <div style={{ fontSize: '3.69em', marginBottom: 12 }}>âœ¦</div>
+        <div style={{ fontSize: '3.69em', marginBottom: 12 }}>✦</div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.08em' }}>
-          {db.hasSupabase ? 'Connecting to cloudâ€¦' : 'Loadingâ€¦'}
+          {db.hasSupabase ? 'Connecting to cloud…' : 'Loading…'}
         </div>
       </div>
     )
@@ -331,8 +331,8 @@ export default function App() {
           <div style={{ position: 'relative' }}>
             <img src={headerImg} alt="header" style={{ width: '100%', height: 'auto', display: 'block' }} />
             <div className="header-corner-zone">
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Change header image">âœŽ</button>
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); removeHeaderImg() }} title="Remove image">âœ•</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Change header image">✎</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); removeHeaderImg() }} title="Remove image">✕</button>
             </div>
           </div>
         ) : (
@@ -344,10 +344,10 @@ export default function App() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               letterSpacing: '.02em', display: 'inline-block', lineHeight: 1.2,
             }}>
-              The Guardians of Lajen â€” Worldbuilding Compendium
+              The Guardians of Lajen — Worldbuilding Compendium
             </span>
             <div className="header-corner-zone">
-              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Upload header image">âœŽ</button>
+              <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Upload header image">✎</button>
             </div>
           </div>
         )}
@@ -390,7 +390,7 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>â—€</button>
+          <button className="nav-btn" onClick={() => scrollTabs(-1)} style={{ flexShrink: 0 }}>◀</button>
           <div className="tabs-bar" id="tabBar" ref={tabBarRef}>
             {TAB_ORDER.map(k => {
               const c = CATS[k]
@@ -435,7 +435,7 @@ export default function App() {
         }}
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-      >âœ¦</button>
+      >✦</button>
 
       {/* Quick Capture popup */}
       {quickCapOpen && (
@@ -446,14 +446,14 @@ export default function App() {
           boxShadow: '0 4px 24px rgba(0,0,0,.5)',
         }}>
           <div style={{ fontFamily: "'Cinzel',serif", fontSize: '0.85em', color: '#9d4edd', marginBottom: 8 }}>
-            âœ¦ Quick Capture â†’ Journal
+            ✦ Quick Capture → Journal
           </div>
           <textarea
             ref={quickCapRef}
             value={quickCapText}
             onChange={e => setQuickCapText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitQuickCap() }}
-            placeholder="Capture a thoughtâ€¦"
+            placeholder="Capture a thought…"
             style={{
               width: '100%', minHeight: 70, padding: '6px 8px',
               background: 'var(--card)', border: '1px solid var(--brd)',
@@ -464,7 +464,7 @@ export default function App() {
           <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
             <button className="btn btn-outline btn-sm" onClick={() => { setQuickCapOpen(false); setQuickCapText('') }}>Cancel</button>
             <button className="btn btn-sm" style={{ background: '#9d4edd', color: '#fff' }} onClick={submitQuickCap}>
-              Save (Ctrl+â†µ)
+              Save (Ctrl+↵)
             </button>
           </div>
         </div>
@@ -472,7 +472,7 @@ export default function App() {
 
       <IOBar db={db} backup={backup} onImport={handleImportWithConflicts} />
 
-      {/* Floating undo indicator â€” 5 min window */}
+      {/* Floating undo indicator — 5 min window */}
       {db.lastUndoable && (
         <button onClick={() => db.undoAction(db.lastUndoable)}
           style={{ position:'fixed', bottom:108, right:68, zIndex:122,
@@ -480,11 +480,11 @@ export default function App() {
             background:'rgba(17,17,20,.95)', border:'1px solid #ffaa33',
             color:'#ffaa33', fontSize:'0.77em', cursor:'pointer',
             boxShadow:'0 2px 12px rgba(0,0,0,.5)' }}>
-          âŸ² Undo last
+          ⟲ Undo last
         </button>
       )}
 
-      {/* Toast notification â€” 12s */}
+      {/* Toast notification — 12s */}
       {db.toast && (
         <div style={{ position:'fixed', bottom:108, left:'50%', transform:'translateX(-50%)',
           background:'rgba(17,17,20,.97)', border:'1px solid var(--brd)', borderRadius:10,
@@ -494,11 +494,11 @@ export default function App() {
           <button onClick={() => db.undoAction(db.toast)}
             style={{ padding:'4px 12px', borderRadius:6, border:'1px solid #9d4edd',
               background:'none', color:'#9d4edd', fontSize:'0.85em', cursor:'pointer', fontWeight:700, whiteSpace:'nowrap' }}>
-            âŸ² Undo
+            ⟲ Undo
           </button>
           <button onClick={db.dismissToast}
             style={{ background:'none', border:'none', color:'var(--mut)', cursor:'pointer', fontSize:'1.08em', padding:'0 2px' }}>
-            âœ•
+            ✕
           </button>
         </div>
       )}
@@ -508,10 +508,10 @@ export default function App() {
         <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,.85)',
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:480, width:'100%' }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>âš  Import Conflict</div>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>⚠ Import Conflict</div>
             <div style={{ fontSize:'0.77em', color:'var(--dim)', marginBottom:14 }}>
               {conflictQueue.length} conflict{conflictQueue.length !== 1 ? 's' : ''} remaining
-              {importSummary && ` Â· ${importSummary.added} entries already added`}
+              {importSummary && ` · ${importSummary.added} entries already added`}
             </div>
             <div style={{ fontSize:'0.85em', color:'var(--tx)', marginBottom:8 }}>
               Category: <span style={{ color:'var(--cc)' }}>{conflictQueue[0].category}</span>
@@ -537,9 +537,9 @@ export default function App() {
               </div>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-              <button onClick={() => resolveNext('keep_existing')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #ff888844', background:'none', color:'#ff8888', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep existing â€” ignore incoming</button>
-              <button onClick={() => resolveNext('use_incoming')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #88ff8844', background:'none', color:'#88ff88', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Use incoming â€” replace existing</button>
-              <button onClick={() => resolveNext('keep_both')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid var(--brd)', background:'none', color:'var(--dim)', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep both â€” save as new entry</button>
+              <button onClick={() => resolveNext('keep_existing')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #ff888844', background:'none', color:'#ff8888', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep existing — ignore incoming</button>
+              <button onClick={() => resolveNext('use_incoming')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid #88ff8844', background:'none', color:'#88ff88', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Use incoming — replace existing</button>
+              <button onClick={() => resolveNext('keep_both')} style={{ padding:'8px 14px', borderRadius:7, border:'1px solid var(--brd)', background:'none', color:'var(--dim)', cursor:'pointer', fontSize:'0.85em', textAlign:'left' }}>Keep both — save as new entry</button>
             </div>
           </div>
         </div>
@@ -551,7 +551,7 @@ export default function App() {
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:14, padding:22, maxWidth:360, width:'100%', textAlign:'center' }}>
             <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:importSummary.error?'#ff4444':'#44bb44', marginBottom:10 }}>
-              {importSummary.error ? 'âœ— Import Failed' : 'âœ“ Import Complete'}
+              {importSummary.error ? '✗ Import Failed' : '✓ Import Complete'}
             </div>
             {importSummary.error
               ? <p style={{ fontSize:'0.85em', color:'var(--dim)', marginBottom:14 }}>{importSummary.error}</p>

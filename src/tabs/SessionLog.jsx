@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { TAB_RAINBOW, uid } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
 
-// â”€â”€ Rainbow spectrum for session cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Rainbow spectrum for session cards ─────────────────────────
 // Session cards use the TAB_RAINBOW cycling through sessions
 const RAINBOW = [
   '#ff69b4','#ff6b6b','#ff4433','#ff5533','#ff7040',
@@ -38,14 +38,14 @@ const FEATURE_REGISTRY_SEED = [
   { name: 'Family Tree', tab: 'familytree', session: 1, status: 'active', description: 'Interactive canvas showing character relationships. Drag-to-reposition nodes, web and force-directed layout modes.' },
   { name: 'Scenes', tab: 'scenes', session: 1, status: 'active', description: 'Wrapped timeline of story scenes, grouped by chapter with gradient spectrum colours. Links to Manuscript chapters.' },
   { name: 'Timeline', tab: 'timeline', session: 1, status: 'active', description: 'Visual event track. XS = 8-column grid, XL = full-screen single column with auto-expand.' },
-  { name: 'Calendar', tab: 'calendar', session: 1, status: 'active', description: 'Lajen 12-month calendar with day notes, birthdays, Expand All, and XSâ€“XL grid sizing.' },
+  { name: 'Calendar', tab: 'calendar', session: 1, status: 'active', description: 'Lajen 12-month calendar with day notes, birthdays, Expand All, and XS–XL grid sizing.' },
   { name: 'Flags', tab: 'flags', session: 1, status: 'active', description: 'Continuity flags for tracking unresolved story issues, inconsistencies, and reminders.' },
-  { name: 'Questions', tab: 'questions', session: 1, status: 'active', description: 'Open canon questions â€” things not yet decided or confirmed for the series.' },
-  { name: 'Canon', tab: 'canon', session: 1, status: 'active', description: 'Locked canon entries â€” confirmed facts about the world, characters, and story.' },
+  { name: 'Questions', tab: 'questions', session: 1, status: 'active', description: 'Open canon questions — things not yet decided or confirmed for the series.' },
+  { name: 'Canon', tab: 'canon', session: 1, status: 'active', description: 'Locked canon entries — confirmed facts about the world, characters, and story.' },
   { name: 'Notes', tab: 'notes', session: 1, status: 'active', description: 'Structured lore notes with popup view.' },
   { name: 'Journal', tab: 'journal', session: 1, status: 'active', description: 'Sticky-board quick capture. Cards with pin, size, and colour options.' },
-  { name: 'Session Log', tab: 'sessionlog', session: 1, status: 'active', description: 'Session minutes cards â€” records of each working session with Claude.' },
-  { name: 'Manuscript', tab: 'manuscript', session: 1, status: 'active', description: 'Book shelf â†’ cover lightbox â†’ TOC â†’ chapter editor. Full writing and editing environment.' },
+  { name: 'Session Log', tab: 'sessionlog', session: 1, status: 'active', description: 'Session minutes cards — records of each working session with Claude.' },
+  { name: 'Manuscript', tab: 'manuscript', session: 1, status: 'active', description: 'Book shelf → cover lightbox → TOC → chapter editor. Full writing and editing environment.' },
   { name: 'Activity Log', tab: 'sessionlog', session: 16, status: 'active', description: 'Automatic record of every add, edit, delete, import, and restore action taken in the Compendium. Includes undo.' },
   { name: 'Global Search', tab: 'dashboard', session: 20, status: 'active', description: 'Search bar in Dashboard header that searches across all tabs simultaneously.' },
   { name: 'Inventory', tab: 'inventory', session: 8, status: 'active', description: 'Item tracking in bubble, list, and outfit views. Drag to reorder. Transfer history. OutfitSnapshot inside.' },
@@ -58,10 +58,10 @@ const FEATURE_REGISTRY_SEED = [
   { name: 'Glossary', tab: 'glossary', session: 1, status: 'active', description: 'Filtered compact view of Wiki articles for quick reference.' },
   { name: 'Undo / Activity Tracking', tab: 'sessionlog', session: 25, status: 'active', description: 'The system that logs every Compendium action and enables one-click undo for any record.' },
   { name: 'Quick Capture', tab: 'dashboard', session: 14, status: 'active', description: 'Ctrl+Q shortcut to instantly capture a note or sticky without navigating away.' },
-  { name: 'Partial Doomsday Export', tab: 'sessionlog', session: 25, status: 'active', description: 'Exports a subset of your data by category â€” a targeted backup rather than full export.' },
+  { name: 'Partial Doomsday Export', tab: 'sessionlog', session: 25, status: 'active', description: 'Exports a subset of your data by category — a targeted backup rather than full export.' },
 ]
 
-// â”€â”€ Supabase helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Supabase helpers ───────────────────────────────────────────
 async function sbLoadSessions() {
   if (!hasSupabase) return null
   try {
@@ -112,8 +112,8 @@ function lsLoadFeatureRegistry() { try { return JSON.parse(localStorage.getItem(
 function lsSaveFeatureRegistry(entries) { try { localStorage.setItem(FR_LS_KEY, JSON.stringify(entries)) } catch {} }
 
 function sessionToMd(s) {
-  const lines = [`# Session ${s.session_number} Â· ${s.date}`]
-  if (s.opened_at || s.closed_at) lines.push(`\nOpened: ${s.opened_at || 'â€”'} | Closed: ${s.closed_at || 'â€”'}`)
+  const lines = [`# Session ${s.session_number} · ${s.date}`]
+  if (s.opened_at || s.closed_at) lines.push(`\nOpened: ${s.opened_at || '—'} | Closed: ${s.closed_at || '—'}`)
   if (s.topics) lines.push(`\n**Topics:** ${s.topics}`)
   SECTION_LABELS.forEach(({ k, l }) => { if (s[k]?.trim()) lines.push(`\n## ${l}\n\n${s[k]}`) })
   lines.push('\n---')
@@ -130,7 +130,7 @@ function emptySession(num) {
   }
 }
 
-// â”€â”€ Session card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Session card ───────────────────────────────────────────────
 function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
   const [expanded, setExpanded] = useState(false)
   const col = sessionColor(index)
@@ -152,7 +152,7 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
           onChange={e => onSelect(e.target.checked)} style={{ flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700, color: col }}>
-            Session {session.session_number} Â· {session.date}
+            Session {session.session_number} · {session.date}
           </div>
           {session.topics && (
             <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{session.topics}</div>
@@ -162,7 +162,7 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
           <button onClick={e => { e.stopPropagation(); onEdit(session) }}
             style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${col}66`, background: 'none', color: col, cursor: 'pointer' }}>Edit</button>
           <button onClick={e => { e.stopPropagation(); onDelete(session.id) }}
-            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}>âœ•</button>
+            style={{ fontSize: '0.85em', padding: '2px 8px', borderRadius: 4, border: '1px solid #cc444466', background: 'none', color: '#cc4444', cursor: 'pointer' }}>✕</button>
           <span style={{ color: 'var(--dim)', fontSize: '1.08em' }}>{expanded ? 'â–²' : 'â–¼'}</span>
         </div>
       </div>
@@ -184,7 +184,7 @@ function SessionCard({ session, index, onEdit, onDelete, selected, onSelect }) {
   )
 }
 
-// â”€â”€ Session form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Session form ───────────────────────────────────────────────
 function SessionForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial)
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
@@ -220,12 +220,12 @@ function SessionForm({ initial, onSave, onCancel }) {
       </div>
       <div style={{ marginBottom: 10 }}>
         <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>Topics</div>
-        <input value={form.topics} onChange={e => set('topics', e.target.value)} placeholder="Brief summaryâ€¦" style={inputStyle} />
+        <input value={form.topics} onChange={e => set('topics', e.target.value)} placeholder="Brief summary…" style={inputStyle} />
       </div>
       {SECTION_LABELS.map(({ k, l }) => (
         <div key={k} style={{ marginBottom: 8 }}>
           <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 3, textTransform: 'uppercase' }}>{l}</div>
-          <textarea value={form[k]} onChange={e => set(k, e.target.value)} placeholder={`${l}â€¦`} style={taStyle} />
+          <textarea value={form[k]} onChange={e => set(k, e.target.value)} placeholder={`${l}…`} style={taStyle} />
         </div>
       ))}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
@@ -236,7 +236,7 @@ function SessionForm({ initial, onSave, onCancel }) {
   )
 }
 
-// â”€â”€ Activity Log sub-tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Activity Log sub-tab ───────────────────────────────────────
 const ACTION_COLORS = {
   add:     '#44bb44',
   edit:    '#ffaa33',
@@ -245,8 +245,8 @@ const ACTION_COLORS = {
   restore: '#aa44ff',
 }
 const ACTION_LABELS = {
-  add: '+ Added', edit: 'âœŽ Edited', delete: 'âœ• Deleted',
-  import: 'â¬† Imported', restore: 'âŸ² Restored',
+  add: '+ Added', edit: '✎ Edited', delete: '✕ Deleted',
+  import: '⬆ Imported', restore: '⟲ Restored',
 }
 
 const SESSIONLOG_SUBTAB_KEY = 'sessionlog_subtab'
@@ -302,9 +302,9 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
   const allActions = ['all', 'add', 'edit', 'delete', 'import', 'restore']
   const allCats = ['all', ...new Set((activityLog || []).map(r => getRecordSource(r)).filter(Boolean))]
   const formatRecordTimestamp = (timestamp) => {
-    if (!timestamp) return 'â€”'
+    if (!timestamp) return '—'
     const date = new Date(timestamp)
-    if (Number.isNaN(date.getTime())) return 'â€”'
+    if (Number.isNaN(date.getTime())) return '—'
     return date.toLocaleString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -351,7 +351,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
     <div>
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Searchâ€¦"
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
           style={{ flex: 1, minWidth: 140, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '1em', outline: 'none' }} />
         <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
           {allActions.map(a => (
@@ -372,7 +372,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
       </div>
 
       <div style={{ fontSize: '0.85em', color: 'var(--mut)', marginBottom: 10 }}>
-        {filtered.length} record{filtered.length !== 1 ? 's' : ''} Â· {(activityLog || []).length} total
+        {filtered.length} record{filtered.length !== 1 ? 's' : ''} · {(activityLog || []).length} total
       </div>
 
       {filtered.map(record => {
@@ -394,7 +394,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
                 {ACTION_LABELS[record.action] || record.action}
               </span>
               <span style={{ fontSize: '1em', color: 'var(--tx)', flex: 1 }}>
-                <span style={{ color: rowColor, fontSize: '0.8em' }}>{source} Â· </span>
+                <span style={{ color: rowColor, fontSize: '0.8em' }}>{source} · </span>
                 {record.entry_name}
               </span>
               <span style={{ fontSize: '0.8em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>
@@ -409,7 +409,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
               {!record.undone && (record.action === 'delete' || record.action === 'edit' || record.action === 'add') && (
                 <button onClick={e => { e.stopPropagation(); undoActivityRecord(record.id) }}
                   style={{ fontSize: '0.8em', padding: '2px 8px', borderRadius: 4, border: `1px solid ${actionIconColor}55`, background: 'none', color: actionIconColor, cursor: 'pointer', fontWeight: 700 }}>
-                  âŸ² Undo
+                  ⟲ Undo
                 </button>
               )}
               {record.undone && (
@@ -425,11 +425,11 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       <div style={{ background: '#ff444411', border: '1px solid #ff444433', borderRadius: 4, padding: '4px 6px', color: '#ff8888' }}>
                         <span style={{ fontSize: '0.75em', display: 'block', marginBottom: 2, opacity: 0.7 }}>Before</span>
-                        {String(d.before || 'â€”').slice(0, 200)}
+                        {String(d.before || '—').slice(0, 200)}
                       </div>
                       <div style={{ background: '#44bb4411', border: '1px solid #44bb4433', borderRadius: 4, padding: '4px 6px', color: '#88ff88' }}>
                         <span style={{ fontSize: '0.75em', display: 'block', marginBottom: 2, opacity: 0.7 }}>After</span>
-                        {String(d.after || 'â€”').slice(0, 200)}
+                        {String(d.after || '—').slice(0, 200)}
                       </div>
                     </div>
                   </div>
@@ -443,7 +443,7 @@ function ActivityLog({ activityLog, undoActivityRecord, crossLink, goTo, tabColo
   )
 }
 
-// â”€â”€ Main SessionLog tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main SessionLog tab ────────────────────────────────────────
 export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
   const [sessions, setSessions] = useState([])
   const [featureRegistry, setFeatureRegistry] = useState([])
@@ -462,13 +462,13 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
 
   useEffect(() => {
     if (!setCrumbs) return
-    const root = { icon: 'ðŸŒ³', label: 'The Guardians of Lajen Worldbuilding Compendium' }
-    const tabCrumb = { icon: 'ðŸ“‹', label: 'Logs' }
+    const root = { icon: '🌳', label: 'The Guardians of Lajen Worldbuilding Compendium' }
+    const tabCrumb = { icon: '📋', label: 'Logs' }
     const subMap = {
-      sessions: { icon: 'ðŸ“‹', label: 'Session Logs' },
-      activityfeatures: { icon: 'âš¡', label: 'Activity & Features' },
+      sessions: { icon: '📋', label: 'Session Logs' },
+      activityfeatures: { icon: '⚡', label: 'Activity & Features' },
     }
-    setCrumbs([root, tabCrumb, subMap[subTab] || { icon: 'Â·', label: subTab }])
+    setCrumbs([root, tabCrumb, subMap[subTab] || { icon: '·', label: subTab }])
   }, [setCrumbs, subTab])
 
   useEffect(() => {
@@ -539,7 +539,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
     const toExport = sessions.filter(s => selected.has(s.id)).sort((a, b) => a.session_number - b.session_number)
     if (!toExport.length) { flash('No sessions selected.'); return }
     const body = toExport.map(sessionToMd).join('\n\n')
-    const blob = new Blob([`# The Guardians of Lajen â€” Session Log\n\n---\n\n${body}`], { type: 'text/markdown' })
+    const blob = new Blob([`# The Guardians of Lajen — Session Log\n\n---\n\n${body}`], { type: 'text/markdown' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = toExport.length === 1 ? `session_${toExport[0].session_number}_${toExport[0].date}.md` : `guardians_sessions_export_${new Date().toISOString().slice(0,10)}.md`
     a.click(); flash(`Exported ${toExport.length} session${toExport.length > 1 ? 's' : ''}.`)
@@ -549,7 +549,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
     const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number)
     if (!sorted.length) { flash('No sessions to export.'); return }
     const body = sorted.map(sessionToMd).join('\n\n')
-    const blob = new Blob([`# The Guardians of Lajen â€” Complete Session Log\n\n*Sahrynar (Melissa) & Claude Â· Exported ${new Date().toLocaleDateString()}*\n\n---\n\n${body}`], { type: 'text/markdown' })
+    const blob = new Blob([`# The Guardians of Lajen — Complete Session Log\n\n*Sahrynar (Melissa) & Claude · Exported ${new Date().toLocaleDateString()}*\n\n---\n\n${body}`], { type: 'text/markdown' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `guardians_session_log_complete_${new Date().toISOString().slice(0,10)}.md`
     a.click(); flash(`Exported all ${sorted.length} sessions.`)
@@ -602,7 +602,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--dim)', fontFamily: "'Cinzel',serif" }}>
-      Loading session logâ€¦
+      Loading session log…
     </div>
   )
 
@@ -613,7 +613,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
     <div>
       {/* Header */}
       <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor, marginBottom: 12 }}>
-        ðŸ“‹ Logs
+        📋 Logs
       </div>
 
       {/* Flash */}
@@ -658,12 +658,12 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
         <div>
           {/* Toolbar */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sessionsâ€¦"
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sessions…"
               style={{ flex: 1, minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--tx)', fontSize: '0.92em', outline: 'none' }} />
             {selected.size > 0 && (
               <>
                 <button onClick={exportSelected} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: `1px solid ${tabColor}`, background: 'none', color: tabColor, cursor: 'pointer' }}>
-                  â†“ Export {selected.size} selected
+                  ↓ Export {selected.size} selected
                 </button>
                 <button onClick={() => setSelected(new Set())} style={{ fontSize: '0.85em', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Clear</button>
               </>
@@ -672,7 +672,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
               <button onClick={() => setSelected(new Set(filtered.map(s => s.id)))}
                 style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>Select all</button>
             )}
-            <button onClick={exportAll} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>â†“ Export All</button>
+            <button onClick={exportAll} style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}>↓ Export All</button>
             <button onClick={() => { setAdding(true); setEditing(null) }}
               style={{ fontSize: '0.85em', padding: '4px 12px', borderRadius: 8, border: 'none', background: tabColor, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
               + New Session
@@ -698,7 +698,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
             ))
           )}
           <div style={{ fontSize: '0.85em', color: 'var(--dim)', textAlign: 'center', marginTop: 12 }}>
-            {filtered.length} session{filtered.length !== 1 ? 's' : ''} Â· {hasSupabase ? 'Cloud sync on' : 'Local only'}
+            {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {hasSupabase ? 'Cloud sync on' : 'Local only'}
           </div>
         </div>
       ) : (
@@ -717,7 +717,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
 
           <div style={{ flex: '0 0 50%', minWidth: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', minHeight: 540 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>âœ¨ Features</div>
+              <div style={{ fontSize: '1em', fontWeight: 700, color: tabColor, fontFamily: "'Cinzel',serif" }}>✨ Features</div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   onClick={() => setAddingFeature(v => !v)}
@@ -729,7 +729,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
                   onClick={toggleDescriptionEditing}
                   style={{ fontSize: '0.85em', padding: '3px 9px', borderRadius: 8, border: `1px solid ${tabColor}66`, background: editingDescriptions ? `${tabColor}22` : 'none', color: tabColor, cursor: 'pointer', fontWeight: 700 }}
                 >
-                  âœŽ Edit
+                  ✎ Edit
                 </button>
               </div>
             </div>
@@ -796,7 +796,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ color: 'var(--tx)', whiteSpace: 'normal' }}>
                         {entry.name}
-                        {entry.description ? ` â€” ${entry.description}` : ''}
+                        {entry.description ? ` — ${entry.description}` : ''}
                       </span>
                       {editingDescriptions && (
                         <input
@@ -807,7 +807,7 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
                         />
                       )}
                       <span style={{ display: 'block', marginTop: 2, fontSize: '0.8em', color: 'var(--dim)' }}>
-                        ({entry.tab} Â· S{entry.session})
+                        ({entry.tab} · S{entry.session})
                       </span>
                     </span>
                     <button
@@ -815,14 +815,14 @@ export default function SessionLog({ db, goTo, crossLink, setCrumbs }) {
                       title={`Go to ${entry.tab}`}
                       style={{ fontSize: '0.85em', padding: '1px 5px', borderRadius: 4, border: `1px solid ${featureColor}55`, background: 'none', color: featureColor, cursor: 'pointer' }}
                     >
-                      â†—
+                      ↗
                     </button>
                     <button
                       onClick={e => { e.stopPropagation(); toggleFeatureArchive(entry.id) }}
                       title={archived ? 'Restore to active' : 'Archive feature'}
                       style={{ fontSize: '1em', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--brd)', background: 'none', color: 'var(--dim)', cursor: 'pointer' }}
                     >
-                      ðŸ“¦
+                      📦
                     </button>
                   </div>
                 )

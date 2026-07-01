@@ -1,4 +1,4 @@
-﻿import Modal from './Modal'
+import Modal from './Modal'
 
 const FIELD_DISPLAY = {
   characters: ['display_name', 'name', 'role', 'notes', 'description'],
@@ -53,7 +53,7 @@ export default function EntryPreviewModal({ open, onClose, entry, category, onEd
         })}
         {entry.auto_imported && (
           <div style={{ fontSize: '0.77em', color: '#ffcc00', padding: '6px 10px', borderRadius: 6, background: '#ffcc0011', border: '1px solid #ffcc0044' }}>
-            ðŸ“¥ Auto-imported {entry.source ? `from ${entry.source}` : ''} - needs review
+            📥 Auto-imported {entry.source ? `from ${entry.source}` : ''} - needs review
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--div)' }}>
@@ -66,7 +66,7 @@ export default function EntryPreviewModal({ open, onClose, entry, category, onEd
             </button>
           )}
           <button onClick={onEdit} style={{ fontSize: '0.85em', padding: '6px 14px', borderRadius: 6, border: `1px solid ${color}`, background: color, color: '#000', cursor: 'pointer', fontWeight: 700 }}>
-            âœŽ Edit
+            ✎ Edit
           </button>
         </div>
       </div>

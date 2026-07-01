@@ -61,12 +61,9 @@ export function normalizeSticky(sticky, index = 0) {
           ? 'M'
           : legacySize
   return {
-    size: 'M',
     color: 'yellow',
     fontSize: '0.92em',
     archived: false,
-    sort_order: index,
-    journal_sort_order: index,
     ...sticky,
     size: normalizedSize,
     pinned_stickies: pinnedStickies,

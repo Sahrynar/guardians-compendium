@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TAB_RAINBOW } from '../constants'
 
 const OUTFIT_SLOTS = [
@@ -116,13 +116,13 @@ export default function OutfitSnapshot({ db, chars, allEntries }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.85em', fontWeight: 600 }}>{snap.name}</div>
-                    <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` Â· ${snap.scene}` : ''}</div>
+                    <div style={{ fontSize: '0.69em', color: 'var(--mut)' }}>{snap.characterName}{snap.scene ? ` · ${snap.scene}` : ''}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <button onClick={() => loadSnapshot(snap)}
                       style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: `${tabColor}22`, border: `1px solid ${tabColor}`, color: tabColor, cursor: 'pointer' }}>↻ Load</button>
                     <button onClick={() => deleteSnapshot(snap.id)}
-                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none', border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>âœ•</button>
+                      style={{ fontSize: '0.69em', padding: '2px 8px', borderRadius: 6, background: 'none', border: '1px solid #ff335544', color: '#ff3355', cursor: 'pointer' }}>✕</button>
                   </div>
                 </div>
                 {filledSlots.length > 0 && (
