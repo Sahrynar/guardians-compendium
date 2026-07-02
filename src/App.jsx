@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
-import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid } from './constants'
+import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid , GLOSSARY_CATS} from './constants'
 
 import Dashboard from './tabs/Dashboard'
 import Characters from './tabs/Characters'
@@ -204,7 +204,7 @@ export default function App() {
   function getTabCount(tabKey) {
     if (tabKey === 'dashboard' || tabKey === 'tools') return null
     if (tabKey === 'wiki') return (db.db.wiki || []).length
-    if (tabKey === 'glossary') return (db.db.glossary || []).length
+    if (tabKey === 'glossary') return (db.db.wiki || []).filter(a => GLOSSARY_CATS.includes(a.category) || a.is_glossary).length
     if (tabKey === 'characters') return (db.db.characters || []).length
     if (tabKey === 'familytree') return (db.db.family_tree || []).length
     if (tabKey === 'world') return (db.db.world || []).length

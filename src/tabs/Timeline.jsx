@@ -85,9 +85,28 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
   const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
   const [rangeMin, setRangeMin] = useState('') // HC date range filter min
   const [rangeMax, setRangeMax] = useState('') // HC date range filter max
-  const [eraMarkers, setEraMarkers] = useState(() => {
-    try { return JSON.parse(db.getSetting?.('timeline_era_markers') || '[]') } catch { return [] }
-  })
+  // Era markers: stored as real entries (category 'eras', kind 'marker') — robust like everything else.
+  const eraMarkers = (db.db.eras || []).filter(e => e.kind === 'marker')
+  const migratedRef = useRef(false)
+  useEffect(() => {
+    if (migratedRef.current || db.loading) return
+    if (eraMarkers.length > 0) { migratedRef.current = true; return }
+    let legacy = []
+    try { legacy = JSON.parse(db.getSetting?.('timeline_era_markers') || '[]') } catch {}
+    if (!Array.isArray(legacy) || !legacy.length) { migratedRef.current = true; return }
+    migratedRef.current = true
+    const sorted = [...events].sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
+    const nearest = v => { const n = parseFloat(v); if (isNaN(n) || !sorted.length) return null
+      return sorted.reduce((best, e) => Math.abs((parseFloat(e.sort_order)||0) - n) < Math.abs((parseFloat(best.sort_order)||0) - n) ? e : best, sorted[0]).id }
+    legacy.forEach((m, i) => db.upsertEntry('eras', {
+      id: 'era_marker_migr_' + i + '_' + uid(), kind: 'marker', name: m.name || 'Era',
+      color: m.color || '#4488ff', startId: nearest(m.start), endId: nearest(m.end),
+      legacy_start: m.start, legacy_end: m.end,
+      notes: 'Recovered from old settings-based markers (Jul 2026 migration).',
+    }))
+  }, [db.loading, events.length])
+  function saveMarker(m) { db.upsertEntry('eras', m) }
+  function removeMarker(id) { db.deleteEntry('eras', id) }
   const [eraEditor, setEraEditor] = useState(false)
   const [editingMarker, setEditingMarker] = useState(null)
   const [zoom, setZoom] = useState(1)
@@ -150,10 +169,6 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
 
   const eras = [...new Set(events.map(e => e.era).filter(Boolean))]
 
-  function saveEraMarkers(markers) {
-    setEraMarkers(markers)
-    db.saveSetting?.('timeline_era_markers', JSON.stringify(markers))
-  }
 
   function handleSave(entry) {
     if (!editing?.id) {
@@ -281,8 +296,13 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
           <div style={{ position: 'relative', minHeight: 180, padding: '0 30px', width: w }}>
             {/* Custom era markers — positioned divs */}
             {eraMarkers.map((marker, mi) => {
-              const x1 = 30 + (w - 60) * ((parseFloat(marker.start)||mn) - mn) / Math.max(1, rng)
-              const x2 = 30 + (w - 60) * ((parseFloat(marker.end)||mx) - mn) / Math.max(1, rng)
+              const evById = id => events.find(e => e.id === id)
+              const soToX = so => 30 + (w - 60) * (so - mn) / Math.max(1, rng)
+              const sEv = evById(marker.startId), eEv = evById(marker.endId)
+              const s = sEv ? (parseFloat(sEv.sort_order)||0) : (parseFloat(marker.legacy_start ?? marker.start) || mn)
+              const eV = eEv ? (parseFloat(eEv.sort_order)||0) : (parseFloat(marker.legacy_end ?? marker.end) || mx)
+              const x1 = soToX(Math.min(s, eV)) - 14
+              const x2 = soToX(Math.max(s, eV)) + 14
               const col = marker.color || '#4488ff'
               return (
                 <div key={mi} style={{ position:'absolute', left:x1, width:Math.max(2,x2-x1),
@@ -419,29 +439,34 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
             onClick={e => e.stopPropagation()}>
             <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.08em', color:'var(--cca)', marginBottom:14 }}>⧖ Era Markers</div>
             <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:10 }}>
-              Markers appear as bands on the visual track. Use sort# values to set start/end positions.
+              Markers appear as bands on the visual track. Pick the FIRST and LAST event each era covers — the band follows those events wherever they sit.
             </div>
-            {eraMarkers.map((m, i) => (
-              <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6, padding:'6px 8px',
+            {(() => { const _sortedEvs = [...events].sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0)); return eraMarkers.map(m => (
+              <div key={m.id} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6, padding:'6px 8px', flexWrap:'wrap',
                 background:'var(--card)', borderRadius:6, borderLeft:`3px solid ${m.color||'#4488ff'}` }}>
-                <input value={m.name} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],name:e.target.value}; saveEraMarkers(n) }}
-                  style={{ flex:1, fontSize: '0.85em', padding:'3px 6px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
+                <input value={m.name || ''} onChange={e => saveMarker({ ...m, name: e.target.value })}
+                  style={{ flex:1, minWidth: 90, fontSize: '0.85em', padding:'3px 6px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
                   placeholder="Era name" />
-                <input type="number" value={m.start} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],start:e.target.value}; saveEraMarkers(n) }}
-                  style={{ width:60, fontSize: '0.77em', padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
-                  placeholder="Start#" />
+                <select value={m.startId || ''} onChange={e => saveMarker({ ...m, startId: e.target.value })}
+                  style={{ maxWidth: 130, fontSize: '0.72em', padding:'3px 4px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}>
+                  <option value="">start event…</option>
+                  {_sortedEvs.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+                </select>
                 <span style={{ fontSize: '0.77em', color:'var(--mut)' }}>–</span>
-                <input type="number" value={m.end} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],end:e.target.value}; saveEraMarkers(n) }}
-                  style={{ width:60, fontSize: '0.77em', padding:'3px 5px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}
-                  placeholder="End#" />
-                <input type="color" value={m.color||'#4488ff'} onChange={e => { const n=[...eraMarkers]; n[i]={...n[i],color:e.target.value}; saveEraMarkers(n) }}
+                <select value={m.endId || ''} onChange={e => saveMarker({ ...m, endId: e.target.value })}
+                  style={{ maxWidth: 130, fontSize: '0.72em', padding:'3px 4px', background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:4, color:'var(--tx)' }}>
+                  <option value="">end event…</option>
+                  {_sortedEvs.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+                </select>
+                <input type="color" value={m.color||'#4488ff'} onChange={e => saveMarker({ ...m, color: e.target.value })}
                   style={{ width:28, height:26, border:'none', borderRadius:4, cursor:'pointer', background:'none' }} />
-                <button onClick={() => saveEraMarkers(eraMarkers.filter((_,j) => j!==i))}
+                <button onClick={() => removeMarker(m.id)}
                   style={{ background:'none', border:'none', color:'#ff3355', cursor:'pointer', fontSize: '1.08em' }}>✕</button>
               </div>
-            ))}
+            )) })()}
             <button className="btn btn-sm btn-outline" style={{ marginTop:8, color:'var(--cca)', borderColor:'var(--cca)' }}
-              onClick={() => saveEraMarkers([...eraMarkers, { name:'New Era', start:'', end:'', color:'#4488ff' }])}>
+              onClick={() => { const s = [...events].sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
+                saveMarker({ id: 'era_marker_' + uid(), kind: 'marker', name:'New Era', color:'#4488ff', startId: s[0]?.id || '', endId: s[s.length-1]?.id || '' }) }}>
               + Add Marker
             </button>
             <div style={{ display:'flex', justifyContent:'flex-end', marginTop:14 }}>

@@ -4,7 +4,7 @@ import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
 import { TAB_RAINBOW } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
-const GLOSSARY_CATS = ['Languages', 'Lore', 'Cosmology', 'Power System', 'Cultures', 'Religions', 'Factions', 'Geography']
+import { GLOSSARY_CATS } from '../constants'
 const tabColor = TAB_RAINBOW['glossary'] || '#aaaaaa'
 
 export default function Glossary({ db, goTo, goToWiki, navSearch }) {

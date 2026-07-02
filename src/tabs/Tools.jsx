@@ -1,37 +1,28 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { RATIO, TAB_RAINBOW, LDAYS, MDAYS, LDPM, MONTHS } from '../constants'
+import { useState, useMemo, useRef } from 'react'
+import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW } from '../constants'
 
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
-  { id: 'l2m',       label: 'Lajen → Mnaerah',       emoji: '🌍', color: 'var(--cca)' },
-  { id: 'm2l',       label: 'Mnaerah → Lajen',        emoji: '🌙', color: 'var(--ct)'  },
-  { id: 'elapsed',   label: 'Time Elapsed',           emoji: '⏱',  color: 'var(--cq)'  },
-  { id: 'age',       label: 'Character Age',          emoji: '🎂', color: 'var(--cc)'  },
-  { id: 'units',     label: 'Unit Converter',         emoji: '📐', color: 'var(--csp)' },
+  { id: 'datetime',  label: 'Date & Time',           emoji: '🕰', color: 'var(--cca)' },
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
-  { id: 'pronun',    label: 'Pronunciation Helper',   emoji: '🔊', color: 'var(--cwr)' },
-  { id: 'backfill',  label: 'Birthday Backfill',      emoji: '🗓', color: 'var(--cfl)' },
-  { id: 'scots',     label: 'Scots Dialogue',         emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', color: 'var(--cca)' },
-  { id: 'imagelib',  label: 'Image Library',          emoji: '🖼', color: 'var(--cl)'  },
+  { id: 'pronun',    label: 'Pronunciation Helper',  emoji: '🔊', color: 'var(--cwr)' },
+  { id: 'scots',     label: 'Scots Dialogue',        emoji: '🏴', color: 'var(--ct)'  },
+  { id: 'imagelib',  label: 'Image Library',         emoji: '🖼', color: 'var(--ci)'  },
+  { id: 'backfill',  label: 'Birthday Backfill',     emoji: '🗓', color: 'var(--cfl)' },
+  { id: 'units',     label: 'Unit Converter',        emoji: '📐', color: 'var(--csp)' },
 ]
 
-function Row({ label, value }) {
-  return (
-    <div className="calc-row">
-      <span>{label}</span>
-      <span className="calc-val">{value}</span>
-    </div>
-  )
+// ── Speak helper (Web Speech API) ────────────────────────────────
+function speak(text, lang = 'en-GB') {
+  try {
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = lang; u.rate = 0.85
+    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u)
+  } catch {}
 }
 
-// ── Speak helper (Web Speech API) ────────────────────────────────
-function speak(text) {
-  if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.rate = 0.85
-  window.speechSynthesis.speak(u)
-}
+const inputStyle = { fontSize: '0.85em', padding: '5px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }
+const chipStyle = on => ({ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--cca)' : 'var(--brd)'), background: on ? 'rgba(255,170,51,.15)' : 'transparent', color: on ? 'var(--cca)' : 'var(--dim)' })
 
 // ── Language conversion systems ──────────────────────────────────
 // Each system: { label, prefix_f, prefix_m, convert(name) → string, note }
@@ -287,111 +278,7 @@ function getResult(name, gender, system) {
   return applyPrefix(converted, system.prefix_f, system.prefix_m, gender)
 }
 
-// ── Ix'Citlatl Converter ─────────────────────────────────────────
-function IxCitlatlTool() {
-  const [name, setName] = useState('')
-  const [gender, setGender] = useState('female')
-  const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('gcomp_ix_history') || '[]') } catch { return [] }
-  })
 
-  function saveHistory(h) {
-    setHistory(h)
-    try { localStorage.setItem('gcomp_ix_history', JSON.stringify(h)) } catch {}
-  }
-
-  function convert() {
-    if (!name.trim()) return
-    const results = LANG_SYSTEMS.map(sys => ({
-      system: sys.id,
-      label: sys.label,
-      note: sys.note,
-      result: getResult(name.trim(), gender, sys),
-    }))
-    const entry = { id: Date.now(), original: name.trim(), gender, results }
-    saveHistory([entry, ...history.slice(0, 14)])
-    setName('')
-  }
-
-  return (
-    <div className="tool-card" id="tool-ixcitlatl">
-      <h3 style={{ color: 'var(--cl)' }}>✦ Ix'Citlatl Name Converter</h3>
-      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
-        Converts any name into its Ix'Citlatl equivalent across all 12 Mesoamerican language systems.
-        Female private names begin with <strong style={{ color: 'var(--cl)' }}>Ix</strong> (pronounced "eesh"),
-        male with <strong style={{ color: 'var(--cca)' }}>Ah</strong>.
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 12 }}>
-        <div className="field" style={{ flex: 1, minWidth: 160, margin: 0 }}>
-          <label>Name to convert</label>
-          <input value={name} onChange={e => setName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && convert()}
-            placeholder="e.g. Gillison, Thomas, Rose…" />
-        </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Prefix</label>
-          <select value={gender} onChange={e => setGender(e.target.value)}>
-            <option value="female">Female — Ix</option>
-            <option value="male">Male — Ah</option>
-          </select>
-        </div>
-        <button className="btn btn-primary btn-sm"
-          style={{ background: 'var(--cl)', color: '#000', alignSelf: 'flex-end' }}
-          onClick={convert}>Convert All</button>
-      </div>
-
-      {history.length > 0 && (
-        <div>
-          {history.map(h => (
-            <div key={h.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: '0.77em', color: 'var(--cca)', fontWeight: 700, marginBottom: 6 }}>
-                {h.original} <span style={{ color: 'var(--dim)', fontWeight: 400 }}>({h.gender})</span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.77em' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Language System</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Result</th>
-                      <th style={{ textAlign: 'left', color: 'var(--dim)', padding: '2px 8px 4px 0', fontSize: '0.69em', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>Notes</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {h.results.map((r, i) => (
-                      <tr key={r.system} style={{ borderTop: '1px solid rgba(255,255,255,.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
-                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{r.label}</td>
-                        <td style={{ padding: '5px 8px 5px 0' }}>
-                          <span style={{ fontFamily: "'Cinzel',serif", fontSize: '1em', fontWeight: 700,
-                            color: h.gender === 'female' ? 'var(--cl)' : 'var(--cca)' }}>
-                            {r.result}
-                          </span>
-                        </td>
-                        <td style={{ padding: '5px 8px 5px 0', color: 'var(--mut)', fontSize: '0.69em', fontStyle: 'italic' }}>{r.note}</td>
-                        <td style={{ padding: '5px 0', whiteSpace: 'nowrap' }}>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
-                            onClick={() => navigator.clipboard?.writeText(r.result)} title="Copy">📋</button>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.77em', padding: '0 3px' }}
-                            onClick={() => speak(r.result)} title="Hear pronunciation">🔊</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))}
-          <button style={{ fontSize: '0.69em', color: 'var(--mut)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            onClick={() => saveHistory([])}>Clear history</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Pronunciation Helper (rebuilt) ───────────────────────────────
-// Language config: realWorld=true → call translation API first, then phonetic
 // inWorld=true → phonetic rendering only (+ translation layer when available)
 const PRONUN_LANGS = [
   {
@@ -456,588 +343,450 @@ const PRONUN_LANGS = [
   },
 ]
 
-async function translateWord(word, targetLang) {
-  // Uses MyMemory free translation API (no key needed, 5000 chars/day free)
-  try {
-    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|${targetLang}`)
-    const data = await res.json()
-    if (data.responseStatus === 200 && data.responseData?.translatedText) {
-      const t = data.responseData.translatedText
-      // Reject if same as input or obviously failed
-      if (t.toLowerCase() !== word.toLowerCase() && !t.includes('MYMEMORY')) return t
-    }
-  } catch {}
-  return null
+// ══════════════════════════════════════════════════════════════════
+// DATE & TIME — unified (Convert · Elapsed · Crossed-World · Age)
+// Anchor: Akatriluna 1, HC 320 = June 21, 1554 AD · 8.52 LY = 1 MY
+// ══════════════════════════════════════════════════════════════════
+const ANCHOR_L_ABS = (320 - 1) * LDAYS            // Lajen days at HC 320, Akatriluna 1
+const ANCHOR_E_MS  = Date.UTC(1554, 5, 21)        // June 21, 1554
+const E_PER_L      = MDAYS / (RATIO * LDAYS)      // Earth days per Lajen day
+
+function lajenAbs(hcYear, monthIdx = 0, day = 1) {
+  return (hcYear - 1) * LDAYS + monthIdx * LDPM + (day - 1)
+}
+function absToLajen(abs) {
+  const y = Math.floor(abs / LDAYS) + 1
+  const doy = ((abs % LDAYS) + LDAYS) % LDAYS
+  return { hcYear: abs < 0 && doy !== abs - (y - 1) * LDAYS ? y - (doy > abs - (y-1)*LDAYS ? 0 : 0) : y, monthIdx: Math.floor(doy / LDPM), day: (doy % LDPM) + 1 }
+}
+function lajenToEarth(abs) { return new Date(ANCHOR_E_MS + (abs - ANCHOR_L_ABS) * E_PER_L * 86400000) }
+function earthToLajenAbs(dateMs) { return ANCHOR_L_ABS + (dateMs - ANCHOR_E_MS) / 86400000 / E_PER_L }
+const EMONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+function fmtEarth(d, precision) {
+  if (precision === 'year') return '~' + d.getUTCFullYear() + ' AD'
+  if (precision === 'month') return '~' + EMONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear() + ' AD'
+  return EMONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear() + ' AD'
+}
+function fmtLajen(l, precision) {
+  if (precision === 'year') return '~HC ' + l.hcYear
+  if (precision === 'month') return '~' + (MONTHS[l.monthIdx]?.n || '?') + ', HC ' + l.hcYear
+  return (MONTHS[l.monthIdx]?.n || '?') + ' ' + l.day + ', HC ' + l.hcYear
+}
+function breakdown(earthDays) {
+  const lDays = Math.abs(earthDays) / E_PER_L
+  const ly = Math.floor(lDays / LDAYS), lm = Math.floor((lDays % LDAYS) / LDPM), ld = Math.round(lDays % LDPM)
+  const my = Math.floor(Math.abs(earthDays) / MDAYS), mrem = Math.abs(earthDays) % MDAYS
+  const mm = Math.floor(mrem / 30.44), md = Math.round(mrem % 30.44)
+  return { l: ly + 'y ' + lm + 'm ' + ld + 'd', m: my + 'y ' + mm + 'm ' + md + 'd', lYears: (lDays / LDAYS).toFixed(1), mYears: (Math.abs(earthDays) / MDAYS).toFixed(1) }
 }
 
-function PronunciationTool() {
-  const [word, setWord] = useState('')
-  const [system, setSystem] = useState('ixcitlatl')
-  const [manualOverride, setManualOverride] = useState('')
-  const [results, setResults] = useState([]) // multi-result array
-  const [loading, setLoading] = useState(false)
-
-  const sys = PRONUN_LANGS.find(s => s.id === system) || PRONUN_LANGS[0]
-
-  async function generate() {
-    const w = word.trim()
-    if (!w) return
-    if (system === 'manual') {
-      setResults([{ system: 'Manual', original: w, translated: null, phonetic: manualOverride || w }])
-      return
-    }
-    setLoading(true)
-    const out = []
-
-    // For each language, generate a result
-    const langs = system === 'all'
-      ? PRONUN_LANGS.filter(l => l.id !== 'manual')
-      : [PRONUN_LANGS.find(l => l.id === system)].filter(Boolean)
-
-    for (const lang of langs) {
-      let translated = null
-      // Real-world base language → try translation first
-      if (lang.realBase) {
-        translated = await translateWord(w, lang.realBase)
-      }
-      const sourceWord = translated || w
-      const phonetic = lang.phonetic(sourceWord)
-      out.push({
-        system: lang.label,
-        id: lang.id,
-        confirmed: lang.confirmed,
-        original: w,
-        translated,
-        phonetic,
-      })
-    }
-    setResults(out)
-    setLoading(false)
-  }
-
+function DateInput({ val, onChange }) {
+  const set = (k, v) => onChange({ ...val, [k]: v })
   return (
-    <div className="tool-card" id="tool-pronun">
-      <h3 style={{ color: 'var(--cwr)' }}>🔊 Pronunciation Helper</h3>
-      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
-        Enter any word or name. Real-world language systems (Murvetian/Italian, Thaeronic/Greek, etc.)
-        will attempt a translation first, then apply phonetic rules.
-        In-world language systems apply phonetic rendering directly.
-        Systems marked ⚠ have unconfirmed phonology.
-      </div>
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+      <select value={val.cal} onChange={e => set('cal', e.target.value)} style={inputStyle}>
+        <option value="lajen">Lajen (HC)</option><option value="mnaerah">Mnaerah (AD)</option>
+      </select>
+      <input type="number" placeholder="Year" value={val.year} onChange={e => set('year', e.target.value)} style={{ ...inputStyle, width: 76 }} />
+      <select value={val.month} onChange={e => set('month', e.target.value)} style={inputStyle}>
+        <option value="">month?</option>
+        {(val.cal === 'lajen' ? MONTHS.map(m => m.n) : EMONTHS).map((m, i) => <option key={m} value={i}>{m}</option>)}
+      </select>
+      <input type="number" placeholder="Day" min="1" max={val.cal === 'lajen' ? 30 : 31} value={val.day} onChange={e => set('day', e.target.value)} style={{ ...inputStyle, width: 58 }} />
+    </div>
+  )
+}
+const emptyDate = cal => ({ cal, year: '', month: '', day: '' })
+function parseDateVal(v) {
+  if (v.year === '' || isNaN(parseFloat(v.year))) return null
+  const y = parseFloat(v.year)
+  const precision = v.month === '' ? 'year' : (v.day === '' || isNaN(parseFloat(v.day))) ? 'month' : 'day'
+  const mi = v.month === '' ? (precision === 'year' ? 5 : 0) : parseInt(v.month)
+  const d = precision === 'day' ? parseInt(v.day) : 15
+  if (v.cal === 'lajen') return { abs: lajenAbs(y, precision === 'year' ? 6 : mi, precision === 'year' ? 1 : d), precision, cal: 'lajen' }
+  const ms = Date.UTC(y, precision === 'year' ? 6 : mi, precision === 'year' ? 1 : d)
+  return { abs: earthToLajenAbs(ms), precision, cal: 'mnaerah' }
+}
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 8 }}>
-        <div className="field" style={{ flex: 1, minWidth: 140, margin: 0 }}>
-          <label>Word or name</label>
-          <input value={word} onChange={e => setWord(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && generate()}
-            placeholder="e.g. Ixelaoien, star, sword…" />
+function ConvertPane() {
+  const [val, setVal] = useState(emptyDate('lajen'))
+  const p = parseDateVal(val)
+  return (
+    <div>
+      <DateInput val={val} onChange={setVal} />
+      {p && (
+        <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
+          <div style={{ fontSize: '0.92em' }}><span style={{ color: 'var(--cl)' }}>{fmtLajen(absToLajen(Math.round(p.abs)), p.precision)}</span>
+            <span style={{ color: 'var(--mut)' }}>  =  </span>
+            <span style={{ color: 'var(--ct)' }}>{fmtEarth(lajenToEarth(p.abs), p.precision)}</span></div>
+          {(() => { const l = absToLajen(Math.round(p.abs)); const m = MONTHS[l.monthIdx]; return m ? (
+            <div style={{ fontSize: '0.72em', color: 'var(--mut)', marginTop: 4 }}>{m.n} · {m.s} · Incarnate: {m.inc} · {m.ssn} · ≈ {m.eq}</div>) : null })()}
+          {p.precision !== 'day' && <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginTop: 4 }}>⚠ Fuzzy date — {p.precision}-level precision. Results are approximate.</div>}
         </div>
-        <div className="field" style={{ margin: 0, minWidth: 180 }}>
-          <label>Language system</label>
-          <select value={system} onChange={e => { setSystem(e.target.value); setResults([]) }}>
-            <option value="all">— All languages —</option>
-            {PRONUN_LANGS.map(s => (
-              <option key={s.id} value={s.id}>{s.confirmed ? '' : '⚠ '}{s.label}</option>
-            ))}
+      )}
+    </div>
+  )
+}
+
+function ElapsedPane() {
+  const [a, setA] = useState(emptyDate('lajen'))
+  const [b, setB] = useState(emptyDate('mnaerah'))
+  const pa = parseDateVal(a), pb = parseDateVal(b)
+  let out = null
+  if (pa && pb) {
+    const eDays = (pb.abs - pa.abs) * E_PER_L
+    const bd = breakdown(eDays)
+    out = { sign: eDays < 0 ? ' (second date is earlier)' : '', bd, fuzzy: pa.precision !== 'day' || pb.precision !== 'day' }
+  }
+  return (
+    <div>
+      <div style={{ fontSize: '0.72em', color: 'var(--mut)', marginBottom: 4 }}>From:</div><DateInput val={a} onChange={setA} />
+      <div style={{ fontSize: '0.72em', color: 'var(--mut)', margin: '8px 0 4px' }}>To:</div><DateInput val={b} onChange={setB} />
+      {out ? (
+        <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)', fontSize: '0.85em' }}>
+          <div>Lajen time: <b style={{ color: 'var(--cl)' }}>{out.bd.l}</b> ({out.bd.lYears} LY)</div>
+          <div>Mnaerah time: <b style={{ color: 'var(--ct)' }}>{out.bd.m}</b> ({out.bd.mYears} MY){out.sign}</div>
+          {out.fuzzy && <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginTop: 4 }}>⚠ Includes fuzzy dates — approximate.</div>}
+        </div>
+      ) : <div style={{ marginTop: 8, fontSize: '0.77em', color: 'var(--mut)' }}>Enter at least a year on both sides — mixing calendars is fine.</div>}
+    </div>
+  )
+}
+
+function CrossedPane() {
+  const [birth, setBirth] = useState(emptyDate('lajen'))
+  const [crossings, setCrossings] = useState([])
+  const [asOf, setAsOf] = useState(emptyDate('lajen'))
+  const pb = parseDateVal(birth), pe = parseDateVal(asOf)
+  const parsedCr = crossings.map(parseDateVal)
+  let rows = null, totals = null, err = null
+  if (pb && pe) {
+    const pts = [pb.abs, ...parsedCr.map(p => p?.abs), pe.abs]
+    if (parsedCr.some(p => !p)) err = 'Fill in every crossing date (year minimum), or remove empty rows.'
+    else if (pts.some((v, i) => i > 0 && v < pts[i - 1])) err = 'Dates must be in chronological order.'
+    else {
+      let world = birth.cal
+      rows = []; let lSum = 0, mSum = 0
+      for (let i = 0; i < pts.length - 1; i++) {
+        const eDays = (pts[i + 1] - pts[i]) * E_PER_L
+        const localYears = world === 'lajen' ? eDays / E_PER_L / LDAYS : eDays / MDAYS
+        if (world === 'lajen') lSum += localYears; else mSum += localYears
+        rows.push({ world, years: localYears.toFixed(1) })
+        world = world === 'lajen' ? 'mnaerah' : 'lajen'
+      }
+      totals = { l: lSum.toFixed(1), m: mSum.toFixed(1) }
+    }
+  }
+  return (
+    <div>
+      <div style={{ fontSize: '0.72em', color: 'var(--mut)', marginBottom: 4 }}>Born (world = starting side):</div>
+      <DateInput val={birth} onChange={setBirth} />
+      {crossings.map((c, i) => (
+        <div key={i} style={{ marginTop: 8 }}>
+          <div style={{ fontSize: '0.72em', color: 'var(--cca)', marginBottom: 4 }}>Crossing {i + 1} — date they stepped through:
+            <button onClick={() => setCrossings(crossings.filter((_, j) => j !== i))} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer' }}>✕</button></div>
+          <DateInput val={c} onChange={v => setCrossings(crossings.map((x, j) => j === i ? v : x))} />
+        </div>
+      ))}
+      <button className="btn btn-sm btn-outline" style={{ marginTop: 8 }} onClick={() => setCrossings([...crossings, emptyDate('lajen')])}>+ Add crossing</button>
+      <div style={{ fontSize: '0.72em', color: 'var(--mut)', margin: '10px 0 4px' }}>Age as of:</div>
+      <DateInput val={asOf} onChange={setAsOf} />
+      {err && <div style={{ marginTop: 8, fontSize: '0.77em', color: '#ff3355' }}>{err}</div>}
+      {rows && (
+        <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)', fontSize: '0.85em' }}>
+          {rows.map((r, i) => <div key={i} style={{ color: 'var(--dim)' }}>Segment {i + 1} · {r.world === 'lajen' ? 'Lajen' : 'Mnaerah'}: {r.years} local years</div>)}
+          <div style={{ marginTop: 6 }}>Lived <b style={{ color: 'var(--cl)' }}>{totals.l} Lajen years</b> + <b style={{ color: 'var(--ct)' }}>{totals.m} Mnaerah years</b></div>
+          <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginTop: 4 }}>⚠ How crossed-world time maps to biological age is an OPEN canon question — this shows elapsed local time per side only.</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function parseLooseDate(str) {
+  if (!str || typeof str !== 'string') return null
+  const ym = str.match(/-?\d{1,7}/); if (!ym) return null
+  const year = parseFloat(ym[0])
+  const mi = MONTHS.findIndex(m => str.toLowerCase().includes(m.n.toLowerCase()))
+  const dm = str.match(/(?:^|\s)(\d{1,2})(?:\s*,|\s|$)/)
+  const day = mi >= 0 && dm ? parseInt(dm[1]) : 1
+  return { abs: lajenAbs(year, mi >= 0 ? mi : 5, mi >= 0 ? day : 1), precision: mi >= 0 ? (dm ? 'day' : 'month') : 'year' }
+}
+
+function AgePane({ db }) {
+  const chars = (db.db.characters || []).filter(c => c.birthday_lajen)
+  const events = (db.db.timeline || []).filter(e => e.date_hc && e.date_hc !== 'n/a' && e.date_hc !== 'unknown')
+  const [ch, setCh] = useState(''); const [ev, setEv] = useState('')
+  let out = null
+  if (ch && ev) {
+    const c = chars.find(x => x.id === ch); const e = events.find(x => x.id === ev)
+    const pb = parseLooseDate(c?.birthday_lajen); const pe = parseLooseDate(e?.date_hc)
+    if (!pb || !pe) out = { err: 'Could not calculate — ' + (!pb ? `"${c?.birthday_lajen}" isn't a parseable Lajen birthday.` : `event date "${e?.date_hc}" isn't parseable.`) }
+    else { const bd = breakdown((pe.abs - pb.abs) * E_PER_L); out = { l: bd.lYears, m: bd.mYears, fuzzy: pb.precision !== 'day' || pe.precision !== 'day', neg: pe.abs < pb.abs } }
+  }
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <select value={ch} onChange={e => setCh(e.target.value)} style={inputStyle}>
+          <option value="">Character…</option>{chars.map(c => <option key={c.id} value={c.id}>{c.display_name || c.name}</option>)}
+        </select>
+        <select value={ev} onChange={e => setEv(e.target.value)} style={inputStyle}>
+          <option value="">Event…</option>{events.map(e => <option key={e.id} value={e.id}>{e.name} ({e.date_hc})</option>)}
+        </select>
+      </div>
+      {out && (out.err
+        ? <div style={{ marginTop: 8, fontSize: '0.77em', color: '#ff3355' }}>{out.err}</div>
+        : <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)', fontSize: '0.85em' }}>
+            {out.neg ? 'Event is BEFORE this birthday — check the dates.' : <>Age at event: <b style={{ color: 'var(--cl)' }}>{out.l} Lajen years</b> (≈ <b style={{ color: 'var(--ct)' }}>{out.m} Mnaerah years</b>)</>}
+            {out.fuzzy && <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginTop: 4 }}>⚠ Fuzzy date somewhere — approximate.</div>}
+          </div>)}
+      {chars.length === 0 && <div style={{ marginTop: 8, fontSize: '0.77em', color: 'var(--mut)' }}>No characters have a Lajen birthday set yet.</div>}
+    </div>
+  )
+}
+
+function DateTimeTool({ db }) {
+  const [pane, setPane] = useState('convert')
+  const panes = [['convert', 'Convert'], ['elapsed', 'Time Elapsed'], ['crossed', 'Crossed-World Lifetime'], ['age', 'Age at Event']]
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+        {panes.map(([id, l]) => <button key={id} style={chipStyle(pane === id)} onClick={() => setPane(id)}>{l}</button>)}
+      </div>
+      <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Anchor: Akatriluna 1, HC 320 = June 21, 1554 AD · {RATIO} Lajen years = 1 Mnaerah year</div>
+      {pane === 'convert' && <ConvertPane />}
+      {pane === 'elapsed' && <ElapsedPane />}
+      {pane === 'crossed' && <CrossedPane />}
+      {pane === 'age' && <AgePane db={db} />}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════
+// IX'CITLATL CONVERTER — real logic for ALL names; canon annotated
+// ══════════════════════════════════════════════════════════════════
+function IxCitlatlTool({ db }) {
+  const [name, setName] = useState('')
+  const [gender, setGender] = useState('female')
+  const [active, setActive] = useState(() => new Set(LANG_SYSTEMS.map(s => s.label)))
+  const [results, setResults] = useState(null)
+  const [expanded, setExpanded] = useState(false)
+  const [history, setHistory] = useState(() => { try { return JSON.parse(db.getSetting?.('ixc_history') || '[]') } catch { return [] } })
+
+  function toggle(l) { const n = new Set(active); n.has(l) ? n.delete(l) : n.add(l); setActive(n) }
+  function convert() {
+    const nm = name.trim(); if (!nm) return
+    const rows = LANG_SYSTEMS.filter(s => active.has(s.label)).map(s => ({ system: s.label, out: getResult(nm, gender, s) }))
+    const canon = CANON_OVERRIDES[nm.toLowerCase() + '_' + gender]
+    setResults({ name: nm, gender, rows, canon }); setExpanded(false)
+    const h = [{ name: nm, gender, when: new Date().toISOString() }, ...history.filter(x => x.name !== nm)].slice(0, 20)
+    setHistory(h); db.saveSetting?.('ixc_history', JSON.stringify(h))
+  }
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && convert()} placeholder="Name to convert" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+        <select value={gender} onChange={e => setGender(e.target.value)} style={inputStyle}>
+          <option value="female">Female — Ix</option><option value="male">Male — Ah</option>
+        </select>
+        <button className="btn btn-primary btn-sm" style={{ background: 'var(--cl)', color: '#000' }} onClick={convert}>Convert</button>
+      </div>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+        {LANG_SYSTEMS.map(s => <span key={s.label} style={chipStyle(active.has(s.label))} onClick={() => toggle(s.label)}>{s.label}</span>)}
+      </div>
+      {results && (
+        <div style={{ padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
+          {results.canon && (
+            <div style={{ fontSize: '0.77em', color: 'var(--cca)', marginBottom: 6, padding: '4px 8px', background: 'rgba(255,170,51,.1)', borderRadius: 6, display: 'inline-block' }}>
+              📌 Canon: <b>{results.canon}</b> — table below shows raw system output for comparison.
+            </div>
+          )}
+          <div style={{ fontSize: '0.85em', cursor: 'pointer' }} onClick={() => setExpanded(x => !x)}>
+            <b style={{ color: 'var(--cl)' }}>{results.name}</b> → {results.rows.slice(0, 3).map(r => r.out).join(' · ')}
+            <span style={{ color: 'var(--mut)' }}> … {expanded ? '▲ collapse' : `▼ all ${results.rows.length} systems`}</span>
+          </div>
+          {expanded && (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85em', marginTop: 8 }}>
+              <tbody>{results.rows.map((r, i) => (
+                <tr key={r.system} style={{ borderTop: '1px solid rgba(255,255,255,.05)', background: i % 2 ? 'rgba(255,255,255,.02)' : 'transparent' }}>
+                  <td style={{ padding: '4px 6px', color: 'var(--dim)' }}>{r.system}</td>
+                  <td style={{ padding: '4px 6px', color: results.gender === 'female' ? 'var(--cl)' : 'var(--cca)', fontWeight: 600 }}>{r.out}</td>
+                  <td style={{ padding: '4px 6px', width: 30 }}><button onClick={() => speak(r.out, 'es-MX')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button></td>
+                </tr>))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+      {history.length > 0 && (
+        <details style={{ marginTop: 8 }}><summary style={{ fontSize: '0.72em', color: 'var(--mut)', cursor: 'pointer' }}>History ({history.length})</summary>
+          <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginTop: 4 }}>{history.map(h => <span key={h.when} style={{ marginRight: 10, cursor: 'pointer' }} onClick={() => setName(h.name)}>{h.name}</span>)}</div>
+        </details>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PRONUNCIATION HELPER — three tabs, no external services
+// ══════════════════════════════════════════════════════════════════
+function PronunciationTool() {
+  const [tab, setTab] = useState('ixc')
+  const [word, setWord] = useState('')
+  const [ixcSys, setIxcSys] = useState(LANG_SYSTEMS[0].label)
+  const inWorld = PRONUN_LANGS.filter(l => l.inWorld)
+  const realWorld = PRONUN_LANGS.filter(l => !l.inWorld)
+  const [lajenSel, setLajenSel] = useState(inWorld[0]?.id || '')
+  const [realSel, setRealSel] = useState(() => new Set())
+  const toggleReal = id => { const n = new Set(realSel); n.has(id) ? n.delete(id) : n.add(id); setRealSel(n) }
+  const w = word.trim()
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+        {[['ixc', "Ix'Citlatl"], ['lajen', 'Lajen Languages'], ['real', 'Real-World']].map(([id, l]) =>
+          <button key={id} style={chipStyle(tab === id)} onClick={() => setTab(id)}>{l}</button>)}
+      </div>
+      <input value={word} onChange={e => setWord(e.target.value)} placeholder="Word or name…" style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', marginBottom: 8 }} />
+      {tab === 'ixc' && (
+        <div>
+          <select value={ixcSys} onChange={e => setIxcSys(e.target.value)} style={{ ...inputStyle, marginBottom: 8 }}>
+            {LANG_SYSTEMS.map(s => <option key={s.label}>{s.label}</option>)}
           </select>
+          {w && (() => { const s = LANG_SYSTEMS.find(x => x.label === ixcSys); const out = s ? s.convert(w) : w; return (
+            <div style={{ padding: '8px 12px', background: 'var(--card)', borderRadius: 8, fontSize: '0.92em' }}>
+              <b style={{ color: 'var(--cwr)' }}>{out}</b>
+              <button onClick={() => speak(out, 'es-MX')} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8 }}>🔊</button>
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 3 }}>Audio uses a Mexican-Spanish voice as the closest real-world approximation.</div>
+            </div>) })()}
         </div>
-        <button className="btn btn-primary btn-sm"
-          style={{ background: 'var(--cwr)', color: '#000', alignSelf: 'flex-end' }}
-          onClick={generate} disabled={loading}>
-          {loading ? '…' : 'Generate'}
-        </button>
+      )}
+      {tab === 'lajen' && (
+        <div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+            {inWorld.map(l => <span key={l.id} style={chipStyle(lajenSel === l.id)} onClick={() => setLajenSel(l.id)}>{l.label}{l.confirmed ? '' : ' ⚠'}</span>)}
+          </div>
+          {(() => { const l = inWorld.find(x => x.id === lajenSel); if (!l) return null; return (
+            <div style={{ padding: '8px 12px', background: 'var(--card)', borderRadius: 8, fontSize: '0.85em' }}>
+              {!l.confirmed && <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginBottom: 4 }}>⚠ Phonology not yet confirmed for this language — provisional.</div>}
+              {l.note && <div style={{ color: 'var(--dim)', marginBottom: 6 }}>{l.note}</div>}
+              {w && <div><b style={{ color: 'var(--cwr)' }}>{(l.phonetic || (x => x))(w)}</b>
+                <button onClick={() => speak((l.phonetic || (x => x))(w), l.bcp || 'en-GB')} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8 }}>🔊</button></div>}
+            </div>) })()}
+        </div>
+      )}
+      {tab === 'real' && (
+        <div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+            {realWorld.map(l => <span key={l.id} style={chipStyle(realSel.has(l.id))} onClick={() => toggleReal(l.id)}>{l.label}</span>)}
+          </div>
+          {w && [...realSel].map(id => { const l = realWorld.find(x => x.id === id); if (!l) return null; const out = (l.phonetic || (x => x))(w); return (
+            <div key={id} style={{ padding: '6px 12px', background: 'var(--card)', borderRadius: 8, fontSize: '0.85em', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span><span style={{ color: 'var(--mut)', fontSize: '0.85em' }}>{l.label}: </span><b style={{ color: 'var(--cwr)' }}>{out}</b></span>
+              <button onClick={() => speak(w, l.bcp || 'en-GB')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
+            </div>) })}
+          {w && realSel.size === 0 && <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>Pick one or more languages above.</div>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCOTS DIALOGUE — Silvia (educated Edinburgh) · Elizabeth (broad rural)
+// ══════════════════════════════════════════════════════════════════
+const SCOTS_SHARED = [
+  [/\byes\b/gi, 'aye'], [/\bno\b/gi, 'nae'], [/\bknow\b/gi, 'ken'], [/\bknows\b/gi, 'kens'],
+  [/\bto\b/gi, 'tae'], [/\bfrom\b/gi, 'fae'], [/\bsmall\b/gi, 'wee'], [/\blittle\b/gi, 'wee'],
+  [/\bdon't\b/gi, "dinnae"], [/\bdoesn't\b/gi, "disnae"], [/\bcan't\b/gi, 'cannae'], [/\bwon't\b/gi, "willnae"],
+  [/\bdidn't\b/gi, "didnae"], [/\bisn't\b/gi, "isnae"], [/\bwasn't\b/gi, "wisnae"], [/\bnot\b/gi, "no'"],
+  [/\bchild\b/gi, 'bairn'], [/\bchildren\b/gi, 'bairns'], [/\bremember\b/gi, 'mind'],
+]
+const SCOTS_BROAD = [
+  [/\bI\b/g, 'Ah'], [/\byou\b/gi, 'ye'], [/\byour\b/gi, 'yer'], [/\bout\b/gi, 'oot'], [/\babout\b/gi, 'aboot'],
+  [/\bdown\b/gi, 'doon'], [/\bhouse\b/gi, 'hoose'], [/\baround\b/gi, 'aroond'], [/\bnight\b/gi, 'nicht'],
+  [/\bright\b/gi, 'richt'], [/\bgive\b/gi, 'gie'], [/\bgo\b/gi, 'gang'], [/\bgoing\b/gi, 'gaun'],
+  [/\baway\b/gi, "awa'"], [/\bold\b/gi, 'auld'], [/\bcold\b/gi, 'cauld'], [/\bhead\b/gi, 'heid'],
+  [/\bdead\b/gi, 'deid'], [/\bhave\b/gi, 'hae'], [/\bwho\b/gi, 'wha'], [/\bwhere\b/gi, 'whaur'],
+  [/\bone\b/gi, 'ane'], [/\btwo\b/gi, 'twa'], [/\bmore\b/gi, 'mair'], [/\bwell\b/gi, 'weel'],
+  [/\bstone\b/gi, 'stane'], [/\bhome\b/gi, 'hame'], [/ing\b/g, "in'"],
+]
+function keepCase(orig, rep) { return orig[0] === orig[0].toUpperCase() ? rep[0].toUpperCase() + rep.slice(1) : rep }
+function scotsify(text, rules) {
+  let t = text
+  rules.forEach(([re, rep]) => { t = t.replace(re, m => keepCase(m, rep)) })
+  return t
+}
+function ScotsDialogueTool() {
+  const [text, setText] = useState('')
+  const [silvia, setSilvia] = useState(true)
+  const [liz, setLiz] = useState(true)
+  const outS = silvia && text.trim() ? scotsify(text, SCOTS_SHARED) : null
+  const outL = liz && text.trim() ? scotsify(text, [...SCOTS_SHARED, ...SCOTS_BROAD]) : null
+  const copy = t => { try { navigator.clipboard.writeText(t) } catch {} }
+  const card = (label, out, col) => (
+    <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: '0.72em', color: col, fontWeight: 700 }}>{label}</span>
+        <button onClick={() => copy(out)} style={{ background: 'none', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--dim)', cursor: 'pointer', fontSize: '0.69em', padding: '1px 7px' }}>copy</button>
       </div>
-
-      {sys.id === 'manual' && (
-        <div className="field" style={{ marginBottom: 8 }}>
-          <label>Type pronunciation</label>
-          <input value={manualOverride} onChange={e => setManualOverride(e.target.value)}
-            placeholder="e.g. eesh-eh-lah-OH-yen" />
+      <div style={{ fontSize: '0.92em', fontStyle: 'italic' }}>{out}</div>
+    </div>
+  )
+  return (
+    <div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Type or paste plain English dialogue…" rows={3}
+        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
+      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+        <span style={chipStyle(silvia)} onClick={() => setSilvia(x => !x)}>Silvia — educated Edinburgh</span>
+        <span style={chipStyle(liz)} onClick={() => setLiz(x => !x)}>Elizabeth — younger, broader, rural</span>
+      </div>
+      {outS && card('SILVIA MacLEOD', outS, 'var(--ct)')}
+      {outL && card('ELIZABETH MacLEOD', outL, 'var(--cca)')}
+      <details style={{ marginTop: 8 }}>
+        <summary style={{ fontSize: '0.72em', color: 'var(--mut)', cursor: 'pointer' }}>Scots rules reference</summary>
+        <div style={{ fontSize: '0.72em', color: 'var(--dim)', marginTop: 4, columns: 2 }}>
+          <div style={{ fontWeight: 700, color: 'var(--ct)' }}>Both voices:</div>
+          {SCOTS_SHARED.map(([re, rep], i) => <div key={i}>{re.source.replace(/\\b/g, '')} → {rep}</div>)}
+          <div style={{ fontWeight: 700, color: 'var(--cca)', marginTop: 4 }}>Elizabeth adds:</div>
+          {SCOTS_BROAD.map(([re, rep], i) => <div key={i}>{re.source.replace(/\\b/g, '')} → {rep}</div>)}
         </div>
-      )}
-
-      {!sys.confirmed && system !== 'manual' && system !== 'all' && (
-        <div style={{ fontSize: '0.77em', color: 'var(--sp)', padding: '4px 8px', background: 'rgba(255,204,0,.07)',
-          borderRadius: 4, marginBottom: 8, border: '1px solid rgba(255,204,0,.2)' }}>
-          ⚠ {sys.label} phonology not yet confirmed — output is approximate.
-          {sys.realBase && <span> Translation via MyMemory API.</span>}
-        </div>
-      )}
-
-      {results.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          {results.map(r => (
-            <div key={r.system} style={{ padding: '10px 12px', background: 'var(--sf)',
-              border: '1px solid var(--brd)', borderRadius: 'var(--r)', marginBottom: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap' }}>
-                <div style={{ minWidth: 110 }}>
-                  <div style={{ fontSize: '0.69em', color: 'var(--mut)', textTransform: 'uppercase',
-                    letterSpacing: '.05em', marginBottom: 2 }}>{r.system}</div>
-                  {r.translated && (
-                    <div style={{ fontSize: '0.69em', color: 'var(--dim)', fontStyle: 'italic' }}>
-                      → {r.translated} (translated)
-                    </div>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '1.31em', fontFamily: "'Cinzel',serif",
-                    color: 'var(--cwr)', fontWeight: 700 }}>{r.phonetic}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15em' }}
-                    onClick={() => speak(r.phonetic)} title="Hear it">🔊</button>
-                  <button style={{ background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)',
-                    cursor: 'pointer', fontSize: '0.69em', padding: '2px 6px', borderRadius: 3 }}
-                    onClick={() => navigator.clipboard?.writeText(r.phonetic)}>Copy</button>
-                </div>
-              </div>
-              {!r.confirmed && (
-                <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
-                  ⚠ Unconfirmed phonology
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Ix'Citlatl reference guide */}
-      <details style={{ marginTop: 10 }}>
-        <summary style={{ fontSize: '0.77em', color: 'var(--dim)', cursor: 'pointer', userSelect: 'none' }}>
-          📖 Ix'Citlatl Sound Guide
-        </summary>
-        <div style={{ marginTop: 6, padding: 8, background: 'var(--card)', borderRadius: 'var(--r)', fontSize: '0.77em', lineHeight: 1.8 }}>
-          {[["Ix'","eesh (prefix)"],["x","sh (as in 'shell')"],["tl","tl as one sound (like in 'Nahuatl')"],["tz","ts (as in 'bits')"],["hu","w"],["'","glottal stop (like 'uh-oh')"],["c (before a/o)","k"],["c (before e/i)","s"],["ll","long L"]].map(([sym,val]) => (
-            <div key={sym} style={{ display: 'flex', gap: 8 }}>
-              <span style={{ color: 'var(--cl)', minWidth: 80, fontFamily: "'Cinzel',serif" }}>{sym}</span>
-              <span style={{ color: 'var(--dim)' }}>{val}</span>
-            </div>
-          ))}
-        </div>
+        <div style={{ fontSize: '0.66em', color: 'var(--mut)', marginTop: 4 }}>⚠ Rule-based approximation for drafting — not authentic dialect generation. Silvia keeps standard spellings with lighter Scots vocabulary; Elizabeth applies broader sound shifts.</div>
       </details>
     </div>
   )
 }
 
-
-export default function Tools({ db }) {
-  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
-  const [lYear, setLYear] = useState(320)
-  const [lMonth, setLMonth] = useState(1)
-  const [lDay, setLDay] = useState(1)
-  const [mYear, setMYear] = useState('')
-  const [eC1, setEC1] = useState('lajen')
-  const [eY1, setEY1] = useState(1)
-  const [eC2, setEC2] = useState('mnaerah')
-  const [eY2, setEY2] = useState(1550)
-  const [eEv1, setEEv1] = useState('')
-  const [eEv2, setEEv2] = useState('')
-  const [elapResult, setElapResult] = useState(null)
-  const [aCH, setACH] = useState('')
-  const [aEV, setAEV] = useState('')
-  const [aBY, setABY] = useState('')
-  const [aEY, setAEY] = useState('')
-  const [tuAmt, setTuAmt] = useState(1)
-  const [tuFrom, setTuFrom] = useState('days')
-
-  const events = db.db.timeline || []
-  const chars = db.db.characters || []
-
-  const l2m = useCallback(() => {
-    const totalLDays = (lYear - 1) * LDAYS + (lMonth - 1) * LDPM + (lDay - 1)
-    const mYearsFromHC1 = totalLDays / (RATIO * LDAYS)
-    const mYr = Math.round(1516.5 + mYearsFromHC1)
-    return { totalLDays, mYearsFromHC1, mYear: mYr, month: MONTHS[lMonth - 1] }
-  }, [lYear, lMonth, lDay])
-
-  const m2l = useCallback(() => {
-    const my = parseFloat(mYear)
-    if (isNaN(my)) return null
-    const mYearsFromHC = my - 1516.5
-    const lYears = mYearsFromHC * RATIO
-    const lYr = Math.round(lYears)
-    const totalLDays = Math.round(lYears * LDAYS)
-    const lMonthIdx = Math.floor((Math.abs(totalLDays) % LDAYS) / LDPM)
-    const monthName = MONTHS[Math.abs(lMonthIdx) % 12] || MONTHS[0]
-    return { mYearsFromHC, lYear: lYr, totalLDays, monthName, my }
-  }, [mYear])
-
-  function calcElapsed() {
-    let y1 = parseFloat(eY1), y2 = parseFloat(eY2)
-    if (eEv1) {
-      const ev = events.find(e => e.id === eEv1)
-      if (ev) { const m = (ev.date_mnaerah||ev.date_hc||'').match(/-?\d+(\.\d+)?/); if (m) y1 = parseFloat(m[0]) }
-    }
-    if (eEv2) {
-      const ev = events.find(e => e.id === eEv2)
-      if (ev) { const m = (ev.date_mnaerah||ev.date_hc||'').match(/-?\d+(\.\d+)?/); if (m) y2 = parseFloat(m[0]) }
-    }
-    const mY1 = eC1==='mnaerah' ? y1 : (y1/RATIO)+1516.5
-    const mY2 = eC2==='mnaerah' ? y2 : (y2/RATIO)+1516.5
-    const mElapsed = Math.abs(mY2-mY1)
-    setElapResult({ mElapsed, lElapsed: mElapsed*RATIO })
-  }
-
-  function calcAge() {
-    let by = parseFloat(aBY), ey = parseFloat(aEY)
-    if (aCH) {
-      const ch = chars.find(c => c.id === aCH)
-      if (ch && ch.birthday) { const m = ch.birthday.match(/-?\d{4}/); if (m) by = parseFloat(m[0]) }
-    }
-    if (aEV) {
-      const ev = events.find(e => e.id === aEV)
-      if (ev) { const m = (ev.date_mnaerah||'').match(/-?\d+/)||[]; if (m[0]) ey = parseFloat(m[0]) }
-    }
-    if (!by || !ey) return null
-    return { age: ey - by, lAge: (ey - by) * RATIO }
-  }
-
-  const toMin = { minutes:1, hours:60, days:1440, weeks:10080, months30:43200, months365:43829, years360:518400, years365:525960, decades:5259600, centuries:52596000 }
-  const mins = tuAmt * (toMin[tuFrom]||1440)
-  function fmtN(n) {
-    if (n >= 1e9) return (n/1e9).toFixed(2)+' billion'
-    if (n >= 1e6) return (n/1e6).toFixed(2)+' million'
-    if (n >= 10000) return Math.round(n).toLocaleString()
-    if (n >= 10) return n.toFixed(1)
-    return n.toFixed(2)
-  }
-  const unitRows = [
-    ['Minutes',mins],['Hours',mins/60],['Days',mins/1440],['Weeks',mins/10080],
-    ['Months (30-day)',mins/43200],['Years (Lajen / 360-day)',mins/518400],
-    ['Years (Mnaerah / 365.25-day)',mins/525960],['Decades',mins/5259600],['Centuries',mins/52596000]
-  ]
-
-  const l2mResult = l2m()
-  const ageResult = calcAge()
-  const m2lResult = m2l()
-
-  function scrollTo(id) {
-    const el = document.getElementById('tool-' + id)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
+// ══════════════════════════════════════════════════════════════════
+// UNIT CONVERTER — small & simple
+// ══════════════════════════════════════════════════════════════════
+const UNITS = {
+  Length: { m: 1, km: 1000, cm: 0.01, ft: 0.3048, in: 0.0254, mi: 1609.34, yd: 0.9144, league: 4828 },
+  Mass: { kg: 1, g: 0.001, lb: 0.4536, oz: 0.02835, stone: 6.3503 },
+  Volume: { L: 1, mL: 0.001, gal: 3.785, pint: 0.4732, cup: 0.2366 },
+  Time: { 'Mnaerah day': 1, 'Mnaerah year': 365.25, 'Lajen day (calendar-mapped)': 0.11909, 'Lajen month': 3.5727, 'Lajen year': 42.87 },
+}
+function UnitsTool() {
+  const [cat, setCat] = useState('Length')
+  const units = Object.keys(UNITS[cat])
+  const [from, setFrom] = useState(units[0]); const [to, setTo] = useState(units[1] || units[0])
+  const [val, setVal] = useState('1')
+  const u = UNITS[cat]; const f = u[from] !== undefined ? from : units[0]; const t = u[to] !== undefined ? to : units[0]
+  const out = parseFloat(val) ? (parseFloat(val) * u[f] / u[t]) : null
   return (
-    <div>
-      {/* ── Title ── */}
-      <div style={{ fontFamily:"'Cinzel',serif", fontSize: '1.15em', color:tabColor, marginBottom:10 }}>🔧 Tools</div>
-
-      {/* ── Quick-nav bar ── */}
-      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:16, padding:'8px 10px',
-        background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--rl)' }}>
-        <span style={{ fontSize: '0.69em', color:'var(--dim)', alignSelf:'center', marginRight:4, textTransform:'uppercase', letterSpacing:'.04em' }}>Jump to:</span>
-        {TOOLS.map(t => (
-          <button key={t.id}
-            style={{ fontSize: '0.77em', padding:'3px 10px', borderRadius:12, background:'none',
-              border:`1px solid ${t.color}44`, color:t.color, cursor:'pointer', whiteSpace:'nowrap',
-              transition:'.2s' }}
-            onMouseDown={e => e.currentTarget.style.background = `${t.color}22`}
-            onMouseUp={e => e.currentTarget.style.background = 'none'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => scrollTo(t.id)}>
-            {t.emoji} {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Two-column grid ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:10 }}>
-
-        {/* ── Lajen → Mnaerah ── */}
-        <div className="tool-card" id="tool-l2m">
-          <h3 style={{ color:'var(--cca)' }}>🌍 Lajen → Mnaerah</h3>
-          <div className="field-row">
-            <div className="field"><label>Lajen Year (HC)</label>
-              <input type="number" value={lYear} onChange={e => setLYear(parseInt(e.target.value)||0)} />
-            </div>
-            <div className="field"><label>Lajen Month</label>
-              <select value={lMonth} onChange={e => setLMonth(parseInt(e.target.value))}>
-                {MONTHS.map((m,i) => <option key={i} value={i+1}>{m.num}. {m.n}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="field"><label>Lajen Day (1–30)</label>
-            <input type="number" value={lDay} min={1} max={30} onChange={e => setLDay(parseInt(e.target.value)||1)} />
-          </div>
-          <div className="calc-result">
-            <Row label="Lajen Date" value={`Year ${lYear} HC, ${MONTHS[lMonth-1].n} Day ${lDay}`} />
-            <Row label="Total Lajen Days from HC 1" value={l2mResult.totalLDays.toLocaleString()} />
-            <Row label="Approximate Mnaerah Year" value={`~${l2mResult.mYear} AD`} />
-            <Row label="Season" value={MONTHS[lMonth-1].ssn} />
-          </div>
-        </div>
-
-        {/* ── Mnaerah → Lajen ── */}
-        <div className="tool-card" id="tool-m2l">
-          <h3 style={{ color:'var(--ct)' }}>🌙 Mnaerah → Lajen</h3>
-          <div className="field"><label>Mnaerah Year (AD, negative for BC)</label>
-            <input type="number" value={mYear} placeholder="e.g. 1554 or -2500" onChange={e => setMYear(e.target.value)} />
-          </div>
-          {m2lResult && (
-            <div className="calc-result">
-              <Row label="Mnaerah Year" value={m2lResult.my <= 0 ? Math.abs(m2lResult.my)+' BC' : m2lResult.my+' AD'} />
-              <Row label="Lajen Year (HC)" value={m2lResult.lYear > 0 ? `Year ${m2lResult.lYear} HC` : `Year ${Math.abs(m2lResult.lYear)} before HC 1`} />
-              <Row label="Approximate Lajen Month" value={`${m2lResult.monthName.n} (${m2lResult.monthName.ssn})`} />
-            </div>
-          )}
-        </div>
-
-        {/* ── Time Elapsed ── */}
-        <div className="tool-card" id="tool-elapsed">
-          <h3 style={{ color:'var(--cq)' }}>⏱ Time Elapsed</h3>
-          <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:8 }}>Pick events from the dropdown or enter years manually.</div>
-          <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:4, fontWeight:600 }}>START</div>
-          <div className="field"><label>Pick event (optional)</label>
-            <select value={eEv1} onChange={e => setEEv1(e.target.value)}>
-              <option value="">— Manual entry —</option>
-              {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name} ({ev.date_mnaerah||ev.date_hc||''})</option>)}
-            </select>
-          </div>
-          {!eEv1 && (
-            <div className="field-row">
-              <div className="field"><label>Calendar</label>
-                <select value={eC1} onChange={e => setEC1(e.target.value)}>
-                  <option value="lajen">Lajen (HC)</option>
-                  <option value="mnaerah">Mnaerah (AD)</option>
-                </select>
-              </div>
-              <div className="field"><label>Year</label>
-                <input type="number" value={eY1} onChange={e => setEY1(parseFloat(e.target.value)||0)} />
-              </div>
-            </div>
-          )}
-          <div style={{ fontSize: '0.77em', color:'var(--cca)', marginBottom:4, fontWeight:600, marginTop:8 }}>END</div>
-          <div className="field"><label>Pick event (optional)</label>
-            <select value={eEv2} onChange={e => setEEv2(e.target.value)}>
-              <option value="">— Manual entry —</option>
-              {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name} ({ev.date_mnaerah||ev.date_hc||''})</option>)}
-            </select>
-          </div>
-          {!eEv2 && (
-            <div className="field-row">
-              <div className="field"><label>Calendar</label>
-                <select value={eC2} onChange={e => setEC2(e.target.value)}>
-                  <option value="mnaerah">Mnaerah (AD)</option>
-                  <option value="lajen">Lajen (HC)</option>
-                </select>
-              </div>
-              <div className="field"><label>Year</label>
-                <input type="number" value={eY2} onChange={e => setEY2(parseFloat(e.target.value)||0)} />
-              </div>
-            </div>
-          )}
-          <button className="btn btn-primary btn-sm" style={{ background:'var(--cq)' }} onClick={calcElapsed}>Calculate</button>
-          {elapResult && (
-            <div className="calc-result" style={{ marginTop:8 }}>
-              <Row label="Mnaerah time elapsed" value={`~${elapResult.mElapsed.toFixed(2)} years (~${Math.round(elapResult.mElapsed*MDAYS).toLocaleString()} days)`} />
-              <Row label="Lajen time elapsed" value={`~${elapResult.lElapsed.toFixed(2)} years (~${Math.round(elapResult.lElapsed*LDAYS).toLocaleString()} days)`} />
-              <Row label="Ratio" value={`1 Mnaerah year = ${RATIO} Lajen years`} />
-            </div>
-          )}
-        </div>
-
-        {/* ── Character Age at Event ── */}
-        <div className="tool-card" id="tool-age">
-          <h3 style={{ color:'var(--cc)' }}>🎂 Character Age at Event</h3>
-          <div className="field"><label>Character</label>
-            <select value={aCH} onChange={e => setACH(e.target.value)}>
-              <option value="">— Pick character —</option>
-              {[...chars].sort((a,b) => (a.display_name||a.name||'').localeCompare(b.display_name||b.name||'')).map(c => (
-                <option key={c.id} value={c.id}>{c.display_name||c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field"><label>Event</label>
-            <select value={aEV} onChange={e => setAEV(e.target.value)}>
-              <option value="">— Pick event —</option>
-              {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name} ({ev.date_mnaerah||ev.date_hc||''})</option>)}
-            </select>
-          </div>
-          <div className="field-row">
-            <div className="field"><label>Or: Birth Year (Mnaerah)</label>
-              <input type="number" value={aBY} placeholder="e.g. 1538" onChange={e => setABY(e.target.value)} />
-            </div>
-            <div className="field"><label>Or: Event Year (Mnaerah)</label>
-              <input type="number" value={aEY} placeholder="e.g. 1554" onChange={e => setAEY(e.target.value)} />
-            </div>
-          </div>
-          {ageResult ? (
-            <div className="calc-result">
-              <Row label="Mnaerah age at event" value={`${ageResult.age.toFixed(1)} years`} />
-              <Row label="Equivalent Lajen time" value={`${ageResult.lAge.toFixed(1)} Lajen years`} />
-            </div>
-          ) : (
-            <div style={{ fontSize: '0.77em', color:'var(--mut)', marginTop:6 }}>Pick character + event, or enter years manually.</div>
-          )}
-        </div>
-
-        {/* ── Unit Converter ── */}
-        <div className="tool-card" id="tool-units">
-          <h3 style={{ color:'var(--csp)' }}>📐 Generic Time Unit Converter</h3>
-          <div className="field-row">
-            <div className="field"><label>Amount</label>
-              <input type="number" value={tuAmt} onChange={e => setTuAmt(parseFloat(e.target.value)||0)} />
-            </div>
-            <div className="field"><label>From</label>
-              <select value={tuFrom} onChange={e => setTuFrom(e.target.value)}>
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-                <option value="days">Days</option>
-                <option value="weeks">Weeks</option>
-                <option value="months30">Months (30-day)</option>
-                <option value="months365">Months (30.44-day avg)</option>
-                <option value="years360">Years (360-day / Lajen)</option>
-                <option value="years365">Years (365.25-day / Mnaerah)</option>
-                <option value="decades">Decades</option>
-                <option value="centuries">Centuries</option>
-              </select>
-            </div>
-          </div>
-          <div className="calc-result">
-            {unitRows.map(([label, val]) => <Row key={label} label={label} value={fmtN(val)} />)}
-          </div>
-        </div>
-
-        {/* ── Birthday Backfill ── */}
-        <div className="tool-card" id="tool-backfill">
-          <h3 style={{ color:'var(--cfl)' }}>🗓 Backfill Birthday Timeline Entries</h3>
-          <div style={{ fontSize: '0.77em', color:'var(--dim)', marginBottom:10, lineHeight:1.5 }}>
-            Auto-creates a timeline entry for every character who has a Lajen birthday set,
-            but doesn't yet have a matching "Birthday: [Name]" event in the timeline.
-            Safe to run multiple times — won't create duplicates.
-          </div>
-          <BackfillTool db={db} />
-        </div>
-
-      </div>{/* end two-column grid */}
-
-      {/* ── Full-width converters ── */}
-      <div style={{ marginTop:10 }}>
-        <IxCitlatlTool />
-        <PronunciationTool />
-        <ScotsDialogueTool />
-        <ImageLibraryTool db={db} />
-      </div>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      <select value={cat} onChange={e => { setCat(e.target.value); const us = Object.keys(UNITS[e.target.value]); setFrom(us[0]); setTo(us[1] || us[0]) }} style={inputStyle}>
+        {Object.keys(UNITS).map(c => <option key={c}>{c}</option>)}
+      </select>
+      <input type="number" value={val} onChange={e => setVal(e.target.value)} style={{ ...inputStyle, width: 90 }} />
+      <select value={f} onChange={e => setFrom(e.target.value)} style={inputStyle}>{units.map(x => <option key={x}>{x}</option>)}</select>
+      <span style={{ color: 'var(--mut)' }}>→</span>
+      <select value={t} onChange={e => setTo(e.target.value)} style={inputStyle}>{units.map(x => <option key={x}>{x}</option>)}</select>
+      {out !== null && <b style={{ color: 'var(--csp)' }}>{out.toLocaleString(undefined, { maximumFractionDigits: 4 })} {t}</b>}
+      {cat === 'Time' && <div style={{ width: '100%', fontSize: '0.66em', color: 'var(--mut)' }}>Lajen units use the calendar mapping ({RATIO} LY = 1 MY), not experienced clock time — see Date & Time tool note.</div>}
     </div>
   )
 }
 
-// ── Scots Dialogue Converter ──────────────────────────────────────
-const SCOTS_MAP = [
-  // Modal verbs
-  [/\bwill not\b/gi,'willnae'],[/\bwould not\b/gi,'woudnae'],[/\bcannot\b/gi,'cannae'],
-  [/\bcan't\b/gi,'cannae'],[/\bwon't\b/gi,'willnae'],[/\bwouldn't\b/gi,'woudnae'],
-  [/\bdon't\b/gi,'dinnae'],[/\bdo not\b/gi,'dinnae'],[/\bdoes not\b/gi,'disnae'],
-  [/\bdoesn't\b/gi,'disnae'],[/\bdidn't\b/gi,'didnae'],[/\bdid not\b/gi,'didnae'],
-  [/\bisn't\b/gi,'isnae'],[/\bis not\b/gi,'isnae'],[/\baren't\b/gi,'arnae'],
-  [/\bwasn't\b/gi,'wisnae'],[/\bwere not\b/gi,'werenae'],[/\bweren't\b/gi,'werenae'],
-  [/\bhaven't\b/gi,'huvnae'],[/\bhave not\b/gi,'huvnae'],[/\bhasn't\b/gi,'husnae'],
-  [/\bshouldn't\b/gi,'shouldnae'],[/\bshould not\b/gi,'shouldnae'],
-  [/\bmust not\b/gi,'mustnnae'],[/\bmustn't\b/gi,'mustnnae'],
-  // Pronouns + verbs
-  [/\bI am\b/gi,"Ah'm"],[/\bI have\b/gi,"Ah've"],[/\bI will\b/gi,"Ah'll"],
-  [/\bI would\b/gi,"Ah'd"],[/\bI\b/g,'Ah'],
-  [/\byou are\b/gi,"ye're"],[/\byou have\b/gi,"ye've"],[/\byou will\b/gi,"ye'll"],
-  [/\byou would\b/gi,"ye'd"],[/\byou\b/gi,'ye'],
-  [/\bthey are\b/gi,"they're"],[/\bthey have\b/gi,"they've"],
-  [/\bwe are\b/gi,"we're"],[/\bwe have\b/gi,"we've"],
-  // Common words
-  [/\bthe\b/gi,'the'],[/\bthis\b/gi,'this'],[/\bthat\b/gi,'that'],
-  [/\bwhat\b/gi,'whit'],[/\bwhere\b/gi,'whaur'],[/\bwho\b/gi,'wha'],
-  [/\bwhy\b/gi,'why'],[/\bhow\b/gi,'hoo'],[/\bwhen\b/gi,'whan'],
-  [/\bhere\b/gi,'here'],[/\bthere\b/gi,'thare'],[/\bnow\b/gi,'noo'],
-  [/\bjust\b/gi,'juist'],[/\bonly\b/gi,'anly'],[/\bever\b/gi,'ever'],
-  [/\bover\b/gi,'ower'],[/\bunder\b/gi,'unner'],[/\babout\b/gi,'aboot'],
-  [/\bafter\b/gi,'efter'],[/\bbefore\b/gi,'afore'],[/\bbetween\b/gi,'atween'],
-  [/\baway\b/gi,'awa'],[/\bback\b/gi,'back'],[/\bdown\b/gi,'doon'],
-  [/\bup\b/gi,'up'],[/\bout\b/gi,'oot'],[/\bin\b/gi,'in'],
-  [/\bwith\b/gi,'wi'],[/\bwithout\b/gi,'withoot'],[/\bfor\b/gi,'fer'],
-  [/\bfrom\b/gi,'frae'],[/\binto\b/gi,'intae'],[/\bonto\b/gi,'ontae'],
-  [/\bnot\b/gi,'nae'],[/\bno\b/gi,'nae'],[/\byes\b/gi,'aye'],[/\byeah\b/gi,'aye'],
-  [/\blittle\b/gi,'wee'],[/\bsmall\b/gi,'wee'],[/\bgood\b/gi,'guid'],
-  [/\bgreat\b/gi,'braw'],[/\bbeautiful\b/gi,'bonnie'],[/\bpretty\b/gi,'bonnie'],
-  [/\bold\b/gi,'auld'],[/\bcold\b/gi,'cauld'],[/\bbold\b/gi,'bauld'],
-  [/\btold\b/gi,'telt'],[/\bfold\b/gi,'fauld'],[/\bgold\b/gi,'gowd'],
-  [/\bsaid\b/gi,'said'],[/\bknow\b/gi,'ken'],[/\bknew\b/gi,'kent'],
-  [/\bchild\b/gi,'bairn'],[/\bchildren\b/gi,'bairns'],
-  [/\bgirl\b/gi,'lassie'],[/\bboy\b/gi,'laddie'],[/\bman\b/gi,'man'],
-  [/\bwoman\b/gi,'wumman'],[/\bfolk\b/gi,'fowk'],[/\bpeople\b/gi,'fowk'],
-  [/\bhome\b/gi,'hame'],[/\bhouse\b/gi,'hoose'],[/\bstone\b/gi,'stane'],
-  [/\bnight\b/gi,'nicht'],[/\bright\b/gi,'richt'],[/\blight\b/gi,'licht'],
-  [/\bmight\b/gi,'micht'],[/\bfight\b/gi,'fecht'],[/\bsight\b/gi,'sicht'],
-  [/\bring/gi,'ring'],[/\bking\b/gi,'king'],[/\bthing\b/gi,'thing'],
-  [/\bthink\b/gi,'think'],[/\bbrother\b/gi,'brither'],[/\bmother\b/gi,'mither'],
-  [/\bfather\b/gi,'faither'],[/\bother\b/gi,'ither'],[/\beach other\b/gi,'ane anither'],
-  [/\bsomething\b/gi,'somthin'],[/\bnothing\b/gi,'naethin'],[/\beverything\b/gi,'awthin'],
-  [/\banything\b/gi,'oniething'],[/\bsomewhere\b/gi,'somewhaur'],
-  [/\bnever\b/gi,'never'],[/\balways\b/gi,'aye'],[/\bagain\b/gi,'again'],
-  [/\bthrough\b/gi,'through'],[/\benough\b/gi,'eneuch'],
-  // -ing endings
-  [/ing\b/g,'in'],
-  // -ow endings  
-  [/\bknow\b/gi,'ken'],[/\bthrow\b/gi,'throw'],[/\bgrow\b/gi,'grow'],
-]
-
-function applyScots(text) {
-  let out = text
-  SCOTS_MAP.forEach(([pat, rep]) => { out = out.replace(pat, rep) })
-  return out
-}
-
-function ScotsDialogueTool() {
-  const [input, setInput] = useState('')
-  const [output, setOutput] = useState('')
-  const [copied, setCopied] = useState(false)
-
-  function convert() {
-    if (!input.trim()) return
-    setOutput(applyScots(input))
-  }
-
-  function copy() {
-    navigator.clipboard?.writeText(output)
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div className="tool-card" id="tool-scots">
-      <h3 style={{ color: 'var(--cca)' }}>🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Dialogue Converter</h3>
-      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
-        Convert standard English dialogue into Scots-flavoured speech. Useful for Dreslundic or
-        any character with a broad regional accent. Results are a starting point — hand-tune as needed.
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-        <div className="field" style={{ margin: 0 }}>
-          <label>English dialogue</label>
-          <textarea value={input} onChange={e => setInput(e.target.value)} rows={4}
-            placeholder={"\"I will not go back there. You know that.\""} 
-            style={{ width: '100%', resize: 'vertical', fontSize: '0.92em', padding: '6px 8px',
-              background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6,
-              color: 'var(--tx)', boxSizing: 'border-box', fontFamily: 'Georgia, serif', lineHeight: 1.6 }} />
-        </div>
-        <button className="btn btn-primary btn-sm"
-          style={{ background: 'var(--cca)', color: '#000', alignSelf: 'flex-start' }}
-          onClick={convert}>Convert to Scots</button>
-        {output && (
-          <div>
-            <div style={{ fontSize: '0.69em', color: 'var(--mut)', textTransform: 'uppercase',
-              letterSpacing: '.05em', marginBottom: 4 }}>Result</div>
-            <div style={{ padding: '10px 12px', background: 'var(--sf)', border: '1px solid var(--brd)',
-              borderRadius: 6, fontSize: '0.92em', fontFamily: 'Georgia, serif', lineHeight: 1.7,
-              color: 'var(--tx)', marginBottom: 6, whiteSpace: 'pre-wrap' }}>{output}</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="btn btn-sm btn-outline" onClick={copy}>
-                {copied ? '✓ Copied!' : '📋 Copy'}
-              </button>
-              <button className="btn btn-sm btn-outline" onClick={() => setOutput('')}>Clear</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Image Library ─────────────────────────────────────────────────
 const IMG_LIB_CATS = ['All','Characters','Wardrobe','Items','Locations','Maps','Manuscript','Other']
 
 function ImageLibraryTool({ db }) {
@@ -1296,6 +1045,40 @@ function BackfillTool({ db }) {
             : '✓ All birthdays already have timeline entries — nothing to add.'}
         </div>
       )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MAIN — accordion
+// ══════════════════════════════════════════════════════════════════
+export default function Tools({ db }) {
+  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
+  const [open, setOpen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem('tools_open') || '["datetime"]')) } catch { return new Set(['datetime']) } })
+  function toggle(id) {
+    const n = new Set(open); n.has(id) ? n.delete(id) : n.add(id); setOpen(n)
+    try { localStorage.setItem('tools_open', JSON.stringify([...n])) } catch {}
+  }
+  const BODY = {
+    datetime: <DateTimeTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
+    scots: <ScotsDialogueTool />, imagelib: <ImageLibraryTool db={db} />, backfill: (
+      <div><div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 6 }}>Auto-creates a timeline entry for every character who has a Lajen birthday set, skipping ones that already exist.</div><BackfillTool db={db} /></div>
+    ), units: <UnitsTool />,
+  }
+  return (
+    <div>
+      <div style={{ textAlign: 'center', padding: '16px 0 10px' }}>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.31em', color: tabColor }}>⚒ Tools</div>
+      </div>
+      {TOOLS.map(t => (
+        <div key={t.id} style={{ marginBottom: 8, background: 'var(--card)', border: '1px solid var(--brd)', borderLeft: `3px solid ${t.color}`, borderRadius: 'var(--r)' }}>
+          <div onClick={() => toggle(t.id)} style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
+            <span style={{ fontFamily: "'Cinzel',serif", color: t.color }}>{t.emoji} {t.label}</span>
+            <span style={{ color: 'var(--mut)' }}>{open.has(t.id) ? '▲' : '▼'}</span>
+          </div>
+          {open.has(t.id) && <div style={{ padding: '0 14px 14px' }}>{BODY[t.id]}</div>}
+        </div>
+      ))}
     </div>
   )
 }

@@ -150,7 +150,7 @@ function QuickCapture({ tags, onAddSticky, onOpenLongForm }) {
   )
 }
 
-function IdeasPanel({ ideas, setIdeas }) {
+function IdeasPanel({ ideas, setIdeas, db }) {
   const [open, setOpen] = useState(false)
   const [drafts, setDrafts] = useState({ names: '', words: '', phrases: '' })
 
@@ -161,7 +161,24 @@ function IdeasPanel({ ideas, setIdeas }) {
     async function loadIdeas() {
       if (!hasSupabase || !supabase) return
       try {
-        const { data, error } = await supabase.from('ideas_list').select('id, category, value, created_at').order('created_at', { ascending: false })
+
+  // One-time: pull any ideas that landed in the standalone ideas_list TABLE
+  // (quick-capture wrote there before Jul 2026) into the entries category,
+  // then use entries exclusively. Table rows are left in place, harmless.
+  async function mergeTableIdeas(existing) {
+    try {
+      const { data } = await supabase.from('ideas_list').select('id, category, value, created_at')
+      if (!data) return existing
+      const have = new Set(existing.map(i => i.id))
+      const missing = data.filter(r => !have.has(r.id))
+      missing.forEach(r => db.upsertEntry('ideas_list', r))
+      return missing.length ? [...missing, ...existing] : existing
+    } catch { return existing }
+  }
+
+        const fromDb = (db.db.ideas_list || [])
+        const merged = await mergeTableIdeas(fromDb)
+        const data = [...merged].sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')); const error = null
         if (error || !data) return
         if (!ignore) setIdeas(data)
       } catch {}
@@ -178,7 +195,7 @@ function IdeasPanel({ ideas, setIdeas }) {
     setDrafts(prev => ({ ...prev, [category]: '' }))
     if (!hasSupabase || !supabase) return
     try {
-      await supabase.from('ideas_list').insert(idea)
+      db.upsertEntry('ideas_list', idea)
     } catch {}
   }
 
@@ -186,7 +203,7 @@ function IdeasPanel({ ideas, setIdeas }) {
     setIdeas(prev => prev.filter(i => i.id !== id))
     if (!hasSupabase || !supabase) return
     try {
-      await supabase.from('ideas_list').delete().eq('id', id)
+      db.deleteEntry('ideas_list', id)
     } catch {}
   }
 
@@ -703,7 +720,7 @@ export default function Journal({ db, navSearch }) {
         {(!isMobile || mobileZone === 'capture') && (
           <div style={{ width: isMobile ? '100%' : 260, flexShrink: 0 }}>
             <QuickCapture tags={tags} onAddSticky={addCapture} onOpenLongForm={openLongForm} />
-            <IdeasPanel ideas={ideas} setIdeas={setIdeas} />
+            <IdeasPanel db={db} ideas={ideas} setIdeas={setIdeas} />
             {/* Recent captures mini list */}
             <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 6 }}>Recent captures</div>
             {captures.slice(0, 8).map(c => {

@@ -26,7 +26,7 @@ export const MONTHS = [
   { n: 'Zacharlune',  s: 'Zacharael (M)', inc: 'Martyn',   num: 2,  eq: 'Jul 21–Aug 21',  ssn: 'Summer',  si: 1 },
   { n: 'Sofiluna',    s: 'Sofiel (F)',    inc: 'Ehmma',    num: 3,  eq: 'Aug 21–Sep 21',  ssn: 'Summer',  si: 2 },
   { n: 'Trgilune',    s: 'Trgianol (M)',  inc: 'Trevin',   num: 4,  eq: 'Sep 21–Oct 22',  ssn: 'Harvest', si: 0 },
-  { n: 'Sachalune',   s: 'Sachael (F)',   inc: 'Marhanna', num: 5,  eq: 'Oct 22–Nov 21',  ssn: 'Harvest', si: 1 },
+  { n: 'Sachaluna',   s: 'Sachael (F)',   inc: 'Marhanna', num: 5,  eq: 'Oct 22–Nov 21',  ssn: 'Harvest', si: 1 },
   { n: 'Rhamilune',   s: 'Rhamiel (M)',   inc: 'Thomas',   num: 6,  eq: 'Nov 21–Dec 21',  ssn: 'Harvest', si: 2 },
   { n: 'Mailuna',     s: 'Maion (F)',     inc: 'Aenya',    num: 7,  eq: 'Dec 22–Jan 21',  ssn: 'Winter',  si: 0 },
   { n: 'Iahlune',     s: 'Iahhel (M)',    inc: 'Risben',   num: 8,  eq: 'Jan 21–Feb 20',  ssn: 'Winter',  si: 1 },
@@ -52,6 +52,8 @@ export const SEASON_COLORS = {
 }
 
 // Per-month hex colors for calendar display
+export const GLOSSARY_CATS = ['Languages', 'Lore', 'Cosmology', 'Power System', 'Cultures', 'Religions', 'Factions', 'Geography']
+
 export const MONTH_COLORS = MONTHS.map(month => SEASON_COLORS[month.ssn] || '#888888')
 
 export const SEASON_TAG_COLORS = { ...SEASON_COLORS }

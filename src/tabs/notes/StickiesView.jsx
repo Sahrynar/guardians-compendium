@@ -99,7 +99,7 @@ function QuickCapture({ onAddSticky, onOpenLongForm, onSaveIdea }) {
   )
 }
 
-function IdeasPanel({ ideas, setIdeas }) {
+function IdeasPanel({ ideas, setIdeas, db }) {
   const [open, setOpen] = useState(false)
   const [drafts, setDrafts] = useState({ names: '', words: '', phrases: '' })
 
@@ -110,7 +110,7 @@ function IdeasPanel({ ideas, setIdeas }) {
     async function loadIdeas() {
       if (!hasSupabase || !supabase) return
       try {
-        const { data, error } = await supabase.from('ideas_list').select('id, category, value, created_at').order('created_at', { ascending: false })
+        const data = [...(db.db.ideas_list || [])].sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')); const error = null
         if (error || !data || ignore) return
         setIdeas(data)
       } catch {}
@@ -126,13 +126,13 @@ function IdeasPanel({ ideas, setIdeas }) {
     setIdeas(prev => [idea, ...prev])
     setDrafts(prev => ({ ...prev, [category]: '' }))
     if (!hasSupabase || !supabase) return
-    try { await supabase.from('ideas_list').insert(idea) } catch {}
+    db.upsertEntry('ideas_list', idea)
   }
 
   async function removeIdea(id) {
     setIdeas(prev => prev.filter(i => i.id !== id))
     if (!hasSupabase || !supabase) return
-    try { await supabase.from('ideas_list').delete().eq('id', id) } catch {}
+    db.deleteEntry('ideas_list', id)
   }
 
   return (

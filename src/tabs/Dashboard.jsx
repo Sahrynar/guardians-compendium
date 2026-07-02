@@ -60,10 +60,10 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
   let op = 0
   const fl = (data.flags || []).length
 
-  Object.keys(CATS).forEach(cat => {
-    if (cat === 'flags' || cat === 'dashboard') return
-    const entries = getCategoryEntries(data, cat)
-    if (!Array.isArray(entries) || !entries.length) return
+  const _counted = new Set()
+  Object.entries(data || {}).forEach(([key, entries]) => {
+    if (!Array.isArray(entries) || !entries.length || _counted.has(key)) return
+    _counted.add(key)
     tot += entries.length
     entries.forEach(e => {
       if (e.status === 'locked') lk++
