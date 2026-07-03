@@ -28,6 +28,7 @@ import Inventory from './tabs/Inventory'
 import SessionLog from './tabs/SessionLog'
 import Glossary from './tabs/Glossary'
 import IOBar from './components/common/IOBar'
+import { LibraryPickerHost } from './components/common/LibraryPicker'
 import Breadcrumb from './components/common/Breadcrumb'
 
 const TAB_ORDER = TAB_ORDER_FOR_COLORS
@@ -267,9 +268,9 @@ export default function App() {
       const result = await db.importJSON(file)
       if (result.conflicts && result.conflicts.length > 0) {
         setConflictQueue(result.conflicts)
-        setImportSummary({ added: result.added, resolved: 0, total: result.conflicts.length })
+        setImportSummary({ added: result.added, skipped: result.skippedExisting || 0, resolved: 0, total: result.conflicts.length })
       } else {
-        setImportSummary({ added: result.added + (result.sessionLogAdded || 0), resolved: 0, total: 0, done: true })
+        setImportSummary({ added: result.added + (result.sessionLogAdded || 0), skipped: result.skippedExisting || 0, resolved: 0, total: 0, done: true })
       }
     } catch (err) { setImportSummary({ error: err.message, done: true }) }
   }, [db])
@@ -470,6 +471,7 @@ export default function App() {
         </div>
       )}
 
+      <LibraryPickerHost db={db} />
       <IOBar db={db} backup={backup} onImport={handleImportWithConflicts} />
 
       {/* Floating undo indicator — 5 min window */}
@@ -511,7 +513,7 @@ export default function App() {
             <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', color:'#ffaa33', marginBottom:4 }}>⚠ Import Conflict</div>
             <div style={{ fontSize:'0.77em', color:'var(--dim)', marginBottom:14 }}>
               {conflictQueue.length} conflict{conflictQueue.length !== 1 ? 's' : ''} remaining
-              {importSummary && ` · ${importSummary.added} entries already added`}
+              {importSummary && ` · ${importSummary.added} entries already added`}{importSummary.skipped > 0 && <span style={{ color: 'var(--mut)' }}> · {importSummary.skipped} already present</span>}
             </div>
             <div style={{ fontSize:'0.85em', color:'var(--tx)', marginBottom:8 }}>
               Category: <span style={{ color:'var(--cc)' }}>{conflictQueue[0].category}</span>

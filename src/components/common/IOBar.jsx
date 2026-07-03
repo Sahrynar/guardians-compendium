@@ -108,7 +108,7 @@ export default function IOBar({ db, backup, onImport }) {
       if (hasSupabase && supabase) {
         for (const entry of incoming.session_log) {
           if (!entry?.id) continue
-          const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id', ignoreDuplicates: true })
+          const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id' })
           if (!error) sessionLogAdded++
         }
       }
@@ -147,15 +147,18 @@ export default function IOBar({ db, backup, onImport }) {
   }
 
 
-  const bundleRef = useRef(null)
   async function handleSessionBundle(e) {
     const file = e.target.files[0]; if (!file) return
     const reader = new FileReader()
     reader.onload = async ev => {
       try {
         const m = String(ev.target.result).match(/```json\s*([\s\S]*?)```/)
-        if (!m) { flash('✗ No ```json block found in that file'); return }
-        await processIncoming(JSON.parse(m[1]))
+        if (!m) { flash('✗ No ```json block found in that file', 8000); return }
+        flash('📥 Importing bundle…', 60000)
+        const incoming = JSON.parse(m[1])
+        const counts = Object.entries(incoming).filter(([, v]) => Array.isArray(v)).map(([k, v]) => v.length + ' ' + k).join(' · ')
+        await processIncoming(incoming)
+        flash('📥 Bundle done: ' + (counts || 'nothing') + ' processed ✓', 10000)
       } catch (err) { flash(`✗ Bundle import failed: ${err.message}`) }
     }
     reader.readAsText(file); e.target.value = ''
@@ -335,10 +338,11 @@ export default function IOBar({ db, backup, onImport }) {
         </label>
 
         <button className="btn btn-sm btn-outline" onClick={db.exportAster}>⬇ Aster Export</button>
-        <button className="io-btn" title="Import a session-minutes .md with an embedded json block" onClick={() => bundleRef.current?.click()}>
+        <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer' }}
+          title="Import a session-minutes .md with an embedded json block — log + all entries in one go">
           📥 Session Bundle
-          <input ref={bundleRef} type="file" accept=".md,.txt,.markdown" style={{ display: 'none' }} onChange={handleSessionBundle} />
-        </button>
+          <input type="file" accept=".md,.txt,.markdown" style={{ display: 'none' }} onChange={handleSessionBundle} />
+        </label>
 
         <button className="btn btn-sm btn-outline" onClick={db.exportCSV || (() => {})}>📋 CSV</button>
 

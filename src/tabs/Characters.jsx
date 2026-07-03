@@ -633,6 +633,10 @@ function PortraitTool({ charId, db, onClose, palette, presetLabels }) {
                   const r=new FileReader(); r.onload=ev=>{db.upsertEntry('characters',{...ch,portrait_custom:ev.target.result,portrait_base:null,portrait_canvas:null}); loadBase(ev.target.result)}; r.readAsDataURL(f)
                 }} />
               </label>
+              <button type="button" style={{ marginLeft: 8, padding:'6px 12px', background:'var(--card)', border:'1px solid var(--brd)', borderRadius:'var(--r)', cursor:'pointer', fontSize: '0.85em', color:'var(--tx)' }}
+                onClick={() => window.dispatchEvent(new CustomEvent('gcomp_pick_library', { detail: { onPick: src => { db.upsertEntry('characters', { ...ch, portrait_custom: src, portrait_base: null, portrait_canvas: null }); loadBase(src) } } }))}>
+                🖼 From Library
+              </button>
             </div>
           </div>
         )}

@@ -297,7 +297,7 @@ export function useDB() {
       r.onload = async ev => {
         try {
           const parsed = JSON.parse(ev.target.result)
-          let added = 0; const conflicts = []
+          let added = 0, skippedExisting = 0; const conflicts = []
           setDbState(prev => {
             const next = { ...prev }
             CATEGORIES.forEach(k => {
@@ -320,7 +320,7 @@ export function useDB() {
               if (!error) sessionLogAdded++
             }
           }
-          resolve({ added, conflicts, sessionLogAdded })
+          resolve({ added, skippedExisting, conflicts, sessionLogAdded })
         } catch (e) { reject(e) }
       }
       r.readAsText(file)

@@ -4,6 +4,7 @@ import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW } from '../constants'
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
   { id: 'datetime',  label: 'Date & Time',           emoji: '🕰', color: 'var(--cca)' },
+  { id: 'langforge', label: 'Language Workshop',    emoji: '🗣', color: 'var(--ct)'  },
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
   { id: 'pronun',    label: 'Pronunciation Helper',  emoji: '🔊', color: 'var(--cwr)' },
   { id: 'scots',     label: 'Scots Dialogue',        emoji: '🏴', color: 'var(--ct)'  },
@@ -342,6 +343,276 @@ const PRONUN_LANGS = [
     phonetic: w => w,
   },
 ]
+
+
+// ══════════════════════════════════════════════════════════════════
+// LANGUAGE WORKSHOP — flavor generator (words/names, NOT a conlang)
+// Blends real-world sound palettes with % dials · saved presets usable
+// as ingredients · Surprise Me · in-tool palette reference.
+// Outputs are SUGGESTIONS ONLY — nothing here is canon until Melissa says.
+// ══════════════════════════════════════════════════════════════════
+const PALETTES = [
+ // Mediterranean
+ {id:'venetian',l:'Venetian',g:'Mediterranean',bcp:'it-IT',soft:.8,feel:'soft, sing-song, open vowels — Martyn\u2019s home register',sig:['gia','zan','vi'],on:['b','d','f','g','l','m','n','p','r','s','t','v','z','ch'],v:['a','e','i','o','ia','io','ie'],cod:['n','r',''],end:['o','a','in','ero','ia','eo'],sh:['CV','CV','CVC','V','CVV']},
+ {id:'sicilian',l:'Sicilian',g:'Mediterranean',bcp:'it-IT',soft:.35,feel:'harder, clipped, -u endings, weathered (Arabic/Spanish echoes)',sig:['dd','str','sc'],on:['b','c','d','f','g','l','m','n','p','r','s','t','v','z','tr','gr'],v:['a','e','i','o','u'],cod:['','r','n','s'],end:['u','a','i','eddu','azzu','ustru'],sh:['CV','CVC','CVC','CVV']},
+ {id:'italian',l:'Italian (standard)',g:'Mediterranean',bcp:'it-IT',soft:.65,feel:'clear, operatic middle ground',sig:['gl','sc','zz'],on:['b','c','d','f','g','l','m','n','p','r','s','t','v'],v:['a','e','i','o','u'],cod:['n','r','l',''],end:['o','a','e','ino','ella','etto'],sh:['CV','CVC','CV','V']},
+ {id:'occitan',l:'Occitan / Provençal',g:'Mediterranean',bcp:'fr-FR',soft:.7,feel:'lyrical southern-French warmth, troubadour',sig:['lh','nh'],on:['b','c','d','f','g','j','l','m','n','p','r','s','t','v'],v:['a','e','i','o','u','au','ou'],cod:['n','r','s',''],end:['a','on','aire','enc','òl'],sh:['CV','CVC','CVV']},
+ {id:'catalan',l:'Catalan',g:'Mediterranean',bcp:'ca-ES',soft:.55,feel:'crisp, between Spanish and French',sig:['ll','ny','tx'],on:['b','c','d','f','g','j','l','m','n','p','r','s','t','v','x'],v:['a','e','i','o','u'],cod:['n','r','s','l','t'],end:['a','er','ell','ós','au'],sh:['CVC','CV','CVC']},
+ {id:'spanish',l:'Iberian Spanish',g:'Mediterranean',bcp:'es-ES',soft:.6,feel:'rolling R, clear vowels, strong rhythm',sig:['rr','ñ'],on:['b','c','d','f','g','j','l','m','n','p','r','s','t','v'],v:['a','e','i','o','u'],cod:['n','r','s','l',''],end:['o','a','es','illo','ero'],sh:['CV','CVC','CV']},
+ {id:'basque',l:'Basque',g:'Mediterranean',bcp:'eu-ES',soft:.45,feel:'unique, unplaceable, X/K/TZ — ancient isolated people',sig:['tx','tz','k'],on:['b','g','k','l','m','n','s','t','x','z'],v:['a','e','i','o','u'],cod:['k','n','r','tz',''],end:['a','ak','oa','ki','tza'],sh:['CVC','CV','VC']},
+ {id:'latin',l:'Latin',g:'Mediterranean',bcp:'it-IT',soft:.55,feel:'medieval scholarly gravity — Old Lajen candidate',sig:['qu','ct'],on:['b','c','d','f','g','l','m','n','p','q','r','s','t','v'],v:['a','e','i','o','u','ae'],cod:['s','m','n','r','t','x'],end:['us','um','a','or','ix','ensis'],sh:['CVC','CV','CVC']},
+ // Northern / Germanic
+ {id:'old_norse',l:'Old Norse',g:'Northern',bcp:'is-IS',soft:.25,feel:'saga-deep, strong clusters, ancient north',sig:['thr','hr','sk'],on:['b','d','f','g','h','k','l','m','n','r','s','t','v','th','hr','sk'],v:['a','e','i','o','u','ei','au'],cod:['r','n','l','k','g','nd'],end:['ir','ar','ulf','grim','heim'],sh:['CVC','CVC','CV']},
+ {id:'old_high_german',l:'Old High German',g:'Northern',bcp:'de-DE',soft:.25,feel:'stern medieval Germanic — Dreslund core',sig:['wulf','hild','bert'],on:['b','d','f','g','h','k','l','m','n','r','s','t','w','br','hr'],v:['a','e','i','o','u'],cod:['n','r','l','t','ht','nd'],end:['rich','wald','mund','lind','olf'],sh:['CVC','CVC','CV']},
+ {id:'german',l:'German (modern)',g:'Northern',bcp:'de-DE',soft:.35,feel:'precise, clipped, strong consonants',sig:['sch','str'],on:['b','d','f','g','h','k','l','m','n','p','r','s','t','w','z','sch'],v:['a','e','i','o','u','ei','au'],cod:['n','r','l','t','ch','ng'],end:['en','er','ung','burg','stein'],sh:['CVC','CVC']},
+ {id:'dutch_frisian',l:'Dutch / Frisian',g:'Northern',bcp:'nl-NL',soft:.45,feel:'softer Germanic, throaty G, sea-coast',sig:['ij','oo','sch'],on:['b','d','f','g','h','k','l','m','n','p','r','s','t','v','w','z'],v:['a','e','i','o','u','oo','ee','ij'],cod:['n','r','l','k','t'],end:['en','ke','dijk','ma','stra'],sh:['CVC','CVVC','CV']},
+ {id:'west_slavic',l:'West Slavic',g:'Northern',bcp:'pl-PL',soft:.3,feel:'SZ/CZ consonant runs — eastern frontier',sig:['sz','cz','rz'],on:['b','d','g','k','l','m','n','p','r','s','t','w','z','sz','cz'],v:['a','e','i','o','u','y'],cod:['w','k','r','n','sz'],end:['ov','ski','icz','ek','ava'],sh:['CVC','CCVC','CV']},
+ // Celtic
+ {id:'welsh',l:'Welsh (Brythonic)',g:'Celtic',bcp:'cy-GB',soft:.55,feel:'LL/DD, musical but consonant-rich — Lurlish base',sig:['ll','dd','gw'],on:['b','c','d','g','h','l','m','n','p','r','s','t','w','gw','ll'],v:['a','e','i','o','u','w','y'],cod:['n','r','l','dd','th'],end:['wyn','edd','ion','ys','wen'],sh:['CVC','CV','CCVC']},
+ {id:'breton_cornish',l:'Breton / Cornish',g:'Celtic',bcp:'fr-FR',soft:.6,feel:'lost-kingdom melancholy, Welsh\u2019s softer cousins',sig:['ker','pen','tre'],on:['b','d','g','k','l','m','n','p','r','s','t','v','w'],v:['a','e','i','o','u','eu'],cod:['n','r','l','z'],end:['ec','ig','our','enn','où'],sh:['CVC','CV','CVC']},
+ {id:'gaelic',l:'Irish / Scottish Gaelic',g:'Celtic',bcp:'ga-IE',soft:.6,feel:'flowing, BH/MH, silent-letter look',sig:['bh','mh','ao'],on:['b','c','d','f','g','l','m','n','r','s','t','bh','mh'],v:['a','e','i','o','u','ao','ea'],cod:['n','r','l','ch'],end:['ach','aigh','een','ora','ín'],sh:['CV','CVC','CVVC']},
+ // Greek / Aegean
+ {id:'ancient_greek',l:'Ancient Greek',g:'Greek',bcp:'el-GR',soft:.6,feel:'grand, classical, PH/TH — Thaeron core (Perinnon, Aristaeus)',sig:['ph','th','kh'],on:['b','d','g','k','l','m','n','p','r','s','t','x','ph','th','kr'],v:['a','e','i','o','u','ai','ei'],cod:['n','s','r','x'],end:['os','on','ia','eus','ippe','andros'],sh:['CV','CVC','CVVC']},
+ {id:'byzantine',l:'Byzantine / Anatolian',g:'Greek',bcp:'el-GR',soft:.55,feel:'ornate Greek with eastern weight',sig:['kon','stan'],on:['b','d','g','k','l','m','n','p','r','s','t','v','th','chr'],v:['a','e','i','o','y'],cod:['n','s','r'],end:['ios','ion','opoulos','ene','ax'],sh:['CV','CVC']},
+ // Middle East / Central Asia
+ {id:'avestan_persian',l:'Old Persian / Avestan',g:'Middle East',bcp:'fa-IR',soft:.5,feel:'ancient liturgical depth — Xeradi core (Xerad already fits)',sig:['xer','zar','ahu'],on:['b','d','f','g','h','k','m','n','p','r','s','t','v','x','z','zh'],v:['a','e','i','o','u','aa'],cod:['n','r','sh','d','t'],end:['ad','esh','ura','asp','vand'],sh:['CVC','CV','CVC']},
+ {id:'farsi',l:'Persian (Farsi)',g:'Middle East',bcp:'fa-IR',soft:.65,feel:'flowing, elegant, softer than Arabic',sig:['sh','kh'],on:['b','d','f','g','h','j','k','l','m','n','p','r','s','t','v','z','sh','kh'],v:['a','e','i','o','u'],cod:['n','r','m','sh'],end:['an','eh','abad','yar','naz'],sh:['CV','CVC']},
+ {id:'levantine_arabic',l:'Levantine Arabic',g:'Middle East',bcp:'ar-SA',soft:.45,feel:'throaty KH/GH, rhythmic — Hafari core',sig:['kh','gh','q'],on:['b','d','f','h','j','k','l','m','n','q','r','s','t','w','y','z','kh','gh','sh'],v:['a','i','u','aa','ee'],cod:['b','d','l','m','n','r','sh'],end:['ah','iyya','oun','eem','af'],sh:['CVC','CV','CVVC']},
+ {id:'aramaic',l:'Aramaic',g:'Middle East',bcp:'ar-SA',soft:.5,feel:'ancient Levantine, healer/scripture register',sig:['bar','tha'],on:['b','d','g','h','k','l','m','n','p','r','s','t','y','z','sh','th'],v:['a','e','i','o','u'],cod:['n','m','l','r','th'],end:['a','el','tha','iah','oth'],sh:['CVC','CV']},
+ {id:'turkic',l:'Turkic / Steppe',g:'Middle East',bcp:'tr-TR',soft:.4,feel:'steppe horse-peoples, vowel harmony — Traveller ancestry lane',sig:['kh','tug'],on:['b','d','g','k','m','n','s','t','y','ch','kh'],v:['a','e','i','o','u','ö','ü'],cod:['n','r','k','l','t'],end:['an','ay','lug','tay','bek'],sh:['CVC','CV','CVC']},
+ {id:'egyptian',l:'Ancient Egyptian',g:'Middle East',bcp:'ar-EG',soft:.5,feel:'⚠ approx — reconstructed; monumental, vowel-sparse look (Natulas-trail lane)',sig:['ankh','hotep','ra'],on:['b','d','h','k','m','n','p','r','s','t','w','kh','dj'],v:['a','e','o','u'],cod:['n','t','m','p','kh'],end:['et','hotep','amun','ka','iri'],sh:['CVC','CVC','CV']},
+ {id:'sumerian',l:'Sumerian',g:'Middle East',bcp:'ar-SA',soft:.45,feel:'⚠ approx — oldest written tongue; blocky, ancient look',sig:['gil','nam','zi'],on:['b','d','g','k','l','m','n','r','s','sh','z'],v:['a','e','i','u'],cod:['g','l','m','n','r'],end:['gal','ki','esh','ur','anna'],sh:['CVC','CV','VC']},
+ {id:'proto_semitic',l:'Proto-Semitic',g:'Middle East',bcp:'ar-SA',soft:.4,feel:'⚠ approx — reconstructed root-ancestor, triconsonantal bones',sig:['ba','sha'],on:['b','d','g','h','k','l','m','n','q','r','s','t','w','y','z','sh'],v:['a','i','u'],cod:['b','d','l','m','n','r','t'],end:['um','at','an','ish'],sh:['CVC','CVC']},
+ // South Asia
+ {id:'sanskrit',l:'Sanskrit',g:'South Asia',bcp:'hi-IN',soft:.6,feel:'ancient, rolling, resonant, sacred — Dakara core',sig:['dh','bh','sv'],on:['b','d','g','h','j','k','l','m','n','p','r','s','t','v','y','dh','bh','pr'],v:['a','e','i','o','u','aa'],cod:['n','m','r','t','h'],end:['a','am','ini','esha','anda','ati'],sh:['CV','CVC','CV']},
+ {id:'rajasthani',l:'Rajasthani / Desert-North Indian',g:'South Asia',bcp:'hi-IN',soft:.5,feel:'desert-north robustness — Pytem Dakar arid belt',sig:['jodh','rath'],on:['b','ch','d','g','h','j','k','l','m','n','p','r','s','t','v'],v:['a','e','i','o','u'],cod:['n','r','t','l'],end:['pur','garh','wat','ni','sar'],sh:['CVC','CV']},
+ {id:'tamil',l:'Tamil / South Indian',g:'South Asia',bcp:'ta-IN',soft:.6,feel:'retroflex southern flow — Dakar south coast',sig:['zh','tt','nn'],on:['ch','k','m','n','p','r','s','t','v','y'],v:['a','e','i','o','u','aa'],cod:['n','m','r','l'],end:['an','ai','ur','avan','atti'],sh:['CV','CVC','CVV']},
+ // East / Southeast Asia
+ {id:'japanese',l:'Japanese',g:'East Asia',bcp:'ja-JP',soft:.8,feel:'even syllables, soft, open — Kandorī ingredient #1 (Minato)',sig:['shi','tsu','ryo'],on:['h','k','m','n','r','s','t','y','sh','ch','ts'],v:['a','e','i','o','u'],cod:['n',''],end:['a','o','ko','ro','shi','maru'],sh:['CV','CV','CVC','V']},
+ {id:'korean',l:'Korean',g:'East Asia',bcp:'ko-KR',soft:.55,feel:'slightly harder rhythm — Kandorī ingredient #2',sig:['hyun','kang'],on:['b','ch','d','g','h','j','k','m','n','r','s','y'],v:['a','e','i','o','u','eo','ae'],cod:['n','ng','k','m'],end:['an','eun','seok','min','ho'],sh:['CVC','CV']},
+ {id:'mandarin',l:'Chinese (Mandarin)',g:'East Asia',bcp:'zh-CN',soft:.55,feel:'crisp, imperial-scholarly weight — Kandorī court dial-up',sig:['zh','xi','qi'],on:['b','ch','d','f','g','h','j','l','m','n','p','sh','t','w','x','y','zh'],v:['a','e','i','o','u','ao','ei'],cod:['n','ng',''],end:['ang','ing','ao','un','ei'],sh:['CV','CVC','CVV']},
+ {id:'ainu',l:'Ainu',g:'East Asia',bcp:'ja-JP',soft:.6,feel:'⚠ approx — older island strata, northern isles lane',sig:['kam','pet'],on:['ch','h','k','m','n','p','r','s','t','w','y'],v:['a','e','i','o','u'],cod:['k','n','p','r'],end:['ru','pet','ka','nay'],sh:['CVC','CV']},
+ {id:'malay',l:'Malay / Austronesian',g:'East Asia',bcp:'id-ID',soft:.7,feel:'flowing maritime, reduplication feel',sig:['ng','mba'],on:['b','d','g','h','j','k','l','m','n','p','r','s','t','w'],v:['a','e','i','o','u'],cod:['n','ng','r','h'],end:['an','ang','ung','ai','aya'],sh:['CV','CVC','CV']},
+ {id:'polynesian',l:'Polynesian',g:'East Asia',bcp:'id-ID',soft:.9,feel:'very vowel-heavy, few consonants — Saraenya\u2019s coding',sig:['moa','kai'],on:['h','k','l','m','n','p','t','w'],v:['a','e','i','o','u','ai','au','oa'],cod:[''],end:['a','ana','iki','oa','nui'],sh:['CV','V','CVV','CV']},
+ // African
+ {id:'swahili',l:'Swahili',g:'African',bcp:'sw-KE',soft:.7,feel:'flowing east-coast trade tongue — Dakane lane',sig:['mb','nd','nj'],on:['b','ch','d','f','h','j','k','l','m','n','p','s','t','w','y','z','mb','nd'],v:['a','e','i','o','u'],cod:['','n','m'],end:['a','i','ani','uzi','emba'],sh:['CV','CV','CVC']},
+ {id:'yoruba',l:'Yoruba',g:'African',bcp:'yo-NG',soft:.75,feel:'1550s SW-Nigeria; tonal, vowel-rich, city-kingdom culture',sig:['olu','ade','ife'],on:['b','d','f','g','gb','j','k','l','m','n','r','s','t','w','y'],v:['a','e','i','o','u'],cod:[''],end:['un','ade','ola','ayo','ife'],sh:['CV','CV','V']},
+ {id:'igbo',l:'Igbo',g:'African',bcp:'ig-NG',soft:.65,feel:'1550s SE-Nigeria; NW/GB clusters, village-republic culture',sig:['nw','gb','ch'],on:['b','ch','d','g','gb','k','kw','m','n','nw','r','s','t','z'],v:['a','e','i','o','u'],cod:[''],end:['ka','nna','olu','uche','em'],sh:['CV','CCV','CV']},
+ {id:'hausa',l:'Hausa',g:'African',bcp:'ha-NG',soft:.55,feel:'1550s N-Nigeria/Sahel; trade-empire tongue, Arabic-touched',sig:['sar','dan','kan'],on:['b','d','f','g','h','j','k','m','n','r','s','sh','t','w','y','z'],v:['a','e','i','o','u','aa'],cod:['n','r','m'],end:['awa','ta','ki','uwa','au'],sh:['CVC','CV']},
+ {id:'zulu',l:'Zulu / Nguni',g:'African',bcp:'zu-ZA',soft:.6,feel:'southern; NDL/MB clusters (clicks omitted for readability)',sig:['ndl','mb','nk'],on:['b','d','f','g','h','k','l','m','n','s','th','v','z','nd','mb','nk'],v:['a','e','i','o','u'],cod:[''],end:['ani','ile','ela','osi'],sh:['CV','CCV']},
+ {id:'amharic',l:'Amharic / Horn of Africa',g:'African',bcp:'am-ET',soft:.55,feel:'ancient highland; distinct Semitic-African blend',sig:['tes','ge','wol'],on:['b','d','f','g','h','k','l','m','n','r','s','t','w','y','z','ts'],v:['a','e','i','o','u'],cod:['n','m','l','s'],end:['ash','esa','anu','wot'],sh:['CVC','CV']},
+ // Mesoamerican
+ {id:'nahuatl',l:'Nahuatl',g:'Mesoamerican',bcp:'es-MX',soft:.5,feel:'TL/TZ clusters — Xitalar core (Ix\u2019Citlatl, Huecuitla)',sig:['tl','tz','xo'],on:['ch','k','m','n','p','t','x','y','tl','tz','kw'],v:['a','e','i','o'],cod:['tl','n','k','tz'],end:['tl','tli','can','tzin','xochitl'],sh:['CVC','CV','CVC']},
+ {id:'mayan',l:'Mayan',g:'Mesoamerican',bcp:'es-MX',soft:.5,feel:'glottal-stop feel, distinct from Nahuatl — Isles variance',sig:['ix','k\u2019','ch\u2019'],on:['b','ch','h','k','l','m','n','p','s','t','w','x','y'],v:['a','e','i','o','u'],cod:['b','k','l','m','n','x'],end:['al','ob','een','ik','ul'],sh:['CVC','CV']},
+ {id:'zapotec',l:'Zapotec',g:'Mesoamerican',bcp:'es-MX',soft:.55,feel:'⚠ approx — Oaxaca valley strand, west-of-mainland groups',sig:['gui','zaa'],on:['b','d','g','l','m','n','r','s','x','y','z','gu'],v:['a','e','i','o','u','aa'],cod:['n','l',''],end:['aa','ni','be','xhi'],sh:['CV','CVC','CVV']},
+ {id:'mixtec',l:'Mixtec',g:'Mesoamerican',bcp:'es-MX',soft:.6,feel:'⚠ approx — cloud-people strand; nasal, tonal look',sig:['ñu','nda'],on:['ch','d','k','m','n','s','t','v','x','y','nd'],v:['a','e','i','o','u'],cod:['n',''],end:['nu','vi','ko','ita'],sh:['CV','CVC']},
+ {id:'totonac',l:'Totonac',g:'Mesoamerican',bcp:'es-MX',soft:.5,feel:'⚠ approx — gulf-coast strand; LH/QU textures',sig:['lak','tla'],on:['ch','k','l','m','n','p','s','t','x','lh','kg'],v:['a','i','u'],cod:['n','k','t'],end:['at','in','ni','kan'],sh:['CVC','CV']},
+ {id:'purepecha',l:'Purépecha',g:'Mesoamerican',bcp:'es-MX',soft:.6,feel:'⚠ approx — lake-kingdom isolate; unrelated to neighbours',sig:['tsi','kua'],on:['ch','h','j','k','m','n','p','r','s','t','ts','ku'],v:['a','e','i','o','u'],cod:['n','ri',''],end:['ro','pu','cha','ndi'],sh:['CV','CVC']},
+ // Deep-ancient / constructed
+ {id:'pie',l:'Proto-Indo-European',g:'Ancient',bcp:'en-GB',soft:.4,feel:'⚠ approx — reconstructed deepest root of Europe+Persia+India',sig:['bh','gw','h\u2081'],on:['b','d','g','k','l','m','n','p','r','s','t','w','y','bh','dh','gw'],v:['e','o','a','i','u'],cod:['s','r','n','m','t'],end:['os','om','ter','went','tor'],sh:['CVC','CVC','CV']},
+]
+const PAL_BY_ID = Object.fromEntries(PALETTES.map(p => [p.id, p]))
+const PAL_GROUPS = [...new Set(PALETTES.map(p => p.g))]
+const rnd = a => a[Math.floor(Math.random() * a.length)]
+
+function flattenMix(rows, presets, depth = 0) {
+  const acc = {}
+  const add = (id, w) => { if (PAL_BY_ID[id] && w > 0) acc[id] = (acc[id] || 0) + w }
+  rows.forEach(r => {
+    const w = parseFloat(r.pct) || 0
+    if (!w || !r.src) return
+    if (r.src.startsWith('preset:')) {
+      if (depth >= 2) return
+      const p = presets[r.src.slice(7)]
+      if (!p) return
+      const inner = flattenMix(p.mix || [], presets, depth + 1)
+      const tot = inner.reduce((s, [, iw]) => s + iw, 0) || 1
+      inner.forEach(([id, iw]) => add(id, w * iw / tot))
+    } else add(r.src.replace('pal:', ''), w)
+  })
+  return Object.entries(acc)
+}
+function weightedPick(flat) {
+  const tot = flat.reduce((s, [, w]) => s + w, 0)
+  let r = Math.random() * tot
+  for (const [id, w] of flat) { r -= w; if (r <= 0) return id }
+  return flat[0][0]
+}
+function genWord(flat, softPct, syllSpec, seed) {
+  if (!flat.length) return ''
+  const soft = softPct / 100
+  const dom = PAL_BY_ID[[...flat].sort((a, b) => b[1] - a[1])[0][0]]
+  const letters = (seed || '').replace(/[^a-z]/gi, '')
+  const n = letters ? Math.min(5, Math.max(1, Math.round(letters.length / 3)))
+    : syllSpec === 'auto' ? (Math.random() < 0.15 ? 1 : Math.random() < 0.65 ? 2 : Math.random() < 0.9 ? 3 : 4)
+    : parseInt(syllSpec)
+  let w = ''
+  for (let i = 0; i < n; i++) {
+    const p = PAL_BY_ID[weightedPick(flat)]
+    let shape = rnd(p.sh)
+    const pSoft = (soft + (p.soft ?? 0.5)) / 2
+    if (pSoft > 0.62 && /C$/.test(shape) && Math.random() < pSoft) shape = shape.slice(0, -1) || 'CV'
+    if (pSoft < 0.38 && !/C$/.test(shape) && Math.random() < (0.6 - pSoft)) shape += 'C'
+    let s = ''
+    for (let j = 0; j < shape.length; j++) {
+      if (shape[j] === 'C') s += (j === shape.length - 1 && p.cod.length && Math.random() < 0.85) ? rnd(p.cod) : rnd(p.on)
+      else s += rnd(p.v)
+    }
+    if (i === 0 && dom.sig?.length && Math.random() < 0.45) s = rnd(dom.sig) + s.replace(/^[^aeiouy]+/i, '')
+    w += s
+  }
+  const pool = (dom.end || []).filter(e => soft > 0.6 ? /[aeiou]$/i.test(e) : soft < 0.4 ? /[^aeiou]$/i.test(e) : true)
+  const ends = pool.length ? pool : (dom.end || [])
+  if (ends.length && Math.random() < 0.88) {
+    w = w.replace(/[aeiou]+$/i, '')
+    if (!/[aeiouy]/i.test(w)) w += rnd(dom.v)
+    w += rnd(ends)
+  }
+  w = w.replace(/(.)\1{2,}/g, '$1$1')
+  return w ? w[0].toUpperCase() + w.slice(1) : ''
+}
+function muddiness(rows) {
+  const active = rows.filter(r => (parseFloat(r.pct) || 0) > 0 && r.src)
+  const groups = new Set(active.map(r => r.src.startsWith('preset:') ? 'Saved' : (PAL_BY_ID[r.src.replace('pal:', '')]?.g || '?')))
+  const n = active.length
+  if (n <= 1) return { icon: '🟢', label: 'clear' }
+  if (n === 2) return groups.size > 1 ? { icon: '🟡', label: 'blending' } : { icon: '🟢', label: 'clear' }
+  if (n === 3) return groups.size > 1 ? { icon: '🟠', label: 'busy' } : { icon: '🟡', label: 'blending' }
+  return { icon: '🔴', label: 'muddy — consider fewer ingredients' }
+}
+
+function LanguageWorkshopTool({ db }) {
+  const [rows, setRows] = useState([{ src: 'pal:venetian', pct: 70 }, { src: 'pal:sicilian', pct: 30 }])
+  const [soft, setSoft] = useState(70)
+  const [syll, setSyll] = useState('auto')
+  const [seed, setSeed] = useState('')
+  const [results, setResults] = useState([])
+  const [surprise, setSurprise] = useState(null)
+  const [showRef, setShowRef] = useState(false)
+  const [presetName, setPresetName] = useState('')
+  const [presets, setPresets] = useState(() => { try { return JSON.parse(db.getSetting?.('langforge_presets') || '{}') } catch { return {} } })
+
+  const setRow = (i, k, v) => setRows(rows.map((r, j) => j === i ? { ...r, [k]: v } : r))
+  const mud = muddiness(rows)
+
+  function generate() {
+    const flat = flattenMix(rows, presets)
+    if (!flat.length) { setResults(['— pick at least one ingredient with a % —']); return }
+    const out = new Set()
+    for (let i = 0; i < 40 && out.size < 8; i++) { const x = genWord(flat, soft, syll, seed); if (x) out.add(x) }
+    setResults([...out])
+  }
+  function savePreset() {
+    const name = presetName.trim(); if (!name) return
+    const next = { ...presets, [name]: { mix: rows, soft } }
+    setPresets(next); db.saveSetting?.('langforge_presets', JSON.stringify(next)); setPresetName('')
+  }
+  function loadPreset(name) { const p = presets[name]; if (p) { setRows(p.mix); setSoft(p.soft) } }
+  function deletePreset(name) {
+    if (!window.confirm(`Delete preset "${name}"?`)) return
+    const next = { ...presets }; delete next[name]
+    setPresets(next); db.saveSetting?.('langforge_presets', JSON.stringify(next))
+  }
+  function surpriseMe() {
+    const savedNames = Object.keys(presets)
+    const useSaved = savedNames.length && Math.random() < 0.5
+    let flat, label, s
+    if (useSaved) { const nm = rnd(savedNames); flat = flattenMix(presets[nm].mix, presets); s = presets[nm].soft; label = '💾 ' + nm }
+    else { const p = rnd(PALETTES); flat = [[p.id, 1]]; s = Math.round(Math.random() * 100); label = p.l }
+    const word = genWord(flat, s, 'auto', '')
+    setSurprise({ word, label })
+  }
+  const bcpFor = () => { const flat = flattenMix(rows, presets); if (!flat.length) return 'en-GB'; return PAL_BY_ID[[...flat].sort((a, b) => b[1] - a[1])[0][0]].bcp }
+  const copy = s => { try { navigator.clipboard.writeText(s) } catch {} }
+
+  return (
+    <div>
+      <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Flavor generator — words & names that *sound like* a lost tongue. Outputs are suggestions only, never auto-canon.</div>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 5, flexWrap: 'wrap' }}>
+          <select value={r.src} onChange={e => setRow(i, 'src', e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
+            <option value="">ingredient…</option>
+            {PAL_GROUPS.map(g => (
+              <optgroup key={g} label={g}>{PALETTES.filter(p => p.g === g).map(p => <option key={p.id} value={'pal:' + p.id}>{p.l}</option>)}</optgroup>
+            ))}
+            {Object.keys(presets).length > 0 && (
+              <optgroup label="💾 Saved languages">{Object.keys(presets).map(n => <option key={n} value={'preset:' + n}>{n}</option>)}</optgroup>
+            )}
+          </select>
+          <input type="number" min="0" max="100" value={r.pct} onChange={e => setRow(i, 'pct', e.target.value)} style={{ ...inputStyle, width: 62 }} />
+          <span style={{ fontSize: '0.72em', color: 'var(--mut)' }}>%</span>
+          <button onClick={() => setRows(rows.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer' }}>✕</button>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+        {rows.length < 4 && <button className="btn btn-sm btn-outline" onClick={() => setRows([...rows, { src: '', pct: 30 }])}>+ ingredient</button>}
+        <span style={{ fontSize: '0.72em', color: 'var(--dim)' }}>{mud.icon} {mud.label}</span>
+        <button className="btn btn-sm btn-outline" onClick={() => setShowRef(true)}>📖 Palette Reference</button>
+      </div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+        <span style={{ fontSize: '0.72em', color: 'var(--dim)' }}>Soft</span>
+        <input type="range" min="0" max="100" value={soft} onChange={e => setSoft(+e.target.value)} style={{ flex: 1, minWidth: 120 }} />
+        <span style={{ fontSize: '0.72em', color: 'var(--dim)' }}>Hard · {soft}</span>
+        <select value={syll} onChange={e => setSyll(e.target.value)} style={inputStyle}>
+          <option value="auto">length: auto</option>{[1,2,3,4,5].map(x => <option key={x} value={x}>{x} syllable{x>1?'s':''}</option>)}
+        </select>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        <input value={seed} onChange={e => setSeed(e.target.value)} placeholder='optional: word to "translate by feel" (sets length)' style={{ ...inputStyle, flex: 1, minWidth: 180 }} />
+        <button className="btn btn-primary btn-sm" style={{ background: 'var(--ct)', color: '#000' }} onClick={generate}>Generate</button>
+        <button className="btn btn-sm btn-outline" style={{ color: 'var(--cl)', borderColor: 'var(--cl)' }} onClick={surpriseMe}>✨ Surprise Me</button>
+      </div>
+      {surprise && (
+        <div style={{ padding: '10px 14px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--cl)', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div><div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.31em', color: 'var(--cl)' }}>{surprise.word}</div>
+            <div style={{ fontSize: '0.66em', color: 'var(--mut)' }}>from: {surprise.label}</div></div>
+          <div><button onClick={() => speak(surprise.word, bcpFor())} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
+            <button onClick={() => copy(surprise.word)} style={{ background: 'none', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--dim)', cursor: 'pointer', fontSize: '0.69em', padding: '1px 7px', marginLeft: 4 }}>copy</button></div>
+        </div>
+      )}
+      {results.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+          {results.map(x => (
+            <span key={x} style={{ padding: '5px 10px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, fontSize: '0.92em', display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+              <b>{x}</b>
+              <span onClick={() => speak(x, bcpFor())} style={{ cursor: 'pointer' }}>🔊</span>
+              <span onClick={() => copy(x)} style={{ cursor: 'pointer', fontSize: '0.72em', color: 'var(--mut)' }}>⧉</span>
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input value={presetName} onChange={e => setPresetName(e.target.value)} placeholder="preset name (e.g. Murvetian)" style={{ ...inputStyle, width: 190 }} />
+        <button className="btn btn-sm btn-outline" onClick={savePreset}>💾 Save preset</button>
+        {Object.keys(presets).map(n => (
+          <span key={n} style={chipStyle(false)}>
+            <span onClick={() => loadPreset(n)} style={{ cursor: 'pointer' }}>{n}</span>
+            <span onClick={() => deletePreset(n)} style={{ cursor: 'pointer', color: '#ff3355', marginLeft: 5 }}>✕</span>
+          </span>
+        ))}
+      </div>
+      {showRef && (
+        <div onClick={() => setShowRef(false)} style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(0,0,0,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 12, padding: 18, width: '100%', maxWidth: 620, maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontFamily: "'Cinzel',serif", color: 'var(--ct)' }}>📖 Sound Palette Reference</div>
+              <button onClick={() => setShowRef(false)} style={{ background: 'none', border: 'none', color: 'var(--mut)', cursor: 'pointer', fontSize: '1.08em' }}>✕</button>
+            </div>
+            {PAL_GROUPS.map(g => (
+              <div key={g} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: '0.77em', fontWeight: 700, color: 'var(--cca)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3 }}>{g}</div>
+                {PALETTES.filter(p => p.g === g).map(p => (
+                  <div key={p.id} style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 2 }}><b style={{ color: 'var(--tx)' }}>{p.l}</b> — {p.feel}</div>
+                ))}
+              </div>
+            ))}
+            <div style={{ fontSize: '0.66em', color: 'var(--mut)' }}>⚠-marked entries are approximations — obscure or reconstructed languages, best-effort only.</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ══════════════════════════════════════════════════════════════════
 // DATE & TIME — unified (Convert · Elapsed · Crossed-World · Age)
@@ -896,7 +1167,7 @@ export default function Tools({ db }) {
     try { localStorage.setItem('tools_open', JSON.stringify([...n])) } catch {}
   }
   const BODY = {
-    datetime: <DateTimeTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
+    datetime: <DateTimeTool db={db} />, langforge: <LanguageWorkshopTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
     scots: <ScotsDialogueTool />, imagelib: <ImageLibraryTool db={db} />, backfill: (
       <div><div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 6 }}>Auto-creates a timeline entry for every character who has a Lajen birthday set, skipping ones that already exist.</div><BackfillTool db={db} /></div>
     ), units: <UnitsTool />,

@@ -11,6 +11,9 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const [search, setSearch] = useState(navSearch || '')
   const [filterValues, setFilterValues] = useState({})
   const [autoOnly, setAutoOnly] = useState(false)
+  const [size, setSize] = useState('M')
+  const [termModal, setTermModal] = useState(null) // {} for new, entry for edit
+  const SIZES = { XS: 0.72, S: 0.85, M: 1, L: 1.15, XL: 1.31 }
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
@@ -63,12 +66,18 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const letters = Object.keys(grouped).sort()
 
   return (
-    <div>
+    <div style={{ fontSize: SIZES[size] + 'em' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>📚 Glossary</div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.77em', color: 'var(--mut)' }}>{filtered.length} term{filtered.length !== 1 ? 's' : ''}</span>
           <button onClick={() => goTo('wiki')} style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }}>→ Full Wiki</button>
+          <button onClick={() => setTermModal({})} style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 8, background: 'none', border: '1px solid var(--cca)', color: 'var(--cca)', cursor: 'pointer' }}>+ Term</button>
+          <span style={{ display: 'inline-flex', gap: 3 }}>
+            {Object.keys(SIZES).map(s => (
+              <button key={s} onClick={() => setSize(s)} style={{ fontSize: '0.66em', padding: '2px 6px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${size === s ? 'var(--cca)' : 'var(--brd)'}`, background: size === s ? 'rgba(255,170,51,.15)' : 'none', color: size === s ? 'var(--cca)' : 'var(--mut)' }}>{s}</button>
+            ))}
+          </span>
         </div>
       </div>
 
@@ -125,6 +134,57 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
           ))}
         </div>
       ))}
+
+      {termModal && (() => {
+        const existing = termModal.id ? termModal : null
+        return <TermModal db={db} existing={existing} glossaryEntries={glossaryEntries} onClose={() => setTermModal(null)} />
+      })()}
+    </div>
+  )
+}
+
+
+function TermModal({ db, existing, glossaryEntries, onClose }) {
+  const [pickId, setPickId] = useState(existing?.id || '')
+  const base = pickId ? glossaryEntries.find(x => x.id === pickId) : null
+  const [title, setTitle] = useState(base?.title || '')
+  const [summary, setSummary] = useState(base?.summary || '')
+  const [category, setCategory] = useState(base?.category || GLOSSARY_CATS[0])
+  useEffect(() => { if (base) { setTitle(base.title || ''); setSummary(base.summary || ''); setCategory(base.category || GLOSSARY_CATS[0]) } }, [pickId])
+  function save() {
+    if (!title.trim()) return
+    const now = new Date().toISOString()
+    db.upsertEntry('wiki', {
+      ...(base || {}), id: base?.id || 'gl_' + Date.now(), title: title.trim(), summary,
+      category, is_glossary: true, blocks: base?.blocks || [],
+      status: base?.status || 'provisional', created: base?.created || now, updated: now,
+    })
+    onClose()
+  }
+  const inp = { width: '100%', boxSizing: 'border-box', fontSize: '0.85em', padding: '5px 8px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)', marginBottom: 8 }
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 12, padding: 18, width: '100%', maxWidth: 420 }}>
+        <div style={{ fontFamily: "'Cinzel',serif", color: tabColor, marginBottom: 10 }}>✎ {base ? 'Edit' : 'Add'} Glossary Term</div>
+        <label style={{ fontSize: '0.72em', color: 'var(--mut)' }}>Edit existing (optional)</label>
+        <select value={pickId} onChange={e => setPickId(e.target.value)} style={inp}>
+          <option value="">— new term —</option>
+          {glossaryEntries.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+        </select>
+        <label style={{ fontSize: '0.72em', color: 'var(--mut)' }}>Term</label>
+        <input value={title} onChange={e => setTitle(e.target.value)} style={inp} />
+        <label style={{ fontSize: '0.72em', color: 'var(--mut)' }}>Definition / summary</label>
+        <textarea value={summary} onChange={e => setSummary(e.target.value)} rows={3} style={{ ...inp, resize: 'vertical', fontFamily: 'inherit' }} />
+        <label style={{ fontSize: '0.72em', color: 'var(--mut)' }}>Category</label>
+        <select value={category} onChange={e => setCategory(e.target.value)} style={inp}>
+          {GLOSSARY_CATS.map(c => <option key={c}>{c}</option>)}
+        </select>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button className="btn btn-sm btn-outline" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary btn-sm" style={{ background: 'var(--cca)', color: '#000' }} onClick={save}>Save</button>
+        </div>
+        <div style={{ fontSize: '0.63em', color: 'var(--mut)', marginTop: 8 }}>Saves as a wiki entry flagged is_glossary — appears in both Glossary and Wiki.</div>
+      </div>
     </div>
   )
 }
