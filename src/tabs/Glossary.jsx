@@ -82,7 +82,9 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
         <FilterPopup color={tabColor} filters={[{ key: 'category', label: 'Category', options: availableCats.map(c => ({ value: c, label: c })) }]} values={filterValues} onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))} />
       </div>
 
-      <AlphabetJumpBar entries={filtered} getName={e => e.term || e.title} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
+      <div style={{ position: 'sticky', top: 0, zIndex: 30, background: 'var(--bg)', padding: '6px 0' }}>
+        <AlphabetJumpBar entries={filtered} getName={e => e.term || e.title} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
+      </div>
 
       {articles.length === 0 && (
         <div className="empty">

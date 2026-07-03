@@ -225,6 +225,18 @@ export function useDB() {
       const record = logActivity(action, category, entry, prevEntry)
       if (action === 'edit') showToast(`Edited: ${record.entry_name}`, entry, category, 'edit', prevEntry)
     }
+    // Auto-birthday: saving a character with a real Lajen birthday auto-creates its timeline entry
+    if (category === 'characters') {
+      const raw = String(entry.birthday_lajen || '').trim()
+      const bad = ['pending_math', 'unknown', 'n/a', 'tbd', '?', '-']
+      if (raw && !bad.includes(raw.toLowerCase()) && /\d/.test(raw)) {
+        const bid = 'bday_' + entry.id
+        const nm = 'Birthday: ' + (entry.display_name || entry.name || '?')
+        let dupe = false
+        try { const cur = lsLoad(); dupe = (cur.timeline || []).some(x => x.id !== bid && (x.name || '').toLowerCase() === nm.toLowerCase()) } catch {}
+        if (!dupe) upsertEntry('timeline', { id: bid, era: '', name: nm, books: [], detail: 'Auto-created from character birthday (' + raw + ')', status: 'provisional', created: new Date().toISOString(), date_hc: raw, date_mnaerah: String(entry.birthday || ''), sort_order: '', relationships: [], auto_birthday: true }, { silent: true })
+      }
+    }
     if (hasSupabase) {
       const key = entry.id
       if (pendingRef.current.has(key)) clearTimeout(pendingRef.current.get(key))

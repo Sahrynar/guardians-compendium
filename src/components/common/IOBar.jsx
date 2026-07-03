@@ -100,6 +100,67 @@ export default function IOBar({ db, backup, onImport }) {
     setTimeout(() => setMsg(''), ms)
   }
 
+  async function processIncoming(incoming) {
+    // ── Session log entries route to session_log table ──
+    let sessionLogAdded = 0
+    if (incoming.session_log && Array.isArray(incoming.session_log)) {
+      const { supabase, hasSupabase } = await import('../../supabase').catch(() => ({}))
+      if (hasSupabase && supabase) {
+        for (const entry of incoming.session_log) {
+          if (!entry?.id) continue
+          const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id', ignoreDuplicates: true })
+          if (!error) sessionLogAdded++
+        }
+      }
+      delete incoming.session_log
+    }
+
+    const merged = mergeImport(db.db, incoming)
+
+    // Count new entries (by id, robust)
+    let added = 0
+    Object.keys(incoming).forEach(k => {
+      if (!Array.isArray(incoming[k])) return
+      const exIds = new Set((db.db[k] || []).map(x => x?.id))
+      added += incoming[k].filter(x => x?.id && !exIds.has(x.id)).length
+    })
+
+    // Write merged data back via upsert for each category
+    const upsertPromises = []
+    Object.keys(merged).forEach(k => {
+      const arr = merged[k]
+      if (!Array.isArray(arr)) return
+      if (k === 'family_tree') {
+        if (arr[0]) upsertPromises.push(db.upsertEntry('family_tree', arr[0]))
+        return
+      }
+      arr.forEach(entry => {
+        if (entry?.id) upsertPromises.push(db.upsertEntry(k, entry))
+      })
+    })
+    await Promise.all(upsertPromises)
+
+    const parts = []
+    if (added > 0) parts.push(`${added} compendium entries`)
+    if (sessionLogAdded > 0) parts.push(`${sessionLogAdded} session log entries`)
+    flash(`✓ Merged: ${parts.length ? parts.join(' + ') : 'nothing new'} added`)
+  }
+
+
+  const bundleRef = useRef(null)
+  async function handleSessionBundle(e) {
+    const file = e.target.files[0]; if (!file) return
+    const reader = new FileReader()
+    reader.onload = async ev => {
+      try {
+        const m = String(ev.target.result).match(/```json\s*([\s\S]*?)```/)
+        if (!m) { flash('✗ No ```json block found in that file'); return }
+        await processIncoming(JSON.parse(m[1]))
+      } catch (err) { flash(`✗ Bundle import failed: ${err.message}`) }
+    }
+    reader.readAsText(file); e.target.value = ''
+  }
+
   // ── Merge import ─────────────────────────────────────────────
   async function handleImport(e) {
     const file = e.target.files[0]
@@ -115,49 +176,7 @@ export default function IOBar({ db, backup, onImport }) {
       try {
         const incoming = JSON.parse(ev.target.result)
 
-        // ── Session log entries route to session_log table ──
-        let sessionLogAdded = 0
-        if (incoming.session_log && Array.isArray(incoming.session_log)) {
-          const { supabase, hasSupabase } = await import('../../supabase').catch(() => ({}))
-          if (hasSupabase && supabase) {
-            for (const entry of incoming.session_log) {
-              if (!entry?.id) continue
-              const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id', ignoreDuplicates: true })
-              if (!error) sessionLogAdded++
-            }
-          }
-          delete incoming.session_log
-        }
-
-        const merged = mergeImport(db.db, incoming)
-
-        // Count new entries
-        let added = 0
-        Object.keys(merged).forEach(k => {
-          const exLen = (db.db[k] || []).length
-          const newLen = (merged[k] || []).length
-          added += Math.max(0, newLen - exLen)
-        })
-
-        // Write merged data back via upsert for each category
-        const upsertPromises = []
-        Object.keys(merged).forEach(k => {
-          const arr = merged[k]
-          if (!Array.isArray(arr)) return
-          if (k === 'family_tree') {
-            if (arr[0]) upsertPromises.push(db.upsertEntry('family_tree', arr[0]))
-            return
-          }
-          arr.forEach(entry => {
-            if (entry?.id) upsertPromises.push(db.upsertEntry(k, entry))
-          })
-        })
-        await Promise.all(upsertPromises)
-
-        const parts = []
-        if (added > 0) parts.push(`${added} compendium entries`)
-        if (sessionLogAdded > 0) parts.push(`${sessionLogAdded} session log entries`)
-        flash(`✓ Merged: ${parts.length ? parts.join(' + ') : 'nothing new'} added`)
+        await processIncoming(incoming)
       } catch (err) {
         flash(`✗ Import failed: ${err.message}`)
       }
@@ -316,6 +335,10 @@ export default function IOBar({ db, backup, onImport }) {
         </label>
 
         <button className="btn btn-sm btn-outline" onClick={db.exportAster}>⬇ Aster Export</button>
+        <button className="io-btn" title="Import a session-minutes .md with an embedded json block" onClick={() => bundleRef.current?.click()}>
+          📥 Session Bundle
+          <input ref={bundleRef} type="file" accept=".md,.txt,.markdown" style={{ display: 'none' }} onChange={handleSessionBundle} />
+        </button>
 
         <button className="btn btn-sm btn-outline" onClick={db.exportCSV || (() => {})}>📋 CSV</button>
 

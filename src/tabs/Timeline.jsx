@@ -85,6 +85,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
   const [visualFilter, setVisualFilter] = useState('all') // independent era filter for visual track
   const [rangeMin, setRangeMin] = useState('') // HC date range filter min
   const [rangeMax, setRangeMax] = useState('') // HC date range filter max
+  const [ancientOpen, setAncientOpen] = useState(false) // Timeline C: Ancient section collapsible
   // Era markers: stored as real entries (category 'eras', kind 'marker') — robust like everything else.
   const eraMarkers = (db.db.eras || []).filter(e => e.kind === 'marker')
   const migratedRef = useRef(false)
@@ -138,17 +139,16 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
   }
 
   // Visual track: filtered by visualFilter era, always sorted by sort_order
+  const unplaced = events.filter(e => isNaN(parseFloat(e.sort_order)))
+  const ancientCount = events.filter(e => e.era === 'Ancient').length
   const visualEvents = [...events]
     .filter(e => {
+      const soN = parseFloat(e.sort_order)
+      if (isNaN(soN)) return false // no sort# — parked off-track (see ⚠ chip)
+      if (!ancientOpen && e.era === 'Ancient') return false
       if (visualFilter !== 'all' && e.era !== visualFilter) return false
-      if (rangeMin !== '') {
-        const so = parseFloat(e.sort_order) || 0
-        if (so < parseFloat(rangeMin)) return false
-      }
-      if (rangeMax !== '') {
-        const so = parseFloat(e.sort_order) || 0
-        if (so > parseFloat(rangeMax)) return false
-      }
+      if (rangeMin !== '' && soN < parseFloat(rangeMin)) return false
+      if (rangeMax !== '' && soN > parseFloat(rangeMax)) return false
       return true
     })
     .sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0))
@@ -281,6 +281,12 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
               <button className="btn btn-sm btn-outline" style={{ fontSize: '0.69em', padding:'1px 6px' }}
                 onClick={() => { setRangeMin(''); setRangeMax('') }}>Clear</button>
             )}
+            <button className="btn btn-sm btn-outline" style={{ marginLeft: 6, color: ancientOpen ? 'var(--cca)' : 'var(--dim)', borderColor: ancientOpen ? 'var(--cca)' : 'var(--brd)' }}
+              onClick={() => setAncientOpen(o => !o)}>{ancientOpen ? '▾' : '▸'} Ancient ({ancientCount})</button>
+            {unplaced.length > 0 && (
+              <span title={'No sort# — not on the track: ' + unplaced.slice(0, 8).map(e => e.name).join(', ') + (unplaced.length > 8 ? '…' : '')}
+                style={{ fontSize: '0.72em', color: 'var(--cq)', marginLeft: 8 }}>⚠ {unplaced.length} unplaced</span>
+            )}
             <button className="btn btn-sm btn-outline" style={{ fontSize: '0.69em', padding:'1px 6px', color:'var(--cca)', borderColor:'var(--cca)' }}
               onClick={() => setEraEditor(true)} title="Manage era markers">⧖ Eras</button>
           </div>
@@ -299,6 +305,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
               const evById = id => events.find(e => e.id === id)
               const soToX = so => 30 + (w - 60) * (so - mn) / Math.max(1, rng)
               const sEv = evById(marker.startId), eEv = evById(marker.endId)
+              if (!ancientOpen && ((sEv && sEv.era === 'Ancient') || (eEv && eEv.era === 'Ancient'))) return null
               const s = sEv ? (parseFloat(sEv.sort_order)||0) : (parseFloat(marker.legacy_start ?? marker.start) || mn)
               const eV = eEv ? (parseFloat(eEv.sort_order)||0) : (parseFloat(marker.legacy_end ?? marker.end) || mx)
               const x1 = soToX(Math.min(s, eV)) - 14
@@ -309,7 +316,7 @@ export default function Timeline({ db, crossLink, clearCrossLink }) {
                   top:0, height:'100%', background:`${col}12`,
                   borderLeft:`2px solid ${col}88`, borderRight:`2px dashed ${col}66`,
                   pointerEvents:'none', zIndex:0 }}>
-                  <div style={{ position:'absolute', top:4, left:4, fontSize: '0.69em',
+                  <div style={{ position:'absolute', top: 4 + (mi % 3) * 13, left:4, fontSize: '0.69em',
                     color:col, fontWeight:700, whiteSpace:'nowrap', opacity:0.9 }}>
                     {marker.name}
                   </div>

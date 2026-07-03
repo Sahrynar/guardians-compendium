@@ -453,10 +453,20 @@ function ElapsedPane() {
   )
 }
 
-function CrossedPane() {
+const CROSSED_PRESETS = ['Rose','Lila','Martyn','Maitland','Thomas','Sandra','Faith','Hope','Silvia','Elizabeth']
+function CrossedPane({ db }) {
   const [birth, setBirth] = useState(emptyDate('lajen'))
   const [crossings, setCrossings] = useState([])
   const [asOf, setAsOf] = useState(emptyDate('lajen'))
+  const [who, setWho] = useState('')
+  const profiles = (() => { try { return JSON.parse(db?.getSetting?.('crossed_profiles') || '{}') } catch { return {} } })()
+  function loadPreset(name) {
+    setWho(name)
+    const p = profiles[name]
+    if (p) { setBirth(p.birth || emptyDate('lajen')); setCrossings(p.crossings || []); setAsOf(p.asOf || emptyDate('lajen')) }
+    else if (name === 'Maitland') setCrossings([])
+  }
+  function saveProfile() { if (!who) return; db?.saveSetting?.('crossed_profiles', JSON.stringify({ ...profiles, [who]: { birth, crossings, asOf } })) }
   const pb = parseDateVal(birth), pe = parseDateVal(asOf)
   const parsedCr = crossings.map(parseDateVal)
   let rows = null, totals = null, err = null
@@ -479,11 +489,15 @@ function CrossedPane() {
   }
   return (
     <div>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+        {CROSSED_PRESETS.map(n => <span key={n} style={chipStyle(who === n)} onClick={() => loadPreset(n)}>{n}{n === 'Maitland' ? ' (no crossing)' : ''}</span>)}
+        {who && <button className="btn btn-sm btn-outline" style={{ marginLeft: 4 }} onClick={saveProfile}>💾 Save {who}</button>}
+      </div>
       <div style={{ fontSize: '0.72em', color: 'var(--mut)', marginBottom: 4 }}>Born (world = starting side):</div>
       <DateInput val={birth} onChange={setBirth} />
       {crossings.map((c, i) => (
         <div key={i} style={{ marginTop: 8 }}>
-          <div style={{ fontSize: '0.72em', color: 'var(--cca)', marginBottom: 4 }}>Crossing {i + 1} — date they stepped through:
+          <div style={{ fontSize: '0.72em', color: 'var(--cca)', marginBottom: 4 }}>Crossing {i + 1}:
             <button onClick={() => setCrossings(crossings.filter((_, j) => j !== i))} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#ff3355', cursor: 'pointer' }}>✕</button></div>
           <DateInput val={c} onChange={v => setCrossings(crossings.map((x, j) => j === i ? v : x))} />
         </div>
@@ -494,9 +508,9 @@ function CrossedPane() {
       {err && <div style={{ marginTop: 8, fontSize: '0.77em', color: '#ff3355' }}>{err}</div>}
       {rows && (
         <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)', fontSize: '0.85em' }}>
-          {rows.map((r, i) => <div key={i} style={{ color: 'var(--dim)' }}>Segment {i + 1} · {r.world === 'lajen' ? 'Lajen' : 'Mnaerah'}: {r.years} local years</div>)}
-          <div style={{ marginTop: 6 }}>Lived <b style={{ color: 'var(--cl)' }}>{totals.l} Lajen years</b> + <b style={{ color: 'var(--ct)' }}>{totals.m} Mnaerah years</b></div>
-          <div style={{ fontSize: '0.69em', color: 'var(--cq)', marginTop: 4 }}>⚠ How crossed-world time maps to biological age is an OPEN canon question — this shows elapsed local time per side only.</div>
+          {rows.map((r, i) => <div key={i} style={{ color: 'var(--dim)' }}>Segment {i + 1} · {r.world === 'lajen' ? 'Lajen' : 'Mnaerah'}: {r.years} perceived local years</div>)}
+          <div style={{ marginTop: 6 }}>Perceived lifetime: <b style={{ color: 'var(--cl)' }}>{totals.l} Lajen years</b> + <b style={{ color: 'var(--ct)' }}>{totals.m} Mnaerah years</b></div>
+          <div style={{ fontSize: '0.66em', color: 'var(--mut)', marginTop: 4 }}>Perceived-time semantics — canon-locked Jul 2, 2026.</div>
         </div>
       )}
     </div>
@@ -556,7 +570,7 @@ function DateTimeTool({ db }) {
       <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>Anchor: Akatriluna 1, HC 320 = June 21, 1554 AD · {RATIO} Lajen years = 1 Mnaerah year</div>
       {pane === 'convert' && <ConvertPane />}
       {pane === 'elapsed' && <ElapsedPane />}
-      {pane === 'crossed' && <CrossedPane />}
+      {pane === 'crossed' && <CrossedPane db={db} />}
       {pane === 'age' && <AgePane db={db} />}
     </div>
   )
@@ -694,63 +708,56 @@ function PronunciationTool() {
 // ══════════════════════════════════════════════════════════════════
 // SCOTS DIALOGUE — Silvia (educated Edinburgh) · Elizabeth (broad rural)
 // ══════════════════════════════════════════════════════════════════
-const SCOTS_SHARED = [
-  [/\byes\b/gi, 'aye'], [/\bno\b/gi, 'nae'], [/\bknow\b/gi, 'ken'], [/\bknows\b/gi, 'kens'],
-  [/\bto\b/gi, 'tae'], [/\bfrom\b/gi, 'fae'], [/\bsmall\b/gi, 'wee'], [/\blittle\b/gi, 'wee'],
-  [/\bdon't\b/gi, "dinnae"], [/\bdoesn't\b/gi, "disnae"], [/\bcan't\b/gi, 'cannae'], [/\bwon't\b/gi, "willnae"],
-  [/\bdidn't\b/gi, "didnae"], [/\bisn't\b/gi, "isnae"], [/\bwasn't\b/gi, "wisnae"], [/\bnot\b/gi, "no'"],
-  [/\bchild\b/gi, 'bairn'], [/\bchildren\b/gi, 'bairns'], [/\bremember\b/gi, 'mind'],
-]
-const SCOTS_BROAD = [
-  [/\bI\b/g, 'Ah'], [/\byou\b/gi, 'ye'], [/\byour\b/gi, 'yer'], [/\bout\b/gi, 'oot'], [/\babout\b/gi, 'aboot'],
-  [/\bdown\b/gi, 'doon'], [/\bhouse\b/gi, 'hoose'], [/\baround\b/gi, 'aroond'], [/\bnight\b/gi, 'nicht'],
-  [/\bright\b/gi, 'richt'], [/\bgive\b/gi, 'gie'], [/\bgo\b/gi, 'gang'], [/\bgoing\b/gi, 'gaun'],
-  [/\baway\b/gi, "awa'"], [/\bold\b/gi, 'auld'], [/\bcold\b/gi, 'cauld'], [/\bhead\b/gi, 'heid'],
-  [/\bdead\b/gi, 'deid'], [/\bhave\b/gi, 'hae'], [/\bwho\b/gi, 'wha'], [/\bwhere\b/gi, 'whaur'],
-  [/\bone\b/gi, 'ane'], [/\btwo\b/gi, 'twa'], [/\bmore\b/gi, 'mair'], [/\bwell\b/gi, 'weel'],
-  [/\bstone\b/gi, 'stane'], [/\bhome\b/gi, 'hame'], [/ing\b/g, "in'"],
+const SCOTS_LEVELS = [
+  { id: 'L1', name: 'Trace',  who: "Elizabeth's default", note: 'Vocabulary only — not raised in Scotland; accent picked up from Silvia.', rules: [
+    [/\byes\b/gi,'aye'], [/\bknow\b/gi,'ken'], [/\bknows\b/gi,'kens'], [/\bsmall\b/gi,'wee'], [/\blittle\b/gi,'wee'], [/\bchild\b/gi,'bairn'], [/\bchildren\b/gi,'bairns'], [/\bremember\b/gi,'mind'],
+  ]},
+  { id: 'L2', name: 'Light', who: '', note: 'Occasional Scots negatives; standard spelling otherwise.', rules: [
+    [/\bdon't\b/gi,"dinnae"], [/\bcan't\b/gi,'cannae'], [/\bdidn't\b/gi,"didnae"], [/\bno\b/gi,'nae'],
+  ]},
+  { id: 'L3', name: 'Medium', who: "Silvia's default", note: 'Educated Edinburgh. (Canon note, exploratory: may broaden a level under strong emotion.)', rules: [
+    [/\bto\b/gi,'tae'], [/\bfrom\b/gi,'fae'], [/\bdoesn't\b/gi,"disnae"], [/\bwon't\b/gi,"willnae"], [/\bisn't\b/gi,"isnae"], [/\bwasn't\b/gi,"wisnae"], [/\bnot\b/gi,"no'"], [/\bgive\b/gi,'gie'], [/\bhave\b/gi,'hae'], [/\bmore\b/gi,'mair'], [/\bwell\b/gi,'weel'], [/\bold\b/gi,'auld'],
+  ]},
+  { id: 'L4', name: 'Broad', who: '', note: 'Full rural register — sound shifts throughout.', rules: [
+    [/\bI\b/g,'Ah'], [/\byou\b/gi,'ye'], [/\byour\b/gi,'yer'], [/\bout\b/gi,'oot'], [/\babout\b/gi,'aboot'], [/\bdown\b/gi,'doon'], [/\bhouse\b/gi,'hoose'], [/\bnight\b/gi,'nicht'], [/\bright\b/gi,'richt'], [/\bgo\b/gi,'gang'], [/\bgoing\b/gi,'gaun'], [/\baway\b/gi,"awa'"], [/\bcold\b/gi,'cauld'], [/\bhead\b/gi,'heid'], [/\bdead\b/gi,'deid'], [/\bwho\b/gi,'wha'], [/\bwhere\b/gi,'whaur'], [/\bone\b/gi,'ane'], [/\btwo\b/gi,'twa'], [/\bstone\b/gi,'stane'], [/\bhome\b/gi,'hame'], [/ing\b/g,"in'"],
+  ]},
 ]
 function keepCase(orig, rep) { return orig[0] === orig[0].toUpperCase() ? rep[0].toUpperCase() + rep.slice(1) : rep }
-function scotsify(text, rules) {
-  let t = text
-  rules.forEach(([re, rep]) => { t = t.replace(re, m => keepCase(m, rep)) })
-  return t
+function scotsAtLevel(text, levelIdx) {
+  let out = text
+  for (let i = 0; i <= levelIdx; i++) SCOTS_LEVELS[i].rules.forEach(([re, rep]) => { out = out.replace(re, m => keepCase(m, rep)) })
+  return out
 }
 function ScotsDialogueTool() {
   const [text, setText] = useState('')
-  const [silvia, setSilvia] = useState(true)
-  const [liz, setLiz] = useState(true)
-  const outS = silvia && text.trim() ? scotsify(text, SCOTS_SHARED) : null
-  const outL = liz && text.trim() ? scotsify(text, [...SCOTS_SHARED, ...SCOTS_BROAD]) : null
-  const copy = t => { try { navigator.clipboard.writeText(t) } catch {} }
-  const card = (label, out, col) => (
-    <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: '0.72em', color: col, fontWeight: 700 }}>{label}</span>
-        <button onClick={() => copy(out)} style={{ background: 'none', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--dim)', cursor: 'pointer', fontSize: '0.69em', padding: '1px 7px' }}>copy</button>
-      </div>
-      <div style={{ fontSize: '0.92em', fontStyle: 'italic' }}>{out}</div>
-    </div>
-  )
+  const [levels, setLevels] = useState(() => new Set(['L1', 'L3']))
+  const toggle = id => { const n = new Set(levels); n.has(id) ? n.delete(id) : n.add(id); setLevels(n) }
+  const copy = s => { try { navigator.clipboard.writeText(s) } catch {} }
   return (
     <div>
-      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Type or paste plain English dialogue…" rows={3}
+      <textarea value={text} onChange={e => setText(e.target.value)} rows={3} placeholder="Type or paste plain English dialogue…"
         style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
-      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-        <span style={chipStyle(silvia)} onClick={() => setSilvia(x => !x)}>Silvia — educated Edinburgh</span>
-        <span style={chipStyle(liz)} onClick={() => setLiz(x => !x)}>Elizabeth — younger, broader, rural</span>
+      <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+        {SCOTS_LEVELS.map(l => <span key={l.id} style={chipStyle(levels.has(l.id))} onClick={() => toggle(l.id)}>{l.id} {l.name}{l.who ? ' · ' + l.who : ''}</span>)}
       </div>
-      {outS && card('SILVIA MacLEOD', outS, 'var(--ct)')}
-      {outL && card('ELIZABETH MacLEOD', outL, 'var(--cca)')}
-      <details style={{ marginTop: 8 }}>
-        <summary style={{ fontSize: '0.72em', color: 'var(--mut)', cursor: 'pointer' }}>Scots rules reference</summary>
-        <div style={{ fontSize: '0.72em', color: 'var(--dim)', marginTop: 4, columns: 2 }}>
-          <div style={{ fontWeight: 700, color: 'var(--ct)' }}>Both voices:</div>
-          {SCOTS_SHARED.map(([re, rep], i) => <div key={i}>{re.source.replace(/\\b/g, '')} → {rep}</div>)}
-          <div style={{ fontWeight: 700, color: 'var(--cca)', marginTop: 4 }}>Elizabeth adds:</div>
-          {SCOTS_BROAD.map(([re, rep], i) => <div key={i}>{re.source.replace(/\\b/g, '')} → {rep}</div>)}
+      {text.trim() && SCOTS_LEVELS.map((l, i) => levels.has(l.id) && (
+        <div key={l.id} style={{ marginTop: 8, padding: '8px 12px', background: 'var(--card)', borderRadius: 8, border: '1px solid var(--brd)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: '0.72em', color: 'var(--ct)', fontWeight: 700 }}>{l.id} {l.name.toUpperCase()}{l.who ? ' — ' + l.who : ''}</span>
+            <button onClick={() => copy(scotsAtLevel(text, i))} style={{ background: 'none', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--dim)', cursor: 'pointer', fontSize: '0.69em', padding: '1px 7px' }}>copy</button>
+          </div>
+          <div style={{ fontSize: '0.92em', fontStyle: 'italic' }}>{scotsAtLevel(text, i)}</div>
+          <div style={{ fontSize: '0.63em', color: 'var(--mut)', marginTop: 3 }}>{l.note}</div>
         </div>
-        <div style={{ fontSize: '0.66em', color: 'var(--mut)', marginTop: 4 }}>⚠ Rule-based approximation for drafting — not authentic dialect generation. Silvia keeps standard spellings with lighter Scots vocabulary; Elizabeth applies broader sound shifts.</div>
+      ))}
+      <details style={{ marginTop: 8 }}>
+        <summary style={{ fontSize: '0.72em', color: 'var(--mut)', cursor: 'pointer' }}>Rules reference (cumulative by level)</summary>
+        {SCOTS_LEVELS.map(l => (
+          <div key={l.id} style={{ fontSize: '0.72em', color: 'var(--dim)', marginTop: 4 }}>
+            <b style={{ color: 'var(--ct)' }}>{l.id} {l.name}:</b> {l.rules.map(([re, rep]) => re.source.replace(/\\b/g, '') + '→' + rep).join(' · ')}
+          </div>
+        ))}
+        <div style={{ fontSize: '0.66em', color: 'var(--mut)', marginTop: 4 }}>⚠ Drafting aid, not a dialect engine. Levels are cumulative. Rule expansion pending Melissa's line review.</div>
       </details>
     </div>
   )
@@ -787,211 +794,56 @@ function UnitsTool() {
   )
 }
 
-const IMG_LIB_CATS = ['All','Characters','Wardrobe','Items','Locations','Maps','Manuscript','Other']
-
+const IMG_RE = /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i
+function looksLikeImage(v) { return typeof v === 'string' && (v.startsWith('data:image') || ((v.startsWith('http') || v.startsWith('/')) && (IMG_RE.test(v) || v.includes('supabase.co/storage')))) }
 function ImageLibraryTool({ db }) {
-  const tabColor = TAB_RAINBOW['tools'] || '#aaaaaa'
-  const [search, setSearch] = useState('')
-  const [filterCat, setFilterCat] = useState('All')
-  const [lightbox, setLightbox] = useState(null)
-  const [uploadName, setUploadName] = useState('')
-  const [uploadCat, setUploadCat] = useState('Other')
-  const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState(null)
   const fileRef = useRef(null)
-
-  // Gather all images from across all tabs
-  function gatherImages() {
-    const imgs = []
-    const d = db.db
-
-    // Characters
-    ;(d.characters || []).forEach(c => {
-      if (c.image) imgs.push({ url: c.image, name: c.display_name || c.name, cat: 'Characters', id: c.id })
-    })
-    // Wardrobe
-    ;(d.wardrobe || []).forEach(w => {
-      if (w.image) imgs.push({ url: w.image, name: w.name, cat: 'Wardrobe', id: w.id })
-    })
-    // Items / Inventory
-    ;(d.items || []).forEach(it => {
-      if (it.image) imgs.push({ url: it.image, name: it.name, cat: 'Items', id: it.id })
-    })
-    ;(d.inventory || []).forEach(it => {
-      if (it.image) imgs.push({ url: it.image, name: it.name, cat: 'Items', id: it.id })
-    })
-    // Locations
-    ;(d.locations || []).forEach(loc => {
-      if (loc.image) imgs.push({ url: loc.image, name: loc.name, cat: 'Locations', id: loc.id })
-      if (loc.map_image) imgs.push({ url: loc.map_image, name: (loc.name || '') + ' (map)', cat: 'Maps', id: loc.id + '_map' })
-    })
-    // Maps tab
-    ;(d.maps || []).forEach(m => {
-      if (m.image) imgs.push({ url: m.image, name: m.name, cat: 'Maps', id: m.id })
-    })
-    // Manuscript covers + chapter images
-    try {
-      const bookMeta = JSON.parse(d.settings?.manuscript_books || '{}')
-      Object.entries(bookMeta).forEach(([book, meta]) => {
-        if (meta.cover) imgs.push({ url: meta.cover, name: `${book} Cover`, cat: 'Manuscript', id: 'cover_' + book })
-      })
-    } catch {}
-    ;(d.manuscript || []).forEach(ch => {
-      if (ch.chapter_image) imgs.push({
-        url: ch.chapter_image, cat: 'Manuscript',
-        name: `${ch.book} Ch.${ch.chapter_num}${ch.title ? ' — ' + ch.title : ''}`,
-        id: ch.id + '_img'
-      })
-    })
-    // Direct uploads (stored in image_library settings key)
-    try {
-      const direct = JSON.parse(d.settings?.image_library || '[]')
-      direct.forEach(img => imgs.push({ ...img, direct: true }))
-    } catch {}
-
-    return imgs
-  }
-
-  async function handleUpload(e) {
-    const file = e.target.files?.[0]
-    if (!file || !uploadName.trim()) return
-    setUploading(true)
-    try {
-      const { supabase } = await import('../supabase').catch(() => ({ supabase: null }))
-      let url = null
-      if (supabase) {
-        const ext = file.name.split('.').pop()
-        const path = `library/${Date.now()}_${uploadName.replace(/\s+/g,'_')}.${ext}`
-        const { error } = await supabase.storage.from('images').upload(path, file, { upsert: true })
-        if (!error) {
-          const { data: urlData } = supabase.storage.from('images').getPublicUrl(path)
-          url = urlData.publicUrl
-        }
-      }
-      if (!url) {
-        url = await new Promise(res => {
-          const reader = new FileReader()
-          reader.onload = ev => res(ev.target.result)
-          reader.readAsDataURL(file)
+  const gallery = useMemo(() => {
+    const seen = new Set(); const out = []
+    Object.entries(db.db || {}).forEach(([cat, entries]) => {
+      if (!Array.isArray(entries)) return
+      entries.forEach(e => {
+        if (!e || typeof e !== 'object') return
+        Object.entries(e).forEach(([field, v]) => {
+          if (!looksLikeImage(v)) return
+          const key = v.slice(0, 120) + '|' + e.id
+          if (seen.has(key)) return
+          seen.add(key)
+          out.push({ src: v, cat, field, entryId: e.id, label: e.title || e.display_name || e.name || e.id })
         })
-      }
-      const existing = JSON.parse(db.settings?.image_library || '[]')
-      const newEntry = { id: Date.now().toString(36), url, name: uploadName.trim(), cat: uploadCat, direct: true }
-      db.saveSetting('image_library', JSON.stringify([...existing, newEntry]))
-      setUploadName('')
-      e.target.value = ''
-    } catch(err) { console.error(err) }
-    setUploading(false)
+      })
+    })
+    return out
+  }, [db.db])
+  function addImage(ev) {
+    const f = ev.target.files[0]; if (!f) return
+    const r = new FileReader()
+    r.onload = e2 => db.upsertEntry('images', { id: 'img_' + Date.now(), name: f.name, src: e2.target.result, created: new Date().toISOString() })
+    r.readAsDataURL(f); ev.target.value = ''
   }
-
-  function deleteDirectImage(id) {
-    try {
-      const existing = JSON.parse(db.settings?.image_library || '[]')
-      db.saveSetting('image_library', JSON.stringify(existing.filter(i => i.id !== id)))
-    } catch {}
-  }
-
-  const allImgs = gatherImages()
-  const filtered = allImgs.filter(img => {
-    const mc = filterCat === 'All' || img.cat === filterCat
-    const mq = !search || img.name.toLowerCase().includes(search.toLowerCase())
-    return mc && mq
-  })
-
   return (
-    <div className="tool-card" id="tool-imagelib">
-      <h3 style={{ color: tabColor }}>🖼 Image Library</h3>
-      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 10, lineHeight: 1.5 }}>
-        All images from across the Compendium in one place — characters, wardrobe, items, locations,
-        maps, manuscript covers and chapter headers. You can also upload images directly here.
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: '0.77em', color: 'var(--dim)' }}>Every image anywhere in the Compendium, gathered automatically ({gallery.length}). New images added anywhere appear here on their own.</div>
+        <button className="btn btn-sm btn-outline" onClick={() => fileRef.current?.click()}>➕ Add image
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={addImage} /></button>
       </div>
-
-      {/* Upload strip */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end',
-        padding: '8px 10px', background: 'var(--card)', borderRadius: 6,
-        border: '1px solid var(--brd)', marginBottom: 12 }}>
-        <div className="field" style={{ flex: 1, minWidth: 130, margin: 0 }}>
-          <label>Name</label>
-          <input value={uploadName} onChange={e => setUploadName(e.target.value)}
-            placeholder="Image name…" />
-        </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Category</label>
-          <select value={uploadCat} onChange={e => setUploadCat(e.target.value)}>
-            {IMG_LIB_CATS.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
-        <button className="btn btn-sm btn-outline"
-          disabled={!uploadName.trim() || uploading}
-          onClick={() => fileRef.current?.click()}>
-          {uploading ? 'Uploading…' : '📷 Upload image'}
-        </button>
-      </div>
-
-      {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
-        <input className="sx" placeholder="Search by name…" value={search}
-          onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {IMG_LIB_CATS.map(c => (
-            <button key={c} onClick={() => setFilterCat(c)}
-              style={{ fontSize: '0.77em', padding: '3px 10px', borderRadius: 12, cursor: 'pointer',
-                background: filterCat === c ? tabColor : 'none',
-                color: filterCat === c ? '#000' : 'var(--dim)',
-                border: `1px solid ${filterCat === c ? tabColor : 'var(--brd)'}` }}>
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ fontSize: '0.77em', color: 'var(--mut)', marginBottom: 8 }}>
-        {filtered.length} image{filtered.length !== 1 ? 's' : ''}
-      </div>
-
-      {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-        {filtered.map(img => (
-          <div key={img.id} style={{ position: 'relative', background: 'var(--card)',
-            border: '1px solid var(--brd)', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{ position: 'relative', paddingTop: '66%', cursor: 'pointer' }}
-              onClick={() => setLightbox(img.url)}>
-              <img src={img.url} alt={img.name}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
-                  objectFit: 'cover' }}
-                onError={e => e.target.style.display = 'none'} />
-              <div style={{ position: 'absolute', top: 4, right: 4, fontSize: '0.92em',
-                background: 'rgba(0,0,0,.6)', borderRadius: 4, padding: '1px 4px',
-                color: '#fff' }}>↗</div>
-            </div>
-            <div style={{ padding: '5px 7px' }}>
-              <div style={{ fontSize: '0.77em', fontWeight: 600, color: 'var(--tx)',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{img.name}</div>
-              <div style={{ fontSize: '0.69em', color: tabColor }}>{img.cat}</div>
-            </div>
-            {img.direct && (
-              <button onClick={() => deleteDirectImage(img.id)}
-                style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(0,0,0,.7)',
-                  border: 'none', borderRadius: 4, color: '#ff3355', cursor: 'pointer',
-                  fontSize: '0.85em', padding: '1px 5px', lineHeight: 1 }}>✕</button>
-            )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8 }}>
+        {gallery.map((g, i) => (
+          <div key={i} onClick={() => setPreview(g)} style={{ cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 8, overflow: 'hidden' }}>
+            <img src={g.src} alt={g.label} style={{ width: '100%', height: 84, objectFit: 'cover', display: 'block' }} loading="lazy" />
+            <div style={{ fontSize: '0.63em', color: 'var(--dim)', padding: '3px 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.label} <span style={{ color: 'var(--mut)' }}>· {g.cat}</span></div>
           </div>
         ))}
-        {filtered.length === 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '30px 0',
-            color: 'var(--mut)', fontSize: '0.85em' }}>
-            No images found. Upload some or add images to Characters, Wardrobe, Items, or Locations.
-          </div>
-        )}
       </div>
-
-      {/* Lightbox */}
-      {lightbox && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.92)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt=""
-            style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }} />
+      {gallery.length === 0 && <div style={{ fontSize: '0.77em', color: 'var(--mut)' }}>No images found yet.</div>}
+      {preview && (
+        <div onClick={() => setPreview(null)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ textAlign: 'center' }}>
+            <img src={preview.src} alt="" style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: 8 }} />
+            <div style={{ color: 'var(--dim)', fontSize: '0.85em', marginTop: 8 }}>{preview.label} · {preview.cat}{preview.field ? ' · ' + preview.field : ''}</div>
+          </div>
         </div>
       )}
     </div>
@@ -999,50 +851,34 @@ function ImageLibraryTool({ db }) {
 }
 
 function BackfillTool({ db }) {
-  const [result, setResult] = useState(null)
-
-  function run() {
-    const chars = db.db.characters || []
-    const timeline = db.db.timeline || []
-    let added = 0
-
-    chars.forEach(ch => {
-      if (!ch.birthday_lajen || ch.birthday_lajen === 'n/a (born in Mnaerah)' || ch.birthday_lajen === 'pending_math') return
-      const name = ch.display_name || ch.name
-      const existing = timeline.find(t => t.name === 'Birthday: ' + name)
-      if (existing) return
-
-      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7) + added
-
-      db.upsertEntry('timeline', {
-        id: uid(),
-        name: 'Birthday: ' + name,
-        date_hc: ch.birthday_lajen,
-        date_mnaerah: ch.birthday || '',
-        sort_order: '',
-        era: ch.books && ch.books.length ? ch.books[0] : '',
-        detail: 'Auto-created from character birthday.',
-        status: 'locked',
-        books: ch.books || [],
-        relationships: [],
-        created: new Date().toISOString(),
-      })
-      added++
+  const [report, setReport] = useState(null)
+  function sweep() {
+    const bad = ['pending_math', 'unknown', 'n/a', 'tbd', '?', '-']
+    const tl = db.db.timeline || []
+    let created = 0, existing = 0
+    const skipped = []
+    ;(db.db.characters || []).forEach(c => {
+      const raw = String(c.birthday_lajen || '').trim()
+      const nm = 'Birthday: ' + (c.display_name || c.name || '?')
+      if (!raw || bad.includes(raw.toLowerCase()) || !/\d/.test(raw)) { if (raw) skipped.push((c.display_name || c.name) + ' — "' + raw + '"'); return }
+      const bid = 'bday_' + c.id
+      if (tl.some(x => x.id === bid || (x.name || '').toLowerCase() === nm.toLowerCase())) { existing++; return }
+      db.upsertEntry('timeline', { id: bid, era: '', name: nm, books: [], detail: 'Auto-created from character birthday (' + raw + ')', status: 'provisional', created: new Date().toISOString(), date_hc: raw, date_mnaerah: String(c.birthday || ''), sort_order: '', relationships: [], auto_birthday: true }, { silent: true })
+      created++
     })
-
-    setResult(added)
+    setReport({ created, existing, skipped })
   }
-
   return (
     <div>
-      <button className="btn btn-primary btn-sm" style={{ background:'var(--cfl)' }} onClick={run}>
-        Run Backfill
-      </button>
-      {result !== null && (
-        <div style={{ marginTop:8, fontSize: '0.85em', color: result > 0 ? 'var(--sl)' : 'var(--dim)' }}>
-          {result > 0
-            ? `✓ Created ${result} birthday event${result !== 1 ? 's' : ''}.`
-            : '✓ All birthdays already have timeline entries — nothing to add.'}
+      <div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 6 }}>Birthdays now auto-create timeline entries whenever a character is saved. This button sweeps ALL existing characters once and reports anything it couldn't place.</div>
+      <button className="btn btn-primary btn-sm" style={{ background: 'var(--cfl)', color: '#000' }} onClick={sweep}>Sweep all characters</button>
+      {report && (
+        <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--card)', borderRadius: 8, fontSize: '0.85em' }}>
+          <div>✓ Created {report.created} · already present {report.existing}</div>
+          {report.skipped.length > 0 && (
+            <div style={{ marginTop: 4, color: 'var(--cq)', fontSize: '0.85em' }}>⚠ Couldn't place {report.skipped.length} (placeholder/unparseable):
+              <div style={{ color: 'var(--dim)', fontSize: '0.9em', marginTop: 2 }}>{report.skipped.join(' · ')}</div></div>
+          )}
         </div>
       )}
     </div>
