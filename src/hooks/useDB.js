@@ -10,7 +10,8 @@ const CATEGORIES = [
   'scenes','canon','world','questions','spellings',
   'calendar_entries','flags','maps','wiki','notes','family_tree',
   'images','manuscript','inventory','eras','journal','ideas_list',
-  'journal_captures','journal_tags'
+  'journal_captures','journal_tags',
+  'lexicon_seeds','lexicon_saved'
 ]
 
 function lsLoad() {

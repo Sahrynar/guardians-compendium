@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { uid } from '../constants'
 import { supabase, hasSupabase } from '../supabase'
+import LexiconBucket from '../components/LexiconBucket'
 
 // ── Sticky color presets (pastel — bg, border, text) ─────────────
 const STICKY_COLORS = [
@@ -630,6 +631,7 @@ function TagManager({ tags, onUpdate, onClose }) {
 
 // ── Main Journal component ───────────────────────────────────────
 export default function Journal({ db, navSearch }) {
+  const [jSub, setJSub] = useState('board')
   const [tags, setTags] = useState(() => lsGet('gcomp_journal_tags', DEFAULT_TAGS))
   const [captures, setCaptures] = useState(() => lsGet('gcomp_captures', []))
   const [showTagManager, setShowTagManager] = useState(false)
@@ -699,8 +701,22 @@ export default function Journal({ db, navSearch }) {
 
   const isMobile = window.innerWidth < 700
 
+  const jBar = (
+    <div style={{ display: 'flex', gap: 6, margin: '2px 0 10px' }}>
+      {[['board', '📌 Board'], ['lexicon', '🗣 Lexicon']].map(([id, l]) => (
+        <button key={id} onClick={() => setJSub(id)} style={{ fontSize: '0.77em', padding: '4px 12px', borderRadius: 12, cursor: 'pointer', border: '1px solid ' + (jSub === id ? 'var(--cl)' : 'var(--brd)'), background: jSub === id ? 'rgba(170,102,255,.15)' : 'transparent', color: jSub === id ? 'var(--cl)' : 'var(--dim)' }}>{l}</button>
+      ))}
+    </div>
+  )
+  if (jSub === 'lexicon') return (
+    <div>
+      {jBar}
+      <LexiconBucket db={db} />
+    </div>
+  )
   return (
     <div>
+      {jBar}
       {/* Header */}
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.08em', color: JOURNAL_COLOR }}>📝 Notes</div>

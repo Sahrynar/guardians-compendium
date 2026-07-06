@@ -1,10 +1,12 @@
 import { useState, useMemo, useRef } from 'react'
 import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW } from '../constants'
+import SemanticForge from '../components/SemanticForge'
 
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
   { id: 'datetime',  label: 'Date & Time',           emoji: '🕰', color: 'var(--cca)' },
-  { id: 'langforge', label: 'Language Workshop',    emoji: '🗣', color: 'var(--ct)'  },
+  { id: 'semforge',  label: 'Word Forge (Semantic)', emoji: '✨', color: 'var(--cl)'  },
+  { id: 'langforge', label: 'Language Workshop (Phonetic)', emoji: '🗣', color: 'var(--ct)'  },
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
   { id: 'pronun',    label: 'Pronunciation Helper',  emoji: '🔊', color: 'var(--cwr)' },
   { id: 'scots',     label: 'Scots Dialogue',        emoji: '🏴', color: 'var(--ct)'  },
@@ -351,7 +353,7 @@ const PRONUN_LANGS = [
 // as ingredients · Surprise Me · in-tool palette reference.
 // Outputs are SUGGESTIONS ONLY — nothing here is canon until Melissa says.
 // ══════════════════════════════════════════════════════════════════
-const PALETTES = [
+export const PALETTES = [
  // Mediterranean
  {id:'venetian',l:'Venetian',g:'Mediterranean',bcp:'it-IT',soft:.8,feel:'soft, sing-song, open vowels — Martyn\u2019s home register',sig:['gia','zan','vi'],on:['b','d','f','g','l','m','n','p','r','s','t','v','z','ch'],v:['a','e','i','o','ia','io','ie'],cod:['n','r',''],end:['o','a','in','ero','ia','eo'],sh:['CV','CV','CVC','V','CVV']},
  {id:'sicilian',l:'Sicilian',g:'Mediterranean',bcp:'it-IT',soft:.35,feel:'harder, clipped, -u endings, weathered (Arabic/Spanish echoes)',sig:['dd','str','sc'],on:['b','c','d','f','g','l','m','n','p','r','s','t','v','z','tr','gr'],v:['a','e','i','o','u'],cod:['','r','n','s'],end:['u','a','i','eddu','azzu','ustru'],sh:['CV','CVC','CVC','CVV']},
@@ -411,7 +413,7 @@ const PALETTES = [
  // Deep-ancient / constructed
  {id:'pie',l:'Proto-Indo-European',g:'Ancient',bcp:'en-GB',soft:.4,feel:'⚠ approx — reconstructed deepest root of Europe+Persia+India',sig:['bh','gw','h\u2081'],on:['b','d','g','k','l','m','n','p','r','s','t','w','y','bh','dh','gw'],v:['e','o','a','i','u'],cod:['s','r','n','m','t'],end:['os','om','ter','went','tor'],sh:['CVC','CVC','CV']},
 ]
-const PAL_BY_ID = Object.fromEntries(PALETTES.map(p => [p.id, p]))
+export const PAL_BY_ID = Object.fromEntries(PALETTES.map(p => [p.id, p]))
 const PAL_GROUPS = [...new Set(PALETTES.map(p => p.g))]
 const rnd = a => a[Math.floor(Math.random() * a.length)]
 
@@ -1167,7 +1169,7 @@ export default function Tools({ db }) {
     try { localStorage.setItem('tools_open', JSON.stringify([...n])) } catch {}
   }
   const BODY = {
-    datetime: <DateTimeTool db={db} />, langforge: <LanguageWorkshopTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
+    datetime: <DateTimeTool db={db} />, semforge: <SemanticForge db={db} />, langforge: <LanguageWorkshopTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
     scots: <ScotsDialogueTool />, imagelib: <ImageLibraryTool db={db} />, backfill: (
       <div><div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 6 }}>Auto-creates a timeline entry for every character who has a Lajen birthday set, skipping ones that already exist.</div><BackfillTool db={db} /></div>
     ), units: <UnitsTool />,
