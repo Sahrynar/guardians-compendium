@@ -8,6 +8,8 @@
 // design and editable on save.
 // ══════════════════════════════════════════════════════════════════
 
+import { respellMap, respellAffix, ttsFor } from '../data/langRegistry'
+
 // ── Deterministic PRNG ────────────────────────────────────────────
 export function hashString(str) {
   let h = 1779033703 ^ str.length
@@ -212,17 +214,35 @@ const RESPELL_BASE = { a:'ah', e:'eh', i:'ee', o:'oh', u:'oo', y:'ee',
   ai:'eye', au:'ow', ei:'ay', oi:'oy', c:'k', q:'k', x:'ks', j:'j',
   sh:'sh', ch:'ch', th:'th', kh:'kh', gh:'g', ph:'f', tl:'tl', tz:'ts', ts:'ts',
   ll:'l', rr:'r', ng:'ng', zh:'zh', dd:'th', gw:'gw', kw:'kw', hr:'hr', sk:'sk', bh:'b', dh:'d' }
-const RESPELL_LANG = {
-  nahuatl: { x:'sh', j:'h', hu:'w', qu:'k', c:'k' },
-  maya_yucatec: { x:'sh', j:'h', c:'k' },
-  latin: { j:'y', v:'w', c:'k' },
-  italian: { j:'y', gl:'ly', gn:'ny' },
-  welsh: { ll:'hl', dd:'th', w:'oo', u:'ee', f:'v' },
-  japanese: {}, sanskrit: { j:'j' }, persian: { kh:'kh', q:'k' }, arabic: { q:'k' }, greek_ancient: { ph:'f', ch:'kh' },
+// Peel known affixes off a (final) word so they can be pronounced via
+// their OWN layer, not the spine language's root rules. Tolerant of
+// reshape having dropped a glottal. Returns { pre, core, suf }.
+function peelAffixes(word, affixes) {
+  let core = word
+  let pre = '', suf = ''
+  const norm = s => String(s).toLowerCase().replace(/[ʼ’]/g, "'")
+  for (const a of affixes || []) {
+    const rs = respellAffix(a.value)
+    if (rs == null) continue
+    const av = norm(String(a.value).replace(/^-+|-+$/g, ''))
+    const avNoGlot = av.replace(/'/g, '')
+    if (a.position === 'prefix') {
+      const c = norm(core)
+      if (av && c.startsWith(av)) { pre += rs + '-'; core = core.slice(av.length) }
+      else if (avNoGlot && c.startsWith(avNoGlot)) { pre += rs + '-'; core = core.slice(avNoGlot.length) }
+    } else {
+      const c = norm(core)
+      if (av && c.endsWith(av)) { suf = '-' + rs + suf; core = core.slice(0, core.length - av.length) }
+      else if (avNoGlot && c.endsWith(avNoGlot)) { suf = '-' + rs + suf; core = core.slice(0, core.length - avNoGlot.length) }
+    }
+  }
+  return { pre, core, suf }
 }
-export function respell(word, spineLang) {
-  const map = { ...RESPELL_BASE, ...(RESPELL_LANG[spineLang] || {}) }
-  const sylls = syllabify(word)
+
+export function respell(word, spineLang, affixes = []) {
+  const map = { ...RESPELL_BASE, ...respellMap(spineLang) }
+  const { pre, core, suf } = peelAffixes(word, affixes)
+  const sylls = core ? syllabify(core) : []
   const conv = s => {
     let out = '', i = 0
     while (i < s.length) {
@@ -236,7 +256,8 @@ export function respell(word, spineLang) {
   }
   const chunks = sylls.map(conv)
   const stress = chunks.length >= 2 ? chunks.length - 2 : 0
-  return chunks.map((c, i) => (i === stress && chunks.length >= 2 ? c.toUpperCase() : c)).join('-')
+  const coreOut = chunks.map((c, i) => (i === stress && chunks.length >= 2 ? c.toUpperCase() : c)).join('-')
+  return (pre + coreOut + suf).replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-')
 }
 const IPA_BASE = { a:'a', e:'e', i:'i', o:'o', u:'u', y:'i', c:'k', q:'k', x:'ʃ', j:'dʒ',
   sh:'ʃ', ch:'tʃ', th:'θ', kh:'x', gh:'ɣ', ph:'f', tl:'tɬ', tz:'ts', ts:'ts', ll:'ʎ', rr:'r', ng:'ŋ', zh:'ʒ', "'":'ʔ' }
@@ -248,15 +269,11 @@ export function toIPA(word, spineLang) {
   return 'ˈ' + out
 }
 
-// ── TTS locale (browser voices expand automatically) ──────────────
-export const LEX_TTS = {
-  latin: { bcp: 'it-IT', proxy: true }, italian: { bcp: 'it-IT' },
-  greek_ancient: { bcp: 'el-GR', proxy: true }, welsh: { bcp: 'cy-GB' },
-  persian: { bcp: 'fa-IR' }, arabic: { bcp: 'ar-SA' },
-  sanskrit: { bcp: 'hi-IN', proxy: true }, japanese: { bcp: 'ja-JP' },
-  nahuatl: { bcp: 'es-MX', proxy: true }, maya_yucatec: { bcp: 'es-MX', proxy: true },
-}
-export const ttsLocaleFor = spineLang => (LEX_TTS[spineLang] || { bcp: 'en-GB', proxy: true })
+// ── TTS locale (registry-driven; browser/chosen voices expand it) ──
+// Any language in the lexicon resolves to a locale hint via the registry;
+// unknown languages fall back to en-GB. The user's chosen voice (voice
+// picker) overrides this at speak time.
+export const ttsLocaleFor = spineLang => ttsFor(spineLang)
 
 // ── Main generate ─────────────────────────────────────────────────
 export function generate(opts) {
@@ -296,7 +313,7 @@ export function generate(opts) {
     if (seen.has(w)) continue
     seen.add(w)
     out.push({
-      word: w, respelling: respell(w, spineLang), ipa: toIPA(w, spineLang),
+      word: w, respelling: respell(w, spineLang, affixes), ipa: toIPA(w, spineLang),
       spineLang, tts: ttsLocaleFor(spineLang), derivation, affixes,
       seed, recipe: { ...recipeBase, seedIndex: i },
     })

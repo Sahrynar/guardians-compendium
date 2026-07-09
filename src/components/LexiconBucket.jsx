@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react'
 import { ttsLocaleFor } from '../utils/nameForge'
+import { speakText, speakableFromRespell } from '../utils/speech'
 
-// ── Lexicon bucket (PATCH7A) — saved forged words ─────────────────
-// Journal sub-tab. Filter/sort/edit everything; select a word to hear it.
+// ── Lexicon bucket (PATCH7A · voice PATCH7B) ──────────────────────
+// Journal sub-tab. Filter/sort/edit everything; select a word to hear it
+// (with the voice chosen in the Word Forge, reading the respelling).
 
 const inputStyle = { fontSize: '0.85em', padding: '5px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }
-function speak(text, lang = 'en-GB') {
-  try { const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = 0.85; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u) } catch {}
-}
 const TYPES = ['all', 'person', 'place', 'thing', 'concept', 'ability', 'other']
 
 export default function LexiconBucket({ db }) {
@@ -20,6 +19,8 @@ export default function LexiconBucket({ db }) {
   const [sortDir, setSortDir] = useState('desc')
   const [openId, setOpenId] = useState(null)
   const [autoSpeak, setAutoSpeak] = useState(() => db.getSetting?.('lexbucket_autospeak') !== '0')
+  const voiceURI = db.getSetting?.('semforge_voice') || ''
+  const say = w => speakText(speakableFromRespell(w.respelling, w.word), { voiceURI, bcp: ttsLocaleFor(w.spineLang).bcp })
 
   const forms = useMemo(() => ['all', ...new Set(words.map(w => w.language_form).filter(Boolean))], [words])
   const tags = useMemo(() => ['all', ...new Set(words.flatMap(w => w.tags || []))], [words])
@@ -40,7 +41,7 @@ export default function LexiconBucket({ db }) {
   function open(w) {
     const next = openId === w.id ? null : w.id
     setOpenId(next)
-    if (next && autoSpeak) speak(w.word, ttsLocaleFor(w.spineLang).bcp)
+    if (next && autoSpeak) say(w)
   }
   function patch(w, field, value) {
     db.upsertEntry?.('lexicon_saved', { ...w, [field]: value }, { silent: true })
@@ -94,7 +95,7 @@ export default function LexiconBucket({ db }) {
             {openNow && (
               <div style={{ marginTop: 7, fontSize: '0.8em' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 5 }}>
-                  <button onClick={() => speak(w.word, tts.bcp)} title={tts.proxy ? `voice: ${tts.bcp} (closest proxy)` : `voice: ${tts.bcp}`} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em' }}>🔊</button>
+                  <button onClick={() => say(w)} title={tts.proxy ? `voice: ${tts.bcp} (closest proxy)` : `voice: ${tts.bcp}`} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em' }}>🔊</button>
                   <span style={{ color: 'var(--dim)' }}>{w.respelling}</span>
                   {w.ipa && <span style={{ color: 'var(--mut)' }}>/{w.ipa}/</span>}
                   {tts.proxy && <span style={{ fontSize: '0.82em', color: 'var(--mut)' }}>(proxy voice — install more system voices and 🔊 upgrades automatically)</span>}

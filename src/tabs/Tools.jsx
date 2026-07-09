@@ -1,11 +1,13 @@
 import { useState, useMemo, useRef } from 'react'
 import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW } from '../constants'
 import SemanticForge from '../components/SemanticForge'
+import ReverseLookup from '../components/ReverseLookup'
 
 // ── Tool definitions for nav ─────────────────────────────────────
 const TOOLS = [
   { id: 'datetime',  label: 'Date & Time',           emoji: '🕰', color: 'var(--cca)' },
   { id: 'semforge',  label: 'Word Forge (Semantic)', emoji: '✨', color: 'var(--cl)'  },
+  { id: 'reverse',   label: 'Reverse Lookup / Translator', emoji: '🔎', color: 'var(--cca)' },
   { id: 'langforge', label: 'Language Workshop (Phonetic)', emoji: '🗣', color: 'var(--ct)'  },
   { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
   { id: 'pronun',    label: 'Pronunciation Helper',  emoji: '🔊', color: 'var(--cwr)' },
@@ -1169,7 +1171,7 @@ export default function Tools({ db }) {
     try { localStorage.setItem('tools_open', JSON.stringify([...n])) } catch {}
   }
   const BODY = {
-    datetime: <DateTimeTool db={db} />, semforge: <SemanticForge db={db} />, langforge: <LanguageWorkshopTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
+    datetime: <DateTimeTool db={db} />, semforge: <SemanticForge db={db} />, reverse: <ReverseLookup db={db} />, langforge: <LanguageWorkshopTool db={db} />, ixcitlatl: <IxCitlatlTool db={db} />, pronun: <PronunciationTool />,
     scots: <ScotsDialogueTool />, imagelib: <ImageLibraryTool db={db} />, backfill: (
       <div><div style={{ fontSize: '0.77em', color: 'var(--dim)', marginBottom: 6 }}>Auto-creates a timeline entry for every character who has a Lajen birthday set, skipping ones that already exist.</div><BackfillTool db={db} /></div>
     ), units: <UnitsTool />,

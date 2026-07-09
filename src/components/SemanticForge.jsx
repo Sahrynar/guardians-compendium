@@ -1,29 +1,41 @@
 import { useState, useMemo, useEffect } from 'react'
-import { DEFAULT_LEXICON, LEX_LANGS } from '../data/lajenLexicon'
+import { DEFAULT_LEXICON } from '../data/lajenLexicon'
+import { langLabel } from '../data/langRegistry'
 import { generate, BUILTIN_AFFIXES, ttsLocaleFor } from '../utils/nameForge'
+import { listVoices, onVoices, speakText, speakableFromRespell } from '../utils/speech'
 import { PALETTES, PAL_BY_ID } from '../tabs/Tools'
 
-// ── Semantic Word Forge (PATCH7A) ─────────────────────────────────
+// ── Semantic Word Forge (PATCH7A · voice+freetext PATCH7B) ────────
 // Starts from REAL words that MEAN what you typed, then blends/reshapes.
 // Outputs are SUGGESTIONS ONLY — nothing is canon until Melissa says so.
 
 const inputStyle = { fontSize: '0.85em', padding: '5px 8px', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }
 const chip = on => ({ fontSize: '0.74em', padding: '3px 9px', borderRadius: 12, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--cl)' : 'var(--brd)'), background: on ? 'rgba(170,102,255,.15)' : 'transparent', color: on ? 'var(--cl)' : 'var(--dim)' })
-const tagColor = { attested: 'var(--cfl)', near: 'var(--cca)', approx: 'var(--cq)', guessed: 'var(--cwr)' }
-function speak(text, lang = 'en-GB') {
-  try { const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = 0.85; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u) } catch {}
-}
-const LANG_LABEL = { latin: 'Latin', italian: 'Italian', greek_ancient: 'Anc. Greek', welsh: 'Welsh', persian: 'Persian', arabic: 'Arabic', sanskrit: 'Sanskrit', japanese: 'Japanese', nahuatl: 'Nahuatl', maya_yucatec: 'Yucatec Maya' }
+const tagColor = { attested: 'var(--cfl)', near: 'var(--cca)', approx: 'var(--cq)', guessed: 'var(--cwr)', none: 'var(--mut)' }
+const LANG_LABEL = new Proxy({}, { get: (_, k) => langLabel(k) }) // registry-backed labels for all 72
 
 export default function SemanticForge({ db }) {
-  // merged lexicon: bundled base + runtime 'lexicon_seeds' entries (ZERO-deploy expansion)
+  // ad-hoc free-text concepts (typed words with no lexicon match — sound-only)
+  const [freeforms, setFreeforms] = useState({})
+  // merged lexicon: bundled base + runtime 'lexicon_seeds' + free-text.
+  // NOTE: seed words MERGE onto a concept's existing words (word-level),
+  // so importing an added-columns batch (e.g. the 62 new langs) never
+  // strips the original 10 from a concept it patches.
   const lexicon = useMemo(() => {
     const merged = { ...DEFAULT_LEXICON }
     for (const e of db.db.lexicon_seeds || []) {
-      if (e?.concept && e?.words) merged[e.concept] = { meaning: e.meaning || '', group: e.group || 'imported', batch: e.batch || 'import', words: e.words }
+      if (e?.concept && e?.words) {
+        const base = merged[e.concept]
+        merged[e.concept] = {
+          meaning: e.meaning || base?.meaning || '',
+          group: e.group || base?.group || 'imported',
+          batch: e.batch || base?.batch || 'import',
+          words: { ...(base?.words || {}), ...e.words },
+        }
+      }
     }
-    return merged
-  }, [db.db.lexicon_seeds])
+    return { ...merged, ...freeforms }
+  }, [db.db.lexicon_seeds, freeforms])
 
   const [concepts, setConcepts] = useState(['star'])
   const [conceptQ, setConceptQ] = useState('')
@@ -45,6 +57,41 @@ export default function SemanticForge({ db }) {
   const [showImport, setShowImport] = useState(false)
   const [importText, setImportText] = useState('')
   const [notice, setNotice] = useState('')
+  const [voiceURI, setVoiceURI] = useState(() => db.getSetting?.('semforge_voice') || '')
+  const [voices, setVoices] = useState(() => listVoices())
+  const [freeText, setFreeText] = useState('')
+
+  // voices load async in most browsers — refresh when they arrive
+  useEffect(() => onVoices(v => setVoices([...v])), [])
+
+  // speak a candidate: its phonetic respelling, read by the chosen voice
+  function say(c) {
+    const tts = ttsLocaleFor(c.spineLang)
+    speakText(speakableFromRespell(c.respelling, c.word), { voiceURI, bcp: tts.bcp })
+  }
+
+  // free-text: real roots when the word matches the lexicon, honest
+  // sound-only fallback (clearly flagged) when it doesn't
+  function addFreeText() {
+    const raw = freeText.trim()
+    if (!raw) return
+    const norm = raw.toLowerCase()
+    const match = conceptList.find(c => c === norm)
+      || conceptList.find(c => c.includes(norm))
+      || conceptList.find(c => (lexicon[c]?.meaning || '').toLowerCase().includes(norm))
+    if (match) {
+      setConcepts(p => p.includes(match) ? p : [...p, match])
+      setNotice(`"${raw}" → using real roots from concept “${match}”.`)
+    } else {
+      const key = '✎ ' + raw
+      const clean = raw.replace(/[^a-zA-Z'’\- ]/g, '').replace(/\s+/g, '')
+      setFreeforms(f => ({ ...f, [key]: { meaning: raw + ' — free text (no real translation; sound-only)', group: 'freeform', batch: 'freeform', words: { freeform: { w: clean || raw, tag: 'none' } } } }))
+      setConcepts(p => p.includes(key) ? p : [...p, key])
+      setWeights(w => ({ ...w, freeform: Math.max(60, w.freeform || 0) }))
+      setNotice(`"${raw}" isn’t in the lexicon — forging from its SOUND only (no real etymology behind it).`)
+    }
+    setFreeText('')
+  }
 
   // pick up a recipe sent over from the Lexicon bucket (Journal tab)
   useEffect(() => {
@@ -57,7 +104,7 @@ export default function SemanticForge({ db }) {
   const langsAvailable = useMemo(() => {
     const s = new Set()
     concepts.forEach(c => Object.keys(lexicon[c]?.words || {}).forEach(l => s.add(l)))
-    return LEX_LANGS.filter(l => s.has(l))
+    return [...s].sort((a, b) => langLabel(a).localeCompare(langLabel(b)))
   }, [concepts, lexicon])
 
   const conceptList = useMemo(() => Object.keys(lexicon).sort(), [lexicon])
@@ -143,6 +190,11 @@ export default function SemanticForge({ db }) {
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxHeight: 92, overflowY: 'auto', padding: 2 }}>
           {filteredConcepts.map(c => <span key={c} style={chip(concepts.includes(c))} onClick={() => toggleConcept(c)}>{c}</span>)}
         </div>
+        {/* Free-text: type ANY word — real roots if it's in the lexicon, honest sound-only if not */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 6 }}>
+          <input value={freeText} onChange={e => setFreeText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addFreeText() }} placeholder="…or type any word (real roots if known, else sound-only)" style={{ ...inputStyle, flex: 1, minWidth: 180 }} />
+          <button className="btn btn-sm btn-outline" onClick={addFreeText}>+ use word</button>
+        </div>
       </div>
 
       {/* Language weights */}
@@ -199,6 +251,13 @@ export default function SemanticForge({ db }) {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
         <button className="btn btn-sm" onClick={run}>⚒ Forge</button>
         <label style={{ fontSize: '0.72em', color: 'var(--dim)', cursor: 'pointer' }}><input type="checkbox" checked={showIPA} onChange={e => { setShowIPA(e.target.checked); db.saveSetting?.('semforge_ipa', e.target.checked ? '1' : '0') }} /> IPA</label>
+        {/* Voice picker — any installed voice reads the phonetic respelling */}
+        <label style={{ fontSize: '0.72em', color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 4 }}>🗣
+          <select value={voiceURI} onChange={e => { setVoiceURI(e.target.value); db.saveSetting?.('semforge_voice', e.target.value) }} style={{ ...inputStyle, maxWidth: 200 }} title="Voice used for 🔊 across the Word Forge & Lexicon bucket. Reads the phonetic respelling, so it approximates any language.">
+            <option value="">voice: auto (per-language default)</option>
+            {voices.map(v => <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
+          </select>
+        </label>
         <button className="btn btn-sm btn-outline" onClick={() => setShowImport(s => !s)}>📥 Import concept batch</button>
         {notice && <span style={{ fontSize: '0.72em', color: 'var(--cfl)' }}>{notice}</span>}
       </div>
@@ -217,7 +276,7 @@ export default function SemanticForge({ db }) {
           <div key={i} style={{ padding: '8px 12px', background: 'var(--card)', borderRadius: 8, marginBottom: 6, border: '1px solid var(--brd)' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <b style={{ fontSize: '1.08em', color: 'var(--cl)' }}>{c.word}</b>
-              <button onClick={() => speak(c.word, tts.bcp)} title={tts.proxy ? `voice: ${tts.bcp} (closest available proxy)` : `voice: ${tts.bcp}`} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
+              <button onClick={() => say(c)} title={voiceURI ? 'chosen voice reads the respelling' : (tts.proxy ? `voice: ${tts.bcp} (closest proxy)` : `voice: ${tts.bcp}`)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
               <span style={{ fontSize: '0.77em', color: 'var(--dim)' }}>{c.respelling}</span>
               {showIPA && <span style={{ fontSize: '0.74em', color: 'var(--mut)' }}>/{c.ipa}/</span>}
               <span style={{ flex: 1 }} />
