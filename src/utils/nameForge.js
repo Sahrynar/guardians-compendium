@@ -124,8 +124,18 @@ const V_NEAR = { a:['a','e','o'], e:['e','i','a'], i:['i','e','y'], o:['o','u','
 const baseV = ch => 'áàâäā'.includes(ch) ? 'a' : 'éèêëē'.includes(ch) ? 'e' : 'íìîïī'.includes(ch) ? 'i'
   : 'óòôöō'.includes(ch) ? 'o' : 'úùûüū'.includes(ch) ? 'u' : ch
 
+// Preferred substitutes by phonetic closeness, tried before the generic
+// class scan. Fixes e.g. 'c'/'k' collapsing to 'p' when a palette allows
+// both p and k (k is the right choice for a /k/ sound).
+const PREFERRED_SUB = {
+  c: ['k', 'ch', 'q', 's'], k: ['k', 'q', 'c', 'g'], q: ['k', 'c', 'g'],
+  g: ['g', 'k', 'q'], x: ['x', 'sh', 'ch', 's', 'k'], j: ['j', 'ch', 'y', 'g'],
+  z: ['z', 's'], v: ['v', 'f', 'w'], f: ['f', 'ph', 'v'],
+}
 function nearestConsonant(tok, allowed) {
   if (allowed.has(tok)) return tok
+  const pref = PREFERRED_SUB[tok]
+  if (pref) for (const cand of pref) if (allowed.has(cand)) return cand
   for (const cand of C_CLASS[classOf(tok)]) if (allowed.has(cand)) return cand
   for (const cls of ['stop','fric','nasal','liquid','glide']) for (const cand of C_CLASS[cls]) if (allowed.has(cand)) return cand
   return tok

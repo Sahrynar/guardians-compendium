@@ -162,9 +162,9 @@ export default function SemanticForge({ db }) {
   }
   const allAffixChoices = [...BUILTIN_AFFIXES, ...savedAffixes.filter(s => !BUILTIN_AFFIXES.some(b => b.value === s.value && b.position === s.position))]
 
-  function importBatch() {
+  function runImport(text, sourceLabel) {
     try {
-      const d = JSON.parse(importText)
+      const d = JSON.parse(text)
       const cs = d.concepts || d
       let n = 0
       for (const [name, obj] of Object.entries(cs)) {
@@ -172,9 +172,20 @@ export default function SemanticForge({ db }) {
         db.upsertEntry?.('lexicon_seeds', { id: 'seed_' + name, concept: name, meaning: obj.meaning || '', group: obj.group || 'imported', batch: String(d.meta?.batch || 'import'), words: obj.words }, { silent: true })
         n++
       }
-      setNotice(`Imported ${n} concept${n === 1 ? '' : 's'} into the seed lexicon — no deploy needed.`)
+      setNotice(`Imported ${n} concept${n === 1 ? '' : 's'}${sourceLabel ? ' from ' + sourceLabel : ''} into the seed lexicon — no deploy needed.`)
       setShowImport(false); setImportText('')
     } catch { setNotice('Import failed — not valid batch JSON.') }
+  }
+  function importBatch() { runImport(importText) }
+  function importFromFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setNotice(`Reading ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`)
+    const r = new FileReader()
+    r.onload = () => runImport(String(r.result || ''), file.name)
+    r.onerror = () => setNotice('Could not read that file.')
+    r.readAsText(file)
+    e.target.value = '' // allow re-selecting the same file
   }
 
   return (
@@ -265,7 +276,15 @@ export default function SemanticForge({ db }) {
       {showImport && (
         <div style={{ marginBottom: 10 }}>
           <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder='Paste a batch JSON ({"meta":…,"concepts":{…}}) — e.g. Aster batches 5B+. Adds concepts with zero deploys.' style={{ ...inputStyle, width: '100%', minHeight: 80, boxSizing: 'border-box', fontFamily: 'monospace' }} />
-          <button className="btn btn-sm" onClick={importBatch} style={{ marginTop: 4 }}>Import</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+            <button className="btn btn-sm" onClick={importBatch}>Import pasted</button>
+            <span style={{ fontSize: '0.7em', color: 'var(--mut)' }}>or</span>
+            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
+              📁 Load from file…
+              <input type="file" accept=".json,application/json" onChange={importFromFile} style={{ display: 'none' }} />
+            </label>
+            <span style={{ fontSize: '0.68em', color: 'var(--dim)' }}>(use the file loader for large batches — pasting big files can freeze the browser)</span>
+          </div>
         </div>
       )}
 
