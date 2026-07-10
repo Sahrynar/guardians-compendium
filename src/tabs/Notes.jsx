@@ -3,6 +3,7 @@ import { TAB_RAINBOW } from '../constants'
 import StickiesView from './notes/StickiesView'
 import JournalView from './notes/JournalView'
 import IdeasView from './notes/IdeasView'
+import LexiconBucket from '../components/LexiconBucket'
 
 const NOTES_COLOR = TAB_RAINBOW.notes
 
@@ -47,6 +48,7 @@ export default function Notes(props) {
       stickies: { icon: '📌', label: 'Stickies' },
       journal: { icon: '📝', label: 'Journal' },
       ideas: { icon: '💡', label: 'Ideas' },
+      lexicon: { icon: '🗣', label: 'Lexicon' },
     }
     setCrumbs([root, tabCrumb, subMap[subTab] || { icon: '·', label: subTab }])
   }, [setCrumbs, subTab])
@@ -58,8 +60,8 @@ export default function Notes(props) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {[['stickies', '📌 Stickies'], ['journal', '📝 Journal'], ['ideas', '💡 Ideas']].map(([k, l]) => (
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        {[['stickies', '📌 Stickies'], ['journal', '📝 Journal'], ['ideas', '💡 Ideas'], ['lexicon', '🗣 Lexicon']].map(([k, l]) => (
           <button
             key={k}
             onClick={() => pick(k)}
@@ -82,6 +84,7 @@ export default function Notes(props) {
       {subTab === 'stickies' && <StickiesView {...props} goToSubTab={pick} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
       {subTab === 'journal' && <JournalView {...props} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
       {subTab === 'ideas' && <IdeasView {...props} pendingExpandId={pendingExpandId} clearPendingExpandId={() => setPendingExpandId(null)} />}
+      {subTab === 'lexicon' && <LexiconBucket db={db} />}
     </div>
   )
 }

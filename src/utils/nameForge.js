@@ -288,7 +288,7 @@ export const ttsLocaleFor = spineLang => ttsFor(spineLang)
 // ── Main generate ─────────────────────────────────────────────────
 export function generate(opts) {
   const { lexicon, concepts = [], languageWeights = {}, softness = 0.5,
-    palette = null, affixes = [], blendMode = 'portmanteau' } = opts
+    palette = null, affixes = [], blendMode = 'portmanteau', salt = '' } = opts
   const count = Math.max(1, Math.min(50, Math.round(opts.count || 10)))
 
   // seeds per language (a language may hold several seeds across concepts)
@@ -308,7 +308,7 @@ export function generate(opts) {
   const spineLang = langs.sort((a, b) => weights[b] - weights[a])[0]
 
   const recipeBase = { concepts, languageWeights: weights, softness, palette: palette?.id || null, affixes, blendMode }
-  const canon = canonicalRecipe(recipeBase)
+  const canon = canonicalRecipe(recipeBase) + (salt ? '#salt#' + salt : '')
   const out = [], seen = new Set()
   for (let i = 0; out.length < count && i < count * 6; i++) {
     const seed = hashString(canon + '#' + i)
@@ -325,7 +325,7 @@ export function generate(opts) {
     out.push({
       word: w, respelling: respell(w, spineLang, affixes), ipa: toIPA(w, spineLang),
       spineLang, tts: ttsLocaleFor(spineLang), derivation, affixes,
-      seed, recipe: { ...recipeBase, seedIndex: i },
+      seed, recipe: { ...recipeBase, seedIndex: i, salt },
     })
   }
   return { candidates: out, spineLang }

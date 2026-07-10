@@ -1,21 +1,26 @@
 import { useState, useMemo, useRef } from 'react'
-import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW } from '../constants'
+import { RATIO, LDAYS, MDAYS, LDPM, MONTHS, TAB_RAINBOW, generateRainbow } from '../constants'
 import SemanticForge from '../components/SemanticForge'
 import ReverseLookup from '../components/ReverseLookup'
 
 // ── Tool definitions for nav ─────────────────────────────────────
-const TOOLS = [
-  { id: 'datetime',  label: 'Date & Time',           emoji: '🕰', color: 'var(--cca)' },
-  { id: 'semforge',  label: 'Word Forge (Semantic)', emoji: '✨', color: 'var(--cl)'  },
-  { id: 'reverse',   label: 'Reverse Lookup / Translator', emoji: '🔎', color: 'var(--cca)' },
-  { id: 'langforge', label: 'Language Workshop (Phonetic)', emoji: '🗣', color: 'var(--ct)'  },
-  { id: 'ixcitlatl', label: "Ix'Citlatl Converter",  emoji: '✦',  color: 'var(--cl)'  },
-  { id: 'pronun',    label: 'Pronunciation Helper',  emoji: '🔊', color: 'var(--cwr)' },
-  { id: 'scots',     label: 'Scots Dialogue',        emoji: '🏴', color: 'var(--ct)'  },
-  { id: 'imagelib',  label: 'Image Library',         emoji: '🖼', color: 'var(--ci)'  },
-  { id: 'backfill',  label: 'Birthday Backfill',     emoji: '🗓', color: 'var(--cfl)' },
-  { id: 'units',     label: 'Unit Converter',        emoji: '📐', color: 'var(--csp)' },
+// Order is Melissa's; colours are 10 evenly-spaced hues across the
+// rainbow (pink → violet), matching the compendium's rainbow rule.
+// They intentionally won't match the nav tabs (different count).
+const TOOL_ORDER = [
+  { id: 'datetime',  label: 'Date & Time',                 emoji: '🕰' },
+  { id: 'units',     label: 'Unit Converter',              emoji: '📐' },
+  { id: 'reverse',   label: 'Reverse Lookup / Translator', emoji: '🔎' },
+  { id: 'semforge',  label: 'Word Forge (Semantic)',       emoji: '✨' },
+  { id: 'langforge', label: 'Language Workshop (Phonetic)', emoji: '🗣' },
+  { id: 'pronun',    label: 'Pronunciation Helper',        emoji: '🔊' },
+  { id: 'ixcitlatl', label: "Ix'Citlatl Converter",        emoji: '✦'  },
+  { id: 'scots',     label: 'Scots Dialogue',              emoji: '🏴' },
+  { id: 'backfill',  label: 'Birthday Backfill',           emoji: '🗓' },
+  { id: 'imagelib',  label: 'Image Library',               emoji: '🖼' },
 ]
+const TOOL_COLORS = generateRainbow(TOOL_ORDER.length)
+const TOOLS = TOOL_ORDER.map((t, i) => ({ ...t, color: TOOL_COLORS[i] }))
 
 // ── Speak helper (Web Speech API) ────────────────────────────────
 function speak(text, lang = 'en-GB') {
