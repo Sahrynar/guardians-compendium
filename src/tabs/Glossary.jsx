@@ -14,6 +14,7 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const [size, setSize] = useState('M')
   const [termModal, setTermModal] = useState(null) // {} for new, entry for edit
   const SIZES = { XS: 0.72, S: 0.85, M: 1, L: 1.15, XL: 1.31 }
+  const WIDTHS = { XS: 560, S: 720, M: 920, L: 1140, XL: 4000 }
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
@@ -66,7 +67,7 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
   const letters = Object.keys(grouped).sort()
 
   return (
-    <div style={{ fontSize: SIZES[size] + 'em' }}>
+    <div style={{ fontSize: SIZES[size] + 'em', maxWidth: WIDTHS[size] }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>📚 Glossary</div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -91,7 +92,7 @@ export default function Glossary({ db, goTo, goToWiki, navSearch }) {
         <FilterPopup color={tabColor} filters={[{ key: 'category', label: 'Category', options: availableCats.map(c => ({ value: c, label: c })) }]} values={filterValues} onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))} />
       </div>
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 30, background: 'var(--bg)', padding: '6px 0' }}>
+      <div style={{ position: 'sticky', top: 'var(--nav-h, 56px)', zIndex: 30, background: 'var(--bg)', padding: '6px 0' }}>
         <AlphabetJumpBar entries={filtered} getName={e => e.term || e.title} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
       </div>
 

@@ -239,29 +239,42 @@ export default function SemanticForge({ db }) {
   }
   const allAffixChoices = [...BUILTIN_AFFIXES, ...savedAffixes.filter(s => !BUILTIN_AFFIXES.some(b => b.value === s.value && b.position === s.position))]
 
-  function runImport(text, sourceLabel) {
-    try {
-      const d = JSON.parse(text)
-      const cs = d.concepts || d
-      let n = 0
-      for (const [name, obj] of Object.entries(cs)) {
-        if (!obj?.words) continue
-        db.upsertEntry?.('lexicon_seeds', { id: 'seed_' + name, concept: name, meaning: obj.meaning || '', group: obj.group || 'imported', batch: String(d.meta?.batch || 'import'), words: obj.words }, { silent: true })
-        n++
-      }
-      setNotice(`Imported ${n} concept${n === 1 ? '' : 's'}${sourceLabel ? ' from ' + sourceLabel : ''} into the seed lexicon — no deploy needed.`)
-      setShowImport(false); setImportText('')
-    } catch { setNotice('Import failed — not valid batch JSON.') }
+  function parseToEntries(text) {
+    const d = JSON.parse(text)
+    const cs = d.concepts || d
+    const batch = String(d.meta?.batch || 'import')
+    const out = []
+    for (const [name, obj] of Object.entries(cs)) {
+      if (!obj?.words) continue
+      out.push({ id: 'seed_' + name, concept: name, meaning: obj.meaning || '', group: obj.group || 'imported', batch, words: obj.words })
+    }
+    return out
   }
-  function importBatch() { runImport(importText) }
-  function importFromFile(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setNotice(`Reading ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`)
-    const r = new FileReader()
-    r.onload = () => runImport(String(r.result || ''), file.name)
-    r.onerror = () => setNotice('Could not read that file.')
-    r.readAsText(file); e.target.value = ''
+  async function commitImport(entries, sourceLabel) {
+    if (!entries.length) { setNotice('No concepts found in that file.'); return }
+    setNotice(`Importing ${entries.length} concepts${sourceLabel ? ' from ' + sourceLabel : ''}…`)
+    const res = await db.bulkUpsert?.('lexicon_seeds', entries)
+    const failed = res?.failed || 0
+    setNotice(failed
+      ? `Imported ${entries.length} concepts, but ${failed} failed to sync — click Import again to retry those.`
+      : `Imported ${entries.length} concepts${sourceLabel ? ' from ' + sourceLabel : ''} — synced to the cloud. ✓`)
+    setShowImport(false); setImportText('')
+  }
+  async function importBatch() {
+    try { await commitImport(parseToEntries(importText)) }
+    catch { setNotice('Import failed — not valid batch JSON.') }
+  }
+  async function importFromFile(e) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    e.target.value = ''
+    setNotice(`Reading ${files.length} file${files.length === 1 ? '' : 's'}…`)
+    try {
+      const texts = await Promise.all(files.map(f => f.text()))
+      const byId = new Map()
+      texts.forEach(t => parseToEntries(t).forEach(en => byId.set(en.id, en))) // later files win on same concept
+      await commitImport([...byId.values()], files.length === 1 ? files[0].name : `${files.length} files`)
+    } catch { setNotice('Import failed — one of those files wasn’t valid batch JSON.') }
   }
 
   return (
@@ -404,10 +417,10 @@ export default function SemanticForge({ db }) {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
             <button className="btn btn-sm" onClick={importBatch}>Import pasted</button>
             <span style={{ fontSize: '0.7em', color: 'var(--mut)' }}>or</span>
-            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', margin: 0 }}>📁 Load from file…
-              <input type="file" accept=".json,application/json" onChange={importFromFile} style={{ display: 'none' }} />
+            <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', margin: 0 }}>📁 Load from file(s)…
+              <input type="file" accept=".json,application/json" multiple onChange={importFromFile} style={{ display: 'none' }} />
             </label>
-            <span style={{ fontSize: '0.68em', color: 'var(--dim)' }}>(use the file loader for large batches — pasting big files can freeze the browser)</span>
+            <span style={{ fontSize: '0.68em', color: 'var(--dim)' }}>(select one or several JSON batches — large files import via the loader, and now sync reliably)</span>
           </div>
         </div>
       )}

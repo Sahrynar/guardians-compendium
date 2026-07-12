@@ -17,10 +17,27 @@ const inputStyle = { fontSize: '0.9em', padding: '6px 9px', background: 'var(--s
 const tagColor = { attested: 'var(--cfl)', near: 'var(--cca)', approx: 'var(--cq)', guessed: 'var(--cwr)', none: 'var(--mut)' }
 const norm = s => String(s || '').toLowerCase().replace(/[ʼ’]/g, "'").trim()
 
+// longest common substring length — the heart of the fuzzy match
+function lcsLen(a, b) {
+  const m = a.length, n = b.length
+  if (!m || !n) return 0
+  let best = 0, prevRow = new Array(n + 1).fill(0)
+  for (let i = 1; i <= m; i++) {
+    const row = new Array(n + 1).fill(0)
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) { row[j] = prevRow[j - 1] + 1; if (row[j] > best) best = row[j] }
+    }
+    prevRow = row
+  }
+  return best
+}
+function sharedPrefix(a, b) { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i }
+
 export default function ReverseLookup({ db }) {
   const [voiceURI] = useState(() => db.getSetting?.('semforge_voice') || '')
   const [query, setQuery] = useState('')
   const [ran, setRan] = useState(false)
+  const [loose, setLoose] = useState('loose') // strict | loose | loosest
 
   // same word-level merge the Forge uses
   const lexicon = useMemo(() => {
@@ -57,7 +74,8 @@ export default function ReverseLookup({ db }) {
       }
     }
 
-    // scan lexicon for real words that overlap the core
+    // scan lexicon for real words that overlap the core (substring OR fuzzy)
+    const minOv = loose === 'strict' ? Infinity : loose === 'loosest' ? 3 : 4
     const roots = []
     for (const [concept, entry] of Object.entries(lexicon)) {
       for (const [lang, cell] of Object.entries(entry.words || {})) {
@@ -65,17 +83,21 @@ export default function ReverseLookup({ db }) {
         if (!w || w === '—' || w.length < 3) continue
         const contained = core.includes(w)
         const contains = w.includes(core) && core.length >= 3
+        let score = 0, fuzzy = false
         if (contained || contains) {
-          roots.push({ concept, lang, word: cell.w, meaning: entry.meaning || '', tag: cell.tag || 'guessed',
-            score: (contained ? w.length : core.length) + (contained ? 0.5 : 0) })
+          score = (contained ? w.length : core.length) + 1
+        } else {
+          const ov = Math.max(lcsLen(core, w), sharedPrefix(core, w))
+          if (ov >= minOv) { score = ov; fuzzy = true }
         }
+        if (score > 0) roots.push({ concept, lang, word: cell.w, meaning: entry.meaning || '', tag: cell.tag || 'guessed', score, fuzzy })
       }
     }
     roots.sort((a, b) => b.score - a.score)
     const seen = new Set()
     const top = roots.filter(r => { const k = r.concept + '|' + r.lang; if (seen.has(k)) return false; seen.add(k); return true }).slice(0, 24)
     return { kind: 'fuzzy', core, affixes: foundAffixes, roots: top }
-  }, [query, lexicon, saved]) // eslint-disable-line
+  }, [query, lexicon, saved, loose]) // eslint-disable-line
 
   function speakInput() {
     speakText(query, { voiceURI, bcp: 'en-GB' })
@@ -89,6 +111,13 @@ export default function ReverseLookup({ db }) {
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 10 }}>
         <input value={query} onChange={e => { setQuery(e.target.value); setRan(true) }} onKeyDown={e => { if (e.key === 'Enter') setRan(true) }} placeholder="type or paste a word…" style={{ ...inputStyle, flex: 1, minWidth: 180 }} />
+        <label style={{ fontSize: '0.72em', color: 'var(--dim)' }} title="How loosely to match roots. Loose/loosest surface near-misses (e.g. citla → citlalli), not just exact letter runs.">match
+          <select value={loose} onChange={e => setLoose(e.target.value)} style={{ ...inputStyle, marginLeft: 3 }}>
+            <option value="strict">strict</option>
+            <option value="loose">loose</option>
+            <option value="loosest">loosest</option>
+          </select>
+        </label>
         <button onClick={speakInput} title="hear it (chosen voice)" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em' }}>🔊</button>
       </div>
 
@@ -132,10 +161,11 @@ export default function ReverseLookup({ db }) {
             </div>
           )}
 
-          <div style={{ fontSize: '0.72em', color: 'var(--dim)', marginBottom: 4 }}>Possible roots (guessed — meaning layer), best overlap first:</div>
-          {result.roots.length === 0 && <div style={{ fontSize: '0.8em', color: 'var(--mut)', padding: 8 }}>No lexicon roots overlap this word. It may be fully invented, or from a concept/language not in the lexicon.</div>}
+          <div style={{ fontSize: '0.72em', color: 'var(--dim)', marginBottom: 4 }}>Possible roots (guessed — meaning layer), best overlap first. <span style={{ color: 'var(--mut)' }}>~ = fuzzy near-miss, not an exact letter run.</span></div>
+          {result.roots.length === 0 && <div style={{ fontSize: '0.8em', color: 'var(--mut)', padding: 8 }}>No lexicon roots overlap this word at this looseness. Try “loose” or “loosest”, or it may be fully invented / from a concept not in the lexicon.</div>}
           {result.roots.map((r, i) => (
             <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 7, padding: '5px 10px', marginBottom: 4, fontSize: '0.8em', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'baseline' }}>
+              {r.fuzzy && <span style={{ color: 'var(--mut)' }} title="fuzzy near-miss">~</span>}
               <i style={{ color: 'var(--cl)' }}>{r.word}</i>
               <span style={{ color: 'var(--dim)' }}>{langLabel(r.lang)}</span>
               <span style={{ color: 'var(--tx)' }}>“{r.meaning || r.concept}”</span>

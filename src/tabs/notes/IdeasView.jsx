@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TAB_RAINBOW, uid } from '../../constants'
 import { IDEAS_CATEGORIES, IDEAS_LS_KEY, lsGet, lsSet } from './stickyShared'
+import { generateRainbow } from '../../constants'
+
+// bucket colours: evenly spread across the rainbow, like the tools/nav
+const BUCKET_COLORS = generateRainbow(IDEAS_CATEGORIES.length)
+const CAT_COLOR_BY_ID = Object.fromEntries(IDEAS_CATEGORIES.map((c, i) => [c.id, BUCKET_COLORS[i]]))
 
 const NOTES_COLOR = TAB_RAINBOW.notes
-const CAT_COLORS = { names: '#ff6b6b', words: '#44aaff', phrases: '#44bb44' }
+
 
 export default function IdeasView({ db, pendingExpandId, clearPendingExpandId }) {
   const [search, setSearch] = useState('')
@@ -91,7 +96,7 @@ export default function IdeasView({ db, pendingExpandId, clearPendingExpandId })
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${IDEAS_CATEGORIES.length}, 1fr)`, gap: 12, alignItems: 'flex-start' }}>
         {IDEAS_CATEGORIES.map(cat => {
           const items = filtered.filter(i => i.category === cat.id)
-          const color = CAT_COLORS[cat.id] || NOTES_COLOR
+          const color = CAT_COLOR_BY_ID[cat.id] || NOTES_COLOR
           return (
             <div key={cat.id} style={{ background: 'var(--card)', border: '1px solid var(--brd)', borderTop: `3px solid ${color}`, borderRadius: 8, padding: 10, minHeight: 200 }}>
               <div style={{ fontFamily: "'Cinzel', serif", color, marginBottom: 8, fontSize: '1em', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>

@@ -92,6 +92,19 @@ export default function App() {
     document.body.style.fontSize = fs
   }, [fontSize])
 
+  // Keep --nav-h in sync with the sticky nav's real height so sticky sub-bars
+  // (A–Z jump bar, etc.) park just below it instead of behind it.
+  useEffect(() => {
+    const nav = document.querySelector('.nav')
+    if (!nav) return
+    const set = () => document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px')
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(nav)
+    window.addEventListener('resize', set)
+    return () => { ro.disconnect(); window.removeEventListener('resize', set) }
+  }, [tab, fontSize])
+
   useEffect(() => {
     try { localStorage.setItem('gcomp_active_tab', tab) } catch {}
   }, [tab])

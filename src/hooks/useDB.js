@@ -26,10 +26,11 @@ function lsLoad() {
 }
 function lsSave(db) {
   try {
-    // Skip heavy categories (manuscript/images) in the local mirror —
-    // full chapters exceeded the ~5MB localStorage quota, which made this
-    // save fail silently for months and froze the mirror at a stale state.
-    const slim = { ...db, manuscript: [], images: [] }
+    // Skip heavy categories in the local mirror — full chapters, images, and
+    // the (very large, ~17MB) imported lexicon exceeded the ~5MB localStorage
+    // quota, which silently failed the save and froze the mirror at a stale
+    // state. These all re-hydrate from Supabase on load (mergeDB unions them).
+    const slim = { ...db, manuscript: [], images: [], lexicon_seeds: [] }
     localStorage.setItem(LS_KEY, JSON.stringify(slim))
   } catch {}
 }
@@ -51,6 +52,22 @@ async function sbUpsert(category, entry) {
   const { id, ...data } = entry
   const { error } = await supabase.from('entries').upsert({ id, category, data, updated_at: new Date().toISOString() })
   if (error) console.error('Supabase upsert error:', error)
+}
+// Reliable bulk write: one awaited request per small chunk, instead of
+// hundreds of fire-and-forget debounced writes (which lost rows at volume).
+async function sbUpsertMany(category, entries) {
+  if (!hasSupabase) return { ok: entries.length, failed: 0 }
+  const now = new Date().toISOString()
+  const rows = entries.map(e => { const { id, ...data } = e; return { id, category, data, updated_at: now } })
+  const CHUNK = 15
+  let ok = 0, failed = 0
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK)
+    const { error } = await supabase.from('entries').upsert(chunk)
+    if (error) { console.error('Supabase bulk upsert error:', error); failed += chunk.length }
+    else ok += chunk.length
+  }
+  return { ok, failed }
 }
 async function sbDelete(id) {
   if (!hasSupabase) return
@@ -245,6 +262,25 @@ export function useDB() {
     }
   }, [logActivity, showToast])
 
+  // Reliable bulk import: ONE local-state update + ONE localStorage save +
+  // chunked awaited cloud writes. Returns {ok, failed} so callers can report
+  // partial sync. Used for large lexicon imports (hundreds of concepts).
+  const bulkUpsert = useCallback(async (category, entries) => {
+    if (!entries?.length) return { ok: 0, failed: 0 }
+    setDbState(prev => {
+      const map = new Map((prev[category] || []).map(e => [e.id, e]))
+      entries.forEach(e => map.set(e.id, e))
+      const next = { ...prev, [category]: Array.from(map.values()) }
+      lsSave(next)
+      return next
+    })
+    if (!hasSupabase) return { ok: entries.length, failed: 0 }
+    setSyncStatus('syncing')
+    const res = await sbUpsertMany(category, entries)
+    setSyncStatus(res.failed ? 'error' : 'synced')
+    return res
+  }, [])
+
   const deleteEntry = useCallback((category, id) => {
     let deletedEntry = null
     setDbState(prev => {
@@ -421,7 +457,7 @@ export function useDB() {
 
   return {
     db, settings, loading, syncStatus,
-    upsertEntry, deleteEntry, save, saveSetting, getSetting,
+    upsertEntry, deleteEntry, bulkUpsert, save, saveSetting, getSetting,
     exportJSON, importJSON, importAster, exportAster,
     exportMarkdown, exportCSV,
     resolveConflict,

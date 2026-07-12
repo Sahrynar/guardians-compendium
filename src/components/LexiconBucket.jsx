@@ -19,8 +19,22 @@ export default function LexiconBucket({ db }) {
   const [sortDir, setSortDir] = useState('desc')
   const [openId, setOpenId] = useState(null)
   const [autoSpeak, setAutoSpeak] = useState(() => db.getSetting?.('lexbucket_autospeak') !== '0')
+  const [size, setSize] = useState(() => db.getSetting?.('lexbucket_size') || 'M')
+  const MAXW = { XS: 520, S: 680, M: 860, L: 1080, XL: '100%' }
+  const maxW = MAXW[size] || 860
   const voiceURI = db.getSetting?.('semforge_voice') || ''
   const say = w => speakText(speakableFromRespell(w.respelling, w.word), { voiceURI, bcp: ttsLocaleFor(w.spineLang).bcp })
+
+  // promote a saved word into the Glossary (or full Wiki) — creates a wiki entry
+  function promoteToGlossary(w, asGlossary = true) {
+    const summary = (w.respelling ? '[' + w.respelling + '] ' : '') + (w.notes || w.label || '')
+    db.upsertEntry?.('wiki', {
+      id: 'gl_' + Date.now().toString(36) + Math.floor(Math.random() * 1e3).toString(36),
+      title: w.word, summary,
+      category: 'Languages', is_glossary: asGlossary, blocks: [],
+    })
+    alert(`"${w.word}" added to ${asGlossary ? 'the Glossary' : 'the Wiki'}. Open the ${asGlossary ? 'Glossary' : 'Wiki'} tab to see/expand it.`)
+  }
 
   const forms = useMemo(() => ['all', ...new Set(words.map(w => w.language_form).filter(Boolean))], [words])
   const tags = useMemo(() => ['all', ...new Set(words.flatMap(w => w.tags || []))], [words])
@@ -60,7 +74,7 @@ export default function LexiconBucket({ db }) {
   return (
     <div>
       <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginBottom: 8 }}>
-        Words saved from the Language Workshop, with their meanings and recipes. Select a word to hear it. Everything here is provisional — promote to Wiki/Glossary/Characters yourself when a word graduates.
+        Words saved from the Word Forge (and custom entries), with their meanings and recipes. Select a word to hear it. Everything here is provisional — open a word and use <b>→ Glossary</b> / <b>→ Wiki</b> to promote it when it graduates.
       </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="search…" style={{ ...inputStyle, width: 150 }} />
@@ -74,6 +88,11 @@ export default function LexiconBucket({ db }) {
         <label style={{ fontSize: '0.72em', color: 'var(--dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoSpeak} onChange={e => { setAutoSpeak(e.target.checked); db.saveSetting?.('lexbucket_autospeak', e.target.checked ? '1' : '0') }} /> speak on select
         </label>
+        <label style={{ fontSize: '0.72em', color: 'var(--dim)' }}>width
+          <select value={size} onChange={e => { setSize(e.target.value); db.saveSetting?.('lexbucket_size', e.target.value) }} style={{ ...inputStyle, marginLeft: 3 }}>
+            {['XS', 'S', 'M', 'L', 'XL'].map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </label>
         <span style={{ fontSize: '0.72em', color: 'var(--mut)' }}>{shown.length} / {words.length}</span>
       </div>
 
@@ -83,7 +102,7 @@ export default function LexiconBucket({ db }) {
         const tts = ttsLocaleFor(w.spineLang)
         const openNow = openId === w.id
         return (
-          <div key={w.id} style={{ background: 'var(--card)', border: '1px solid ' + (openNow ? 'var(--cl)' : 'var(--brd)'), borderRadius: 8, marginBottom: 6, padding: '7px 11px' }}>
+          <div key={w.id} style={{ background: 'var(--card)', border: '1px solid ' + (openNow ? 'var(--cl)' : 'var(--brd)'), borderRadius: 8, marginBottom: 6, padding: '7px 11px', maxWidth: maxW }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap', cursor: 'pointer' }} onClick={() => open(w)}>
               <b style={{ color: 'var(--cl)' }}>{w.word}</b>
               <span style={{ fontSize: '0.74em', color: 'var(--dim)' }}>{w.label !== w.word ? w.label : ''}</span>
@@ -113,8 +132,10 @@ export default function LexiconBucket({ db }) {
                   <input defaultValue={w.respelling} onBlur={e => patch(w, 'respelling', e.target.value)} placeholder="pronunciation (editable)" style={{ ...inputStyle, width: 170 }} />
                 </div>
                 <textarea defaultValue={w.notes} onBlur={e => patch(w, 'notes', e.target.value)} placeholder="notes / intended meaning" style={{ ...inputStyle, width: '100%', minHeight: 44, boxSizing: 'border-box', marginBottom: 5 }} />
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button className="btn btn-sm btn-outline" onClick={() => loadSettings(w)}>↺ Load settings in Forge</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => promoteToGlossary(w, true)} title="Add this word to the Glossary tab">→ Glossary</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => promoteToGlossary(w, false)} title="Add this word as a full Wiki article">→ Wiki</button>
                   <span style={{ flex: 1 }} />
                   <button className="btn btn-sm btn-outline" style={{ color: '#ff3355' }} onClick={() => remove(w)}>✕ Delete</button>
                 </div>

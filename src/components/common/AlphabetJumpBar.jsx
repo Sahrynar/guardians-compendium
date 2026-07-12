@@ -23,7 +23,7 @@ export default function AlphabetJumpBar({ entries, getName, onJump, color = 'var
   }
 
   return (
-    <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', padding: '6px 8px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)', marginBottom: 8, position: 'sticky', top: 0, zIndex: 10 }}>
+    <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', padding: '6px 8px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--brd)', marginBottom: 8, position: 'sticky', top: 'var(--nav-h, 56px)', zIndex: 40 }}>
       {LETTERS.map(L => {
         const has = available.has(L)
         return (
