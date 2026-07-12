@@ -112,7 +112,6 @@ export default function GenericListTab({
             <button key={sz} onClick={() => setColsPersist(sz)} style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 4, cursor: 'pointer', background: cols === sz ? `${accent}22` : 'transparent', color: cols === sz ? accent : 'var(--dim)', border: `1px solid ${cols === sz ? accent : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
-        <input className="sx" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
         {autoCount > 0 && (
           <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? accent : 'var(--brd)'}`, background: autoOnly ? `${accent}22` : 'none', color: autoOnly ? accent : 'var(--dim)', cursor: 'pointer' }}>
             📥 Auto-imported ({autoCount})

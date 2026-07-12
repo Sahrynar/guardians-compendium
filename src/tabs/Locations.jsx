@@ -252,7 +252,6 @@ export default function Locations({ db, navSearch }) {
     <div>
       <div className="tbar">
         <div style={{ fontFamily: "'Cinzel',serif", fontSize: '1.15em', color: tabColor }}>🗺 Locations</div>
-        <input className="sx" placeholder="Search locations..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 180, maxWidth: 280 }} />
         <div style={{ display: 'flex', gap: 4 }}>
           <button style={btnStyle(view === 'tree')} onClick={() => setView('tree')}>🌳 Tree</button>
           <button style={btnStyle(view === 'table')} onClick={() => setView('table')}>☰ Table</button>

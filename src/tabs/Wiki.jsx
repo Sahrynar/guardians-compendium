@@ -356,9 +356,6 @@ export default function Wiki({ db, navSearch }) {
           ))}
         </div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15em', color: tabColor }}>📖 Wiki</div>
-        <input className="sx" placeholder="Search articles..." value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, minWidth: 180, maxWidth: 280 }} />
         <FilterPopup
           color={tabColor}
           filters={[{ key: 'category', label: 'Category', options: WIKI_CATS.map(c => ({ value: c, label: c })) }]}

@@ -54,11 +54,11 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
           {/* Header */}
           <div style={{ display:'flex', justifyContent:'space-between',
             alignItems:'center', marginBottom:12 }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:14, color:'var(--cl)' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1.08em', color:'var(--cl)' }}>
               🖼 Image Library
             </div>
             <button onClick={onClose} style={{ background:'none', border:'none',
-              cursor:'pointer', fontSize:20, color:'var(--mut)' }}>✕</button>
+              cursor:'pointer', fontSize:'1.54em', color:'var(--mut)' }}>✕</button>
           </div>
 
           {/* Search + filter */}
@@ -68,11 +68,11 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
               onChange={e => setSearch(e.target.value)} />
             <div style={{ display:'flex', gap:4 }}>
               <button className={`fp ${filterCat==='all'?'active':''}`}
-                style={{ fontSize:10 }} onClick={() => setFilterCat('all')}>All</button>
+                style={{ fontSize:'0.77em' }} onClick={() => setFilterCat('all')}>All</button>
               {CATEGORIES.map(c => (
                 <button key={c.key}
                   className={`fp ${filterCat===c.key?'active':''}`}
-                  style={{ fontSize:10 }}
+                  style={{ fontSize:'0.77em' }}
                   onClick={() => setFilterCat(filterCat===c.key?'all':c.key)}>
                   {c.label}
                 </button>
@@ -81,7 +81,7 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
           </div>
 
           {/* Count */}
-          <div style={{ fontSize:10, color:'var(--mut)', marginBottom:8 }}>
+          <div style={{ fontSize:'0.77em', color:'var(--mut)', marginBottom:8 }}>
             {filtered.length} image{filtered.length!==1?'s':''}
             {filtered.length === 0 && allImages.length > 0 ? ' — try a different filter' : ''}
           </div>
@@ -89,7 +89,7 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
           {/* Grid */}
           <div style={{ overflowY:'auto', flex:1 }}>
             {allImages.length === 0 && (
-              <div style={{ textAlign:'center', padding:30, color:'var(--mut)', fontSize:12 }}>
+              <div style={{ textAlign:'center', padding:30, color:'var(--mut)', fontSize:'0.92em' }}>
                 No images uploaded yet. Add images to items, characters, or locations first.
               </div>
             )}
@@ -108,15 +108,15 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
                     <button
                       onClick={e => { e.stopPropagation(); setLightbox(img.url) }}
                       style={{ position:'absolute', top:4, right:4, background:'rgba(0,0,0,.6)',
-                        border:'none', color:'#fff', borderRadius:4, fontSize:10,
+                        border:'none', color:'#fff', borderRadius:4, fontSize:'0.77em',
                         cursor:'pointer', padding:'2px 5px' }}>⤢</button>
                   </div>
                   <div style={{ padding:'5px 7px' }}>
-                    <div style={{ fontSize:10, fontWeight:600, color:'var(--tx)',
+                    <div style={{ fontSize:'0.77em', fontWeight:600, color:'var(--tx)',
                       whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                       {img.name}
                     </div>
-                    <div style={{ fontSize:9, color:'var(--ci)' }}>{img.catLabel}</div>
+                    <div style={{ fontSize:'0.69em', color:'var(--ci)' }}>{img.catLabel}</div>
                   </div>
                 </div>
               ))}
@@ -124,7 +124,7 @@ export default function ImagePicker({ open, onPick, onClose, db }) {
           </div>
 
           {/* Footer */}
-          <div style={{ marginTop:12, fontSize:10, color:'var(--mut)',
+          <div style={{ marginTop:12, fontSize:'0.77em', color:'var(--mut)',
             borderTop:'1px solid var(--brd)', paddingTop:10 }}>
             Click an image to use it · ⤢ to preview full size
           </div>

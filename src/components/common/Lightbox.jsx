@@ -9,7 +9,7 @@ export default function Lightbox({ src, onClose }) {
       <button
         onClick={onClose}
         style={{ position:'absolute', top:16, right:20, background:'none', border:'none',
-          color:'#fff', fontSize:28, cursor:'pointer', lineHeight:1 }}>✕</button>
+          color:'#fff', fontSize:'2.15em', cursor:'pointer', lineHeight:1 }}>✕</button>
       <img
         src={src} alt=""
         style={{ maxWidth:'100%', maxHeight:'90vh', objectFit:'contain',

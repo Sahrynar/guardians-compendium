@@ -121,7 +121,7 @@ export default function EntryForm({
                       set(f.k, next.join(', '))
                     }}
                     style={{
-                      padding: '2px 7px', borderRadius: 10, fontSize: 9, cursor: 'pointer',
+                      padding: '2px 7px', borderRadius: 10, fontSize: '0.69em', cursor: 'pointer',
                       border: `1px solid ${sel ? 'var(--cc)' : 'var(--brd)'}`,
                       color: sel ? 'var(--cc)' : 'var(--dim)',
                       background: sel ? 'rgba(201,102,255,.1)' : 'transparent'
@@ -157,7 +157,7 @@ export default function EntryForm({
                       set(f.k, next.join(', '))
                     }}
                     style={{
-                      padding: '2px 7px', borderRadius: 10, fontSize: 9, cursor: 'pointer',
+                      padding: '2px 7px', borderRadius: 10, fontSize: '0.69em', cursor: 'pointer',
                       border: `1px solid ${sel ? 'var(--ci)' : 'var(--brd)'}`,
                       color: sel ? 'var(--ci)' : 'var(--dim)',
                       background: sel ? 'rgba(255,112,64,.1)' : 'transparent'

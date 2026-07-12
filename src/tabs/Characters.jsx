@@ -204,7 +204,6 @@ export default function Characters({ db, goTo, tab, navSearch }) {
                 border: `1px solid ${colSize === sz ? tabColor : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
-        <input className="sx" placeholder="Search characters…" value={search} onChange={e => setSearch(e.target.value)} />
         {/* Alive/Deceased filter */}
         <div style={{ display: 'flex', gap: 3 }}>
           {[['all','All'], ['alive','Alive'], ['deceased','†']].map(([v, l]) => (

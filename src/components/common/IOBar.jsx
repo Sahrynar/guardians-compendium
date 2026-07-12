@@ -251,19 +251,19 @@ export default function IOBar({ db, backup, onImport }) {
           display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div style={{ background:'var(--sf)', border:'1px solid var(--brd)', borderRadius:12,
             padding:20, maxWidth:340, width:'100%', textAlign:'center' }}>
-            <div style={{ fontFamily:"'Cinzel',serif", fontSize:13, marginBottom:8, color:'var(--cca)' }}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:'1em', marginBottom:8, color:'var(--cca)' }}>
               ⬆ Aster Import
             </div>
-            <p style={{ fontSize:11, color:'var(--dim)', marginBottom:16, lineHeight:1.5 }}>
+            <p style={{ fontSize:'0.85em', color:'var(--dim)', marginBottom:16, lineHeight:1.5 }}>
               <strong style={{ color:'var(--tx)' }}>{asterModal.name}</strong><br/>
               How do you want to import this?
             </p>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
-              <button className="btn btn-primary btn-sm" style={{ background:'var(--cl)', color:'#000', padding:'8px 14px', fontSize:11 }}
+              <button className="btn btn-primary btn-sm" style={{ background:'var(--cl)', color:'#000', padding:'8px 14px', fontSize:'0.85em' }}
                 onClick={() => doAsterImport('merge')}>
                 Merge — add new entries, keep existing
               </button>
-              <button className="btn btn-outline btn-sm" style={{ color:'var(--ccn)', borderColor:'var(--ccn)44', padding:'8px 14px', fontSize:11 }}
+              <button className="btn btn-outline btn-sm" style={{ color:'var(--ccn)', borderColor:'var(--ccn)44', padding:'8px 14px', fontSize:'0.85em' }}
                 onClick={() => doAsterImport('overwrite')}>
                 Replace — overwrite with Aster data
               </button>
@@ -279,13 +279,13 @@ export default function IOBar({ db, backup, onImport }) {
           <div className="modal-box" style={{ maxWidth: 360 }} onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setMdModal(false)}>✕</button>
             <h2 className="modal-title" style={{ color: 'var(--csc)' }}>↓ Export .md</h2>
-            <p style={{ fontSize: 11, color: 'var(--dim)', marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.85em', color: 'var(--dim)', marginBottom: 14, lineHeight: 1.5 }}>
               Choose which categories to include in your markdown export.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
               {MD_CATS.map(({ k, l }) => (
                 <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8,
-                  fontSize: 12, color: 'var(--tx)', cursor: 'pointer' }}>
+                  fontSize: '0.92em', color: 'var(--tx)', cursor: 'pointer' }}>
                   <input type="checkbox" checked={mdSelected.has(k)}
                     onChange={e => setMdSelected(prev => {
                       const next = new Set(prev)
@@ -320,7 +320,7 @@ export default function IOBar({ db, backup, onImport }) {
 
       <div className="iobar">
         {msg && (
-          <span style={{ fontSize: 10, color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
+          <span style={{ fontSize: '0.77em', color: 'var(--sl)', marginRight: 8 }}>{msg}</span>
         )}
 
         <button className="btn btn-sm btn-outline" onClick={db.exportJSON}>⬇ Export JSON</button>
@@ -353,7 +353,7 @@ export default function IOBar({ db, backup, onImport }) {
           </button>
         )}
 
-        <span style={{ fontSize: 9, color: 'var(--mut)', marginLeft: 4 }}>
+        <span style={{ fontSize: '0.69em', color: 'var(--mut)', marginLeft: 4 }}>
           <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
           {db.hasSupabase ? 'Cloud sync on' : 'Local only'}
         </span>

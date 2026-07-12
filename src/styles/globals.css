@@ -7,6 +7,7 @@
 
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {
+  --fs-xs: 0.77em;
   --bg: #060608;
   --sf: #0b0b0e;
   --card: #111114;
@@ -46,7 +47,7 @@
 /* ── Reset ──────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { font-size: var(--fs); }
+html, body, #root { font-size: var(--fs, 13px); }
 
 body {
   font-family: 'Nunito Sans', sans-serif;

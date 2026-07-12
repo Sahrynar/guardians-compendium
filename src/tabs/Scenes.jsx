@@ -53,6 +53,7 @@ export default function Scenes({ db, navSearch }) {
   const manuscripts = db.db.manuscript || []
   const [bookFilter, setBookFilter] = useState('all')
   const [search, setSearch] = useState(navSearch || '')
+  useEffect(() => { setSearch(navSearch || '') }, [navSearch])
   const [cardsPerRow, setCardsPerRow] = useState(() => {
     try { return localStorage.getItem('colsize_scenes') || 'M' } catch { return 'M' }
   })
@@ -201,8 +202,6 @@ export default function Scenes({ db, navSearch }) {
             <button key={l} onClick={() => changeCPR(l)} style={btnStyle(cardsPerRow === l)}>{l}</button>
           ))}
         </div>
-        <input className="sx" placeholder="Search scenes…" value={search}
-          onChange={e => setSearch(e.target.value)} style={{ maxWidth: 180 }} />
         {autoCount > 0 && (
           <button onClick={() => setAutoOnly(v => !v)}
             style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12,
