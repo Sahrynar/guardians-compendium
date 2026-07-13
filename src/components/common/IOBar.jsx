@@ -1,5 +1,6 @@
 import { supabase, hasSupabase } from '../../supabase'
 import { useRef, useState } from 'react'
+import Modal, { ModalActions } from './Modal'
 
 // ── Merge helper ─────────────────────────────────────────────────
 // Merges imported JSON into existing db without overwriting anything.
@@ -73,6 +74,23 @@ export default function IOBar({ db, backup, onImport }) {
   const importRef = useRef()
   const asterRef = useRef()
   const [msg, setMsg] = useState('')
+  const [pwOpen, setPwOpen] = useState(false)
+  const [pw1, setPw1] = useState('')
+  const [pw2, setPw2] = useState('')
+  const [pwErr, setPwErr] = useState('')
+  const [pwBusy, setPwBusy] = useState(false)
+
+  async function handleChangePassword() {
+    setPwErr('')
+    if (pw1.length < 8) { setPwErr('Password must be at least 8 characters.'); return }
+    if (pw1 !== pw2) { setPwErr('Passwords do not match.'); return }
+    setPwBusy(true)
+    const { error } = await supabase.auth.updateUser({ password: pw1 })
+    setPwBusy(false)
+    if (error) { setPwErr(`Failed: ${error.message}`); return }
+    setPwOpen(false); setPw1(''); setPw2('')
+    flash('✓ Password changed')
+  }
   const [asterModal, setAsterModal] = useState(null)
   const [mdModal, setMdModal] = useState(false)
 
@@ -104,7 +122,6 @@ export default function IOBar({ db, backup, onImport }) {
     // ── Session log entries route to session_log table ──
     let sessionLogAdded = 0
     if (incoming.session_log && Array.isArray(incoming.session_log)) {
-      const { supabase, hasSupabase } = await import('../../supabase').catch(() => ({}))
       if (hasSupabase && supabase) {
         for (const entry of incoming.session_log) {
           if (!entry?.id) continue
@@ -357,7 +374,49 @@ export default function IOBar({ db, backup, onImport }) {
           <span className={`sync-dot ${db.syncStatus}`} style={{ marginRight: 3 }} />
           {db.hasSupabase ? 'Cloud sync on' : 'Local only'}
         </span>
+
+        {hasSupabase && (
+          <button className="btn btn-sm btn-outline"
+            style={{ marginLeft: 8, color: 'var(--mut)' }}
+            onClick={() => setPwOpen(true)}
+            title="Change your sign-in password">
+            🔑 Password
+          </button>
+        )}
+
+        {hasSupabase && (
+          <button className="btn btn-sm btn-outline"
+            style={{ marginLeft: 4, color: 'var(--mut)' }}
+            onClick={() => supabase.auth.signOut()}
+            title="Sign out of this device">
+            Sign out
+          </button>
+        )}
       </div>
+
+      {hasSupabase && (
+        <Modal open={pwOpen} onClose={() => { setPwOpen(false); setPw1(''); setPw2(''); setPwErr('') }}
+          title="🔑 Change Password" maxWidth={380}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input type="password" autoComplete="new-password" placeholder="New password (min 8 characters)"
+              value={pw1} onChange={e => setPw1(e.target.value)}
+              style={{ padding: '8px 10px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
+            <input type="password" autoComplete="new-password" placeholder="Confirm new password"
+              value={pw2} onChange={e => setPw2(e.target.value)}
+              style={{ padding: '8px 10px', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
+            {pwErr && <div style={{ color: '#ff7060', fontSize: '0.85em' }}>{pwErr}</div>}
+            <div style={{ color: 'var(--mut)', fontSize: '0.77em' }}>
+              You stay signed in on this device. Save the new password in your password manager — there is no in-app reset if it's lost (dashboard reset only).
+            </div>
+            <ModalActions>
+              <button className="btn btn-sm btn-outline" onClick={() => { setPwOpen(false); setPw1(''); setPw2(''); setPwErr('') }}>Cancel</button>
+              <button className="btn btn-sm" disabled={pwBusy} onClick={handleChangePassword}>
+                {pwBusy ? 'Saving…' : 'Change password'}
+              </button>
+            </ModalActions>
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

@@ -39,19 +39,41 @@ function makeEmpty() { const db = {}; CATEGORIES.forEach(k => { db[k] = [] }); r
 function activityLoad() { try { return JSON.parse(localStorage.getItem(LS_ACTIVITY_KEY)) || [] } catch { return [] } }
 function activitySave(log) { try { localStorage.setItem(LS_ACTIVITY_KEY, JSON.stringify(log)) } catch {} }
 
+// ── Cloud error reporting (PATCH7H) ─────────────────────────────
+// Logs to console AND notifies the UI (CloudErrorToast in App.jsx)
+// so failed cloud operations are never silent.
+function cloudError(label, error) {
+  console.error(label, error)
+  const msg = `${label}${error?.message ? ': ' + error.message : ''}`
+  try { window.dispatchEvent(new CustomEvent('gol-cloud-error', { detail: msg })) } catch {}
+}
+
 async function sbLoad() {
   if (!hasSupabase) return null
-  const { data, error } = await supabase.from('entries').select('*').range(0, 9999)
-  if (error) { console.error('Supabase load error:', error); return null }
+  const PAGE = 1000
   const db = makeEmpty()
-  data.forEach(row => { if (db[row.category] !== undefined) db[row.category].push({ id: row.id, ...row.data }) })
+  let from = 0
+  while (true) {
+    const { data, error } = await supabase
+      .from('entries').select('*')
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) { cloudError('Cloud load failed', error); return null }
+    if (!data || data.length === 0) break
+    data.forEach(row => {
+      if (db[row.category] !== undefined)
+        db[row.category].push({ id: row.id, ...row.data })
+    })
+    if (data.length < PAGE) break
+    from += PAGE
+  }
   return db
 }
 async function sbUpsert(category, entry) {
   if (!hasSupabase) return
   const { id, ...data } = entry
   const { error } = await supabase.from('entries').upsert({ id, category, data, updated_at: new Date().toISOString() })
-  if (error) console.error('Supabase upsert error:', error)
+  if (error) cloudError('Cloud save failed', error)
 }
 // Reliable bulk write: one awaited request per small chunk, instead of
 // hundreds of fire-and-forget debounced writes (which lost rows at volume).
@@ -64,7 +86,7 @@ async function sbUpsertMany(category, entries) {
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK)
     const { error } = await supabase.from('entries').upsert(chunk)
-    if (error) { console.error('Supabase bulk upsert error:', error); failed += chunk.length }
+    if (error) { cloudError('Cloud bulk save failed', error); failed += chunk.length }
     else ok += chunk.length
   }
   return { ok, failed }
@@ -72,7 +94,7 @@ async function sbUpsertMany(category, entries) {
 async function sbDelete(id) {
   if (!hasSupabase) return
   const { error } = await supabase.from('entries').delete().eq('id', id)
-  if (error) console.error('Supabase delete error:', error)
+  if (error) cloudError('Cloud delete failed', error)
 }
 async function sbLoadSettings() {
   if (!hasSupabase) return null

@@ -197,15 +197,6 @@ export const BOOK_TITLES = {
   'Book 3': 'The Gathering — The Third Book of The Guardians of Lajen',
 }
 
-// ── CSS variable map — kept for backward compatibility ─────────
-// Some older tab files reference these; they still work via globals.css
-export const CSS_VARS = {
-  '--cc': '#c966ff', '--ci': '#ff7040', '--cl': '#ffcc00', '--ct': '#00ddff',
-  '--cca': '#44aaff', '--ccn': '#ff4433', '--cw': '#ffaa33', '--cq': '#cc44ff',
-  '--csp': '#ff69b4', '--csc': '#00ccaa', '--cwr': '#6655ff', '--cd': '#ff69b4',
-  '--cfl': '#aa44ff', '--ctl': '#ff5533',
-}
-
 // ── Character field definitions ────────────────────────────────
 export const CHAR_FIELDS = [
   { k: 'name',            l: 'Full Name',           t: 'text',   r: true },

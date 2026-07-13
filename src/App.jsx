@@ -1,35 +1,33 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
 import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid , GLOSSARY_CATS} from './constants'
 
-import Dashboard from './tabs/Dashboard'
-import Characters from './tabs/Characters'
-import Wardrobe from './tabs/Wardrobe'
-import Items from './tabs/Items'
-import Locations from './tabs/Locations'
-import Timeline from './tabs/Timeline'
-import Scenes from './tabs/Scenes'
-import CalendarTab from './tabs/CalendarTab'
-import Tools from './tabs/Tools'
-import Canon from './tabs/Canon'
-import World from './tabs/World'
-import Questions from './tabs/Questions'
-import Eras from './tabs/Eras'
-import Spellings from './tabs/Spellings'
-import MapTab from './tabs/MapTab'
-import Flags from './tabs/Flags'
-import Wiki from './tabs/Wiki'
-import FamilyTree from './tabs/FamilyTree'
-import Notes from './tabs/Notes'
-import Journal from './tabs/Journal'
-import Manuscript from './tabs/Manuscript'
-import Inventory from './tabs/Inventory'
-import SessionLog from './tabs/SessionLog'
-import Glossary from './tabs/Glossary'
+// Tabs are lazy-loaded (code-split) — each downloads on first visit.
+const Dashboard   = lazy(() => import('./tabs/Dashboard'))
+const Characters  = lazy(() => import('./tabs/Characters'))
+const Locations   = lazy(() => import('./tabs/Locations'))
+const Timeline    = lazy(() => import('./tabs/Timeline'))
+const Scenes      = lazy(() => import('./tabs/Scenes'))
+const CalendarTab = lazy(() => import('./tabs/CalendarTab'))
+const Tools       = lazy(() => import('./tabs/Tools'))
+const Canon       = lazy(() => import('./tabs/Canon'))
+const World       = lazy(() => import('./tabs/World'))
+const Questions   = lazy(() => import('./tabs/Questions'))
+const Spellings   = lazy(() => import('./tabs/Spellings'))
+const MapTab      = lazy(() => import('./tabs/MapTab'))
+const Flags       = lazy(() => import('./tabs/Flags'))
+const Wiki        = lazy(() => import('./tabs/Wiki'))
+const FamilyTree  = lazy(() => import('./tabs/FamilyTree'))
+const Notes       = lazy(() => import('./tabs/Notes'))
+const Manuscript  = lazy(() => import('./tabs/Manuscript'))
+const Inventory   = lazy(() => import('./tabs/Inventory'))
+const SessionLog  = lazy(() => import('./tabs/SessionLog'))
+const Glossary    = lazy(() => import('./tabs/Glossary'))
 import IOBar from './components/common/IOBar'
 import { LibraryPickerHost } from './components/common/LibraryPicker'
 import Breadcrumb from './components/common/Breadcrumb'
+import CloudErrorToast from './components/common/CloudErrorToast'
 
 const TAB_ORDER = TAB_ORDER_FOR_COLORS
 
@@ -384,10 +382,8 @@ export default function App() {
             onChange={e => setNavSearch(e.target.value)}
             placeholder="Search..."
             style={{
-              flex: 1,
-              maxWidth: 480,
+              width: 'clamp(160px, 40vw, 480px)',
               minWidth: 0,
-              margin: '0 16px',
               padding: '6px 12px',
               fontSize: '0.9em',
               background: 'var(--card)',
@@ -432,7 +428,16 @@ export default function App() {
         </div>
       </nav>
 
-      <div className="area">{renderTab()}</div>
+      <div className="area">
+        <Suspense fallback={
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--dim)' }}>
+            <div style={{ fontSize: '3.69em' }}>✦</div>
+          </div>
+        }>
+          {renderTab()}
+        </Suspense>
+      </div>
+      <CloudErrorToast />
 
       {/* Floating Quick Capture button */}
       <button
