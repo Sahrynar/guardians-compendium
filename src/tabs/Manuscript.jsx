@@ -136,6 +136,26 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
   })
   const [showFind, setShowFind] = useState(false)
   const [findQuery, setFindQuery] = useState('')
+  const [replaceStr, setReplaceStr] = useState('')
+
+  // Ctrl+F opens/focuses find-replace; Esc closes it (PATCH7I)
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); setShowFind(true) }
+      if (e.key === 'Escape') setShowFind(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  function doReplaceOne() {
+    if (!findQuery.trim()) return
+    setText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'i'), replaceStr))
+  }
+  function doReplaceAll() {
+    if (!findQuery.trim()) return
+    setText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'gi'), replaceStr))
+  }
   const textareaRef = useRef(null)
   const wc = wordCount(text)
   const findCount = useMemo(() => {
@@ -246,7 +266,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         <select value={status} onChange={e => setStatus(e.target.value)} style={{ fontSize: '0.85em', padding: '4px 8px', background: `${statusCol}22`, border: `1px solid ${statusCol}`, borderRadius: 6, color: statusCol, cursor: 'pointer' }}>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>{wc.toLocaleString()} words</span>
+        <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>{wc.toLocaleString()} words · ~{Math.max(1, Math.round(wc / 250))} min read</span>
         <button onClick={copyForSubstack} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: MS_COLOR, color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied!' : '📋 Copy for Substack'}</button>
         <span style={{ fontSize: '0.77em', color: 'var(--mut)', whiteSpace: 'nowrap' }}>Notes ({annotations.length})</span>
         <button onClick={save} style={{ fontSize: '0.85em', padding: '5px 14px', borderRadius: 6, background: MS_COLOR, color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Save</button>
@@ -262,6 +282,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
           {[['edit', '✎'], ['preview', '👁'], ['split', '⧉'], ['read', '📖']].map(([v, l]) => (
             <button key={v} onClick={() => changeView(v)} title={v} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: view === v ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{l}</button>
           ))}
+          <button onClick={() => setShowFind(s => !s)} title="Find / Replace (Ctrl+F)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: showFind ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>🔍</button>
         </div>
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
       </div>
@@ -293,10 +314,17 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {showFind && (
-          <div style={{ position: 'sticky', top: 8, zIndex: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, padding: '6px 10px', display: 'flex', gap: 8, alignItems: 'center', maxWidth: 360, marginLeft: 'auto', marginRight: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-            <input autoFocus value={findQuery} onChange={e => setFindQuery(e.target.value)} placeholder="Find in chapter..." style={{ flex: 1, minWidth: 0, padding: '4px 8px', fontSize: '0.9em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--tx)' }} />
-            <span style={{ fontSize: '0.77em', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{findCount > 0 ? `${findCount} matches` : findQuery ? 'no matches' : ''}</span>
-            <button onClick={() => setShowFind(false)} style={{ fontSize: '0.85em', background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', padding: '0 4px' }}>✕</button>
+          <div style={{ position: 'sticky', top: 8, zIndex: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 420, marginLeft: 'auto', marginRight: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input autoFocus value={findQuery} onChange={e => setFindQuery(e.target.value)} placeholder="Find in chapter..." style={{ flex: 1, minWidth: 0, padding: '4px 8px', fontSize: '0.9em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--tx)' }} />
+              <span style={{ fontSize: '0.77em', color: 'var(--dim)', whiteSpace: 'nowrap' }}>{findCount > 0 ? `${findCount} matches` : findQuery ? 'no matches' : ''}</span>
+              <button onClick={() => setShowFind(false)} title="Close (Esc)" style={{ fontSize: '0.85em', background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', padding: '0 4px' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input value={replaceStr} onChange={e => setReplaceStr(e.target.value)} placeholder="Replace with..." style={{ flex: 1, minWidth: 0, padding: '4px 8px', fontSize: '0.9em', background: 'var(--sf)', border: '1px solid var(--brd)', borderRadius: 4, color: 'var(--tx)' }} />
+              <button onClick={doReplaceOne} disabled={!findCount} title="Replace the first match" style={{ fontSize: '0.77em', padding: '3px 8px', borderRadius: 4, background: findCount ? MS_COLOR : 'var(--card)', color: findCount ? '#fff' : 'var(--mut)', border: '1px solid var(--brd)', cursor: findCount ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>Replace</button>
+              <button onClick={doReplaceAll} disabled={!findCount} title="Replace every match in this chapter" style={{ fontSize: '0.77em', padding: '3px 8px', borderRadius: 4, background: findCount ? MS_COLOR : 'var(--card)', color: findCount ? '#fff' : 'var(--mut)', border: '1px solid var(--brd)', cursor: findCount ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>All</button>
+            </div>
           </div>
         )}
         {(view === 'edit' || view === 'split') && (
@@ -309,8 +337,8 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {(view === 'preview' || view === 'split') && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.08}em`, lineHeight: 1.9, padding: '20px 40px' }}>
             <style>{`
-              .ms-preview p { text-indent: inherit; margin: 0; }
-              .ms-preview p + p { margin-top: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0 0 0.9em; line-height: inherit; }
+              .ms-preview p:last-child { margin-bottom: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
             <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
@@ -320,8 +348,8 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         {view === 'read' && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.2}em`, lineHeight: 2, padding: '40px 60px' }}>
             <style>{`
-              .ms-preview p { text-indent: inherit; margin: 0; }
-              .ms-preview p + p { margin-top: 0; }
+              .ms-preview p { text-indent: inherit; margin: 0 0 0.9em; line-height: inherit; }
+              .ms-preview p:last-child { margin-bottom: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>

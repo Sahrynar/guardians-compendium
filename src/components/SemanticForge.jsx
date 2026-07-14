@@ -5,6 +5,21 @@ import { generate, BUILTIN_AFFIXES, ttsLocaleFor } from '../utils/nameForge'
 import { listVoices, onVoices, speakText, speakableFromRespell } from '../utils/speech'
 import { PALETTES, PAL_BY_ID } from '../tabs/Tools'
 
+// Longest-common-substring length — same fuzzy heart as ReverseLookup (PATCH7I)
+function lcsLen(a, b) {
+  const m = a.length, n = b.length
+  if (!m || !n) return 0
+  let best = 0, prevRow = new Array(n + 1).fill(0)
+  for (let i = 1; i <= m; i++) {
+    const row = new Array(n + 1).fill(0)
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) { row[j] = prevRow[j - 1] + 1; if (row[j] > best) best = row[j] }
+    }
+    prevRow = row
+  }
+  return best
+}
+
 // ── Semantic Word Forge (PATCH7A · voice+freetext 7B · organize 7C) ──
 // Starts from REAL words that MEAN what you typed, then blends/reshapes.
 // Outputs are SUGGESTIONS ONLY — nothing is canon until Melissa says so.
@@ -117,8 +132,15 @@ export default function SemanticForge({ db }) {
   const inactiveLangs = useMemo(() => langsAvailable.filter(l => !((weights[l] || 0) > 0)), [langsAvailable, weights])
 
   const conceptList = useMemo(() => Object.keys(lexicon).sort(), [lexicon])
-  const filteredConcepts = conceptList.filter(c =>
-    (!conceptQ || c.includes(conceptQ.toLowerCase())) && (!showSelectedOnly || concepts.includes(c)))
+  const filteredConcepts = conceptList.filter(c => {
+    if (showSelectedOnly && !concepts.includes(c)) return false
+    if (!conceptQ) return true
+    const q = conceptQ.toLowerCase()
+    if (c.includes(q)) return true
+    if ((lexicon[c]?.meaning || '').toLowerCase().includes(q)) return true
+    // fuzzy: near-misses like "hapiness" → happiness (4-letter common run, 3 for short queries)
+    return q.length >= 3 && lcsLen(c, q) >= Math.min(4, q.length)
+  })
 
   // words you've already made — for the "already exists" warning
   const savedWords = useMemo(() => {

@@ -3,6 +3,7 @@ import Modal from '../components/common/Modal'
 import FilterPopup from '../components/common/FilterPopup'
 import { TAB_RAINBOW, uid } from '../constants'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
+import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
 
 const SIZE_COLS_WIKI = { XS: 4, S: 3, M: 2, L: 2, XL: 1 }
 const tabColor = TAB_RAINBOW['wiki'] || '#aaaaaa'
@@ -388,6 +389,8 @@ export default function Wiki({ db, navSearch }) {
           <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => setEditing({})}>+ New Article</button>
         </div>
       )}
+
+      <AlphabetJumpBar entries={filtered} getName={a => a.title || a.name || ''} onJump={t => scrollAndFlashEntry(t.id)} color={tabColor} />
 
       <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (

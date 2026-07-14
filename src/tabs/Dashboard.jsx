@@ -10,23 +10,6 @@ const TAB_LIST = [
 ]
 
 const REVIEW_CATS = ['characters', 'locations', 'items', 'scenes', 'timeline', 'wiki', 'world', 'glossary', 'spellings', 'canon', 'flags', 'questions', 'notes']
-const DASH_SEARCH_SCOPES = [
-  ['all', '🌐 Global (everything)'],
-  ['characters', '👤 Characters'],
-  ['wiki', '📖 Wiki'],
-  ['glossary', '📚 Glossary'],
-  ['locations', '📍 Locations'],
-  ['world', '🌍 World'],
-  ['scenes', '🎬 Scenes'],
-  ['timeline', '⏳ Timeline'],
-  ['manuscript', '📜 Manuscript'],
-  ['flags', '🚩 Flags'],
-  ['questions', '❓ Questions'],
-  ['canon', '✦ Canon'],
-  ['spellings', '🔤 Spellings'],
-  ['notes', '📝 Notes'],
-]
-
 function getEntryName(e) {
   return e.name || e.title || e.display_name || e.word || e.term || e.text?.slice(0, 50) || '(unnamed)'
 }
@@ -49,8 +32,6 @@ function getCategoryCount(data, cat, sessionLogCount = 0) {
 
 export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) {
   const data = db.db
-  const [searchScope, setSearchScope] = useState('all')
-  const [dashSearch, setDashSearch] = useState('')
   const [previewEntry, setPreviewEntry] = useState(null)
   const [previewCategory, setPreviewCategory] = useState(null)
 
@@ -118,25 +99,6 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
 
   const flags = data.flags || []
 
-  const searchResults = useMemo(() => {
-    if (!dashSearch.trim()) return []
-    const q = dashSearch.toLowerCase()
-    const cats = searchScope === 'all' ? DASH_SEARCH_SCOPES.slice(1).map(s => s[0]) : [searchScope]
-    const results = []
-    cats.forEach(cat => {
-      getCategoryEntries(data, cat).forEach(e => {
-        const hay = [
-          e.name, e.title, e.display_name, e.word, e.term, e.text,
-          e.summary, e.notes, e.detail, e.content, e.definition, e.significance,
-        ].filter(Boolean).join(' ').toLowerCase()
-        if (hay.includes(q)) {
-          results.push({ cat, id: e.id, name: getEntryName(e) })
-        }
-      })
-    })
-    return results.slice(0, 40)
-  }, [dashSearch, searchScope, data])
-
   function openPreview(cat, id) {
     const entry = getCategoryEntries(data, cat).find(e => e.id === id)
     if (!entry) return
@@ -181,28 +143,8 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
 
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
-      {searchResults.length === 0 && dashSearch && (
-        <div style={{ padding: 10, fontSize: '0.85em', color: 'var(--mut)' }}>No matches.</div>
-      )}
-      <div style={{ maxWidth: 600, margin: '0 auto 14px', display: 'flex', gap: 6, alignItems: 'center' }}>
-        <select value={searchScope} onChange={e => setSearchScope(e.target.value)}
-          style={{ padding: '6px 10px', fontSize: '0.85em', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
-          {DASH_SEARCH_SCOPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-        </select>
-        <input type="text" value={dashSearch} onChange={e => setDashSearch(e.target.value)}
-          placeholder={`Search ${searchScope === 'all' ? 'everything' : searchScope}...`}
-          style={{ flex: 1, padding: '6px 10px', fontSize: '0.92em', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }} />
-      </div>
-      {searchResults.length > 0 && (
-        <div style={{ marginBottom: 14, maxHeight: 300, overflowY: 'auto', border: '1px solid var(--brd)', borderRadius: 6, padding: 8, background: 'var(--card)' }}>
-          {searchResults.map((r, i) => (
-            <div key={`${r.cat}-${r.id}-${i}`} onClick={() => openPreview(r.cat, r.id)}
-              style={{ padding: '4px 8px', fontSize: '0.85em', cursor: 'pointer', borderLeft: `3px solid ${TAB_RAINBOW[r.cat] || 'var(--cc)'}`, marginBottom: 2 }}>
-              <span style={{ color: TAB_RAINBOW[r.cat] }}>{CATS[r.cat]?.i}</span> {r.name}
-              <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>({r.cat})</span>
-            </div>
-          ))}
-        </div>
+      {/* Scoped global search moved to the nav bar (PATCH7I) — see components/common/GlobalSearch.jsx */}
+
       )}
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>

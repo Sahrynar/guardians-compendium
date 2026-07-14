@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/common/Modal'
 import { TAB_RAINBOW, uid } from '../constants'
+import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
 
 export default function Flags({ db }) {
@@ -41,6 +42,7 @@ export default function Flags({ db }) {
     return !autoOnly || f.auto_imported === true
   }).sort((a, b) => {
     if (sortMode === 'alpha') return (a.name || '').localeCompare(b.name || '')
+    if (sortMode === 'zalpha') return (b.name || '').localeCompare(a.name || '')
     if (sortMode === 'oldest') return new Date(a.created || 0) - new Date(b.created || 0)
     if (sortMode === 'priority') {
       const order = { urgent: 0, high: 1, medium: 2, low: 3 }
@@ -84,7 +86,17 @@ export default function Flags({ db }) {
           {[['active', 'Active'], ['resolved', 'Resolved'], ['all', 'All']].map(([k, l]) => <button key={k} className={`fp ${filter === k ? 'active' : ''}`} style={{ color: tabColor }} onClick={() => setFilter(k)}>{l}</button>)}
         </div>
         <span style={{ fontSize: '0.77em', color: 'var(--mut)', marginLeft: 8 }}>{flags.filter(f => !f.resolved).length} active · {flags.filter(f => f.resolved).length} resolved</span>
+        <select value={sortMode} onChange={e => setSortMode(e.target.value)} title="Sort flags"
+          style={{ marginLeft: 'auto', padding: '3px 8px', fontSize: '0.77em', background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="alpha">A → Z</option>
+          <option value="zalpha">Z → A</option>
+          <option value="priority">By priority</option>
+        </select>
       </div>
+
+      <AlphabetJumpBar entries={filtered} getName={f => f.name || ''} onJump={t => scrollAndFlashEntry(t.id)} color={tabColor} />
 
       {!filtered.length && <div className="empty"><div className="empty-icon">🚩</div><p>{filter === 'resolved' ? 'No resolved flags.' : filter === 'active' ? 'No active flags!' : 'No flags.'}</p></div>}
 

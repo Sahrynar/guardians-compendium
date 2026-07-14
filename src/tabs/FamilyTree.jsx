@@ -934,7 +934,7 @@ export default function FamilyTree({ db }) {
         {nodeModal && <NodeForm node={nodeModal} onSave={saveNode} onCancel={() => setNodeModal(null)} db={db} nodeTypes={allNodeTypes} tabColor={tabColor}
           onAddNodeType={t => saveCustom(undefined, [...customNodeTypes, t], undefined, undefined)} />}
       </Modal>
-      <Modal open={!!edgeModal} onClose={() => setEdgeModal(null)} title={edgeModal?.id ? 'Edit Relation' : 'Add Relation'} color="var(--cca)">
+      <Modal open={!!edgeModal} onClose={() => setEdgeModal(null)} title={edgeModal?.id ? 'Edit Relation' : 'Add Relation'} color={tabColor}>
         {edgeModal && <EdgeForm edge={edgeModal} nodes={nodes} onSave={saveEdge}
           onDelete={edgeModal.id ? deleteEdge : null}
           onCancel={() => setEdgeModal(null)}

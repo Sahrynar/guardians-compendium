@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { useDB } from './hooks/useDB'
 import { useAutoBackup } from './hooks/useAutoBackup'
-import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid , GLOSSARY_CATS} from './constants'
+import { CATS, TAB_ORDER_FOR_COLORS, TAB_RAINBOW, uid } from './constants'
 
 // Tabs are lazy-loaded (code-split) — each downloads on first visit.
 const Dashboard   = lazy(() => import('./tabs/Dashboard'))
@@ -27,6 +27,7 @@ const Glossary    = lazy(() => import('./tabs/Glossary'))
 import IOBar from './components/common/IOBar'
 import { LibraryPickerHost } from './components/common/LibraryPicker'
 import Breadcrumb from './components/common/Breadcrumb'
+import GlobalSearch from './components/common/GlobalSearch'
 import CloudErrorToast from './components/common/CloudErrorToast'
 
 const TAB_ORDER = TAB_ORDER_FOR_COLORS
@@ -213,28 +214,6 @@ export default function App() {
     })
   }, [])
 
-  function getTabCount(tabKey) {
-    if (tabKey === 'dashboard' || tabKey === 'tools') return null
-    if (tabKey === 'wiki') return (db.db.wiki || []).length
-    if (tabKey === 'glossary') return (db.db.wiki || []).filter(a => GLOSSARY_CATS.includes(a.category) || a.is_glossary).length
-    if (tabKey === 'characters') return (db.db.characters || []).length
-    if (tabKey === 'familytree') return (db.db.family_tree || []).length
-    if (tabKey === 'world') return (db.db.world || []).length
-    if (tabKey === 'locations') return (db.db.locations || []).length
-    if (tabKey === 'map') return (db.db.maps || []).length
-    if (tabKey === 'manuscript') return (db.db.manuscript || []).length
-    if (tabKey === 'scenes') return (db.db.scenes || []).length
-    if (tabKey === 'timeline') return (db.db.timeline || []).length
-    if (tabKey === 'calendar') return (db.db.calendar_entries || []).length
-    if (tabKey === 'inventory') return (db.db.inventory || []).length
-    if (tabKey === 'flags') return (db.db.flags || []).length
-    if (tabKey === 'questions') return (db.db.questions || []).length
-    if (tabKey === 'canon') return (db.db.canon || []).length
-    if (tabKey === 'spellings') return (db.db.spellings || []).length
-    if (tabKey === 'notes') return (db.db.journal_captures || []).length + (db.db.notes || []).length + (db.db.ideas_list || []).length
-    if (tabKey === 'sessionlog') return typeof sessionLogCount === 'number' ? sessionLogCount : 0
-    return 0
-  }
 
   function scrollTabs(dir) {
     const bar = tabBarRef.current
@@ -375,23 +354,7 @@ export default function App() {
             <button className="nav-btn" onClick={() => goTo('dashboard')} title="Home">⌂</button>
             <button className="nav-btn" onClick={goFwd} title="Forward">→</button>
           </div>
-          <input
-            type="text"
-            className="global-top-search"
-            value={navSearch}
-            onChange={e => setNavSearch(e.target.value)}
-            placeholder="Search..."
-            style={{
-              width: 'clamp(160px, 40vw, 480px)',
-              minWidth: 0,
-              padding: '6px 12px',
-              fontSize: '0.9em',
-              background: 'var(--card)',
-              border: '1px solid var(--brd)',
-              borderRadius: 6,
-              color: 'var(--tx)',
-            }}
-          />
+          <GlobalSearch db={db} navSearch={navSearch} setNavSearch={setNavSearch} crossLink={crossLink} />
           <div className="nav-btns">
             <span className={`sync-dot ${db.syncStatus}`} title={`Sync: ${db.syncStatus}`} style={{ marginRight: 4 }} />
             <button className="nav-btn" onClick={() => adjFont(-1)} title="Smaller text">A−</button>
@@ -407,7 +370,6 @@ export default function App() {
               if (!c) return null
               const tabHex = TAB_RAINBOW[k] || '#aaaaaa'
               const isActive = tab === k
-              const count = getTabCount(k)
               return (
                 <button key={k} className="tab-btn"
                   style={{
@@ -419,7 +381,7 @@ export default function App() {
                   }}
                   onClick={() => goTo(k)}
                 >
-                  {c.i} {c.l}{count === null ? '' : ` (${count})`}
+                  {c.i} {c.l}
                 </button>
               )
             })}

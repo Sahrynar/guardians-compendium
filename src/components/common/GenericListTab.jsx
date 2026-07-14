@@ -66,6 +66,7 @@ export default function GenericListTab({
       const aName = a.display_name || a.name || a.word || ''
       const bName = b.display_name || b.name || b.word || ''
       if (sortMode === 'alpha') return aName.localeCompare(bName)
+      if (sortMode === 'zalpha') return bName.localeCompare(aName)
       if (sortMode === 'newest') return new Date(b.updated_at || b.updated || b.created || 0) - new Date(a.updated_at || a.updated || a.created || 0)
       if (sortMode === 'oldest') return new Date(a.updated_at || a.updated || a.created || 0) - new Date(b.updated_at || b.updated || b.created || 0)
       return 0
@@ -119,6 +120,7 @@ export default function GenericListTab({
         )}
         <select value={sortMode} onChange={e => setSortMode(e.target.value)} style={{ fontSize: 'var(--fs-xs)', padding: '4px 8px', borderRadius: 'var(--r)', border: '1px solid var(--brd)', background: 'var(--sf)', color: 'var(--dim)', cursor: 'pointer' }} title="Sort order">
           <option value="alpha">A → Z</option>
+          <option value="zalpha">Z → A</option>
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
         </select>

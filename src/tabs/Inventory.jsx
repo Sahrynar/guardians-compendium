@@ -530,6 +530,7 @@ export default function Inventory({ db, setCrumbs }) {
   // ── List sorted ──
   const sortedList = useMemo(() => [...filtered].sort((a, b) => {
     if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '')
+    if (sortBy === 'za') return (b.name || '').localeCompare(a.name || '')
     if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || '')
     // holder
     return charName(a.character || a.holder).localeCompare(charName(b.character || b.holder)) || (a.name || '').localeCompare(b.name || '')
@@ -607,6 +608,7 @@ export default function Inventory({ db, setCrumbs }) {
               border: '1px solid var(--brd)', borderRadius: 6, color: 'var(--tx)' }}>
             <option value="holder">Sort: By Holder</option>
             <option value="name">Sort: A → Z</option>
+            <option value="za">Sort: Z → A</option>
             <option value="category">Sort: By Category</option>
           </select>
         )}
