@@ -117,7 +117,7 @@ function FormatBar({ textareaRef, onUpdate }) {
   )
 }
 
-function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink, bookColor }) {
+function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink, bookColor, onSplit, onMerge }) {
   const [text, setText] = useState(chapter.text || '')
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
@@ -138,10 +138,49 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
   const [findQuery, setFindQuery] = useState('')
   const [replaceStr, setReplaceStr] = useState('')
 
+  // ── Undo/redo history (PATCH7K) — one choke point for ALL text changes ──
+  const textRef = useRef(text)
+  useEffect(() => { textRef.current = text }, [text])
+  const histPast = useRef([])
+  const histFuture = useRef([])
+  const histLastPush = useRef(0)
+  const [, setHistTick] = useState(0)
+  function pushHistory(force) {
+    const now = Date.now()
+    if (!force && now - histLastPush.current < 700) return  // group typing bursts
+    histPast.current.push(textRef.current)
+    if (histPast.current.length > 200) histPast.current.shift()
+    histFuture.current = []
+    histLastPush.current = now
+    setHistTick(t => t + 1)
+  }
+  function updateText(v, force) {
+    const nv = typeof v === 'function' ? v(textRef.current) : v
+    if (nv === textRef.current) return
+    pushHistory(force)
+    setText(nv)
+  }
+  function undo() {
+    if (!histPast.current.length) return
+    histFuture.current.push(textRef.current)
+    setText(histPast.current.pop())
+    histLastPush.current = 0
+    setHistTick(t => t + 1)
+  }
+  function redo() {
+    if (!histFuture.current.length) return
+    histPast.current.push(textRef.current)
+    setText(histFuture.current.pop())
+    histLastPush.current = 0
+    setHistTick(t => t + 1)
+  }
+
   // Ctrl+F opens/focuses find-replace; Esc closes it (PATCH7I)
   useEffect(() => {
     function onKey(e) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); setShowFind(true) }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo() }
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) { e.preventDefault(); redo() }
       if (e.key === 'Escape') setShowFind(false)
     }
     window.addEventListener('keydown', onKey)
@@ -150,11 +189,36 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
 
   function doReplaceOne() {
     if (!findQuery.trim()) return
-    setText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'i'), replaceStr))
+    updateText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'i'), replaceStr), true)
   }
   function doReplaceAll() {
     if (!findQuery.trim()) return
-    setText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'gi'), replaceStr))
+    updateText(t => t.replace(new RegExp(escapeRegex(findQuery.trim()), 'gi'), replaceStr), true)
+  }
+
+  // ── Split / Merge (PATCH7K) ──
+  function doSplit() {
+    const ta = textareaRef.current
+    if (!ta || (view !== 'edit' && view !== 'split')) { window.alert('Split works from the ✎ Edit or ⧉ Split view — click into the text where the new chapter should begin, then press ✂.'); return }
+    const pos = ta.selectionStart
+    const before = text.slice(0, pos).trimEnd()
+    const after = text.slice(pos).trimStart()
+    if (!before || !after) { window.alert('Place the cursor mid-chapter — both halves need text.'); return }
+    if (!window.confirm(`Split here?\n\n"${title || 'Untitled'}" keeps ${wordCount(before).toLocaleString()} words.\nNew chapter "${title || 'Untitled'} — Part 2" gets ${wordCount(after).toLocaleString()} words.\nFollowing chapters in this book renumber +1.`)) return
+    updateText(before, true)
+    onSplit({ ...chapter, title, status, notes, annotations }, before, after)
+  }
+  function doMergeNext() {
+    const same = (allChapters || []).filter(c => c.book === chapter.book)
+    const curN = parseInt(chapter.chapter_num) || 0
+    const next = same.filter(c => (parseInt(c.chapter_num) || 0) > curN)
+      .sort((a, b) => (parseInt(a.chapter_num) || 0) - (parseInt(b.chapter_num) || 0))[0]
+    if (!next) { window.alert('No following chapter in this book to merge.'); return }
+    const nw = next.word_count || wordCount(next.text || '')
+    if (!window.confirm(`Merge Ch ${next.chapter_num} "${next.title || 'Untitled'}" (${nw.toLocaleString()} words) INTO this chapter?\n\nIts text is appended after a *** scene break, that chapter is then DELETED, and later chapters renumber −1.\n\nIf unsure, back up first (IOBar Export).`)) return
+    const merged = `${text.trimEnd()}\n\n***\n\n${(next.text || '').trimStart()}`
+    updateText(merged, true)
+    onMerge({ ...chapter, title, status, notes, annotations }, merged, next.id)
   }
   const textareaRef = useRef(null)
   const wc = wordCount(text)
@@ -166,18 +230,8 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
   const renderedHTML = useMemo(() => applyFindMarks(toHTML(text), findQuery), [text, findQuery])
 
   useEffect(() => {
-    function onKey(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault()
-        setShowFind(s => !s)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
-  useEffect(() => {
     setText(chapter.text || '')
+    histPast.current = []; histFuture.current = []; histLastPush.current = 0
     setTitle(chapter.title || '')
     setStatus(chapter.status || 'Draft')
     setNotes(chapter.notes || '')
@@ -283,6 +337,10 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
             <button key={v} onClick={() => changeView(v)} title={v} style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: view === v ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>{l}</button>
           ))}
           <button onClick={() => setShowFind(s => !s)} title="Find / Replace (Ctrl+F)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: showFind ? 'var(--csc)' : 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>🔍</button>
+          <button onClick={undo} disabled={!histPast.current.length} title="Undo (Ctrl+Z)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: histPast.current.length ? 'var(--tx)' : 'var(--mut)', cursor: histPast.current.length ? 'pointer' : 'default' }}>↶</button>
+          <button onClick={redo} disabled={!histFuture.current.length} title="Redo (Ctrl+Y)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: histFuture.current.length ? 'var(--tx)' : 'var(--mut)', cursor: histFuture.current.length ? 'pointer' : 'default' }}>↷</button>
+          <button onClick={doSplit} title="Split chapter at cursor (Edit/Split view)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>✂</button>
+          <button onClick={doMergeNext} title="Merge the NEXT chapter into this one" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>⤵</button>
         </div>
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
       </div>
@@ -329,26 +387,26 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
         )}
         {(view === 'edit' || view === 'split') && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px', overflow: 'hidden', borderRight: view === 'split' ? '1px solid var(--brd)' : 'none' }}>
-            <FormatBar textareaRef={textareaRef} onUpdate={setText} />
-            <textarea ref={textareaRef} value={text} onChange={e => setText(e.target.value)} style={{ flex: 1, resize: 'none', fontSize: `${fontSize}em`, lineHeight: 1.8, padding: '8px 0', background: 'transparent', border: 'none', color: 'var(--tx)', outline: 'none', fontFamily: 'Georgia, serif', overflowY: 'auto' }} placeholder="Paste or type your chapter here. Use *italic*, **bold**, — for em dash, *** for scene break." />
+            <FormatBar textareaRef={textareaRef} onUpdate={v => updateText(v, true)} />
+            <textarea ref={textareaRef} value={text} onChange={e => updateText(e.target.value)} style={{ flex: 1, resize: 'none', fontSize: `${fontSize}em`, lineHeight: 1.8, padding: '8px 0', background: 'transparent', border: 'none', color: 'var(--tx)', outline: 'none', fontFamily: 'Georgia, serif', overflowY: 'auto' }} placeholder="Paste or type your chapter here. Use *italic*, **bold**, — for em dash, *** for scene break." />
           </div>
         )}
 
         {(view === 'preview' || view === 'split') && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.08}em`, lineHeight: 1.9, padding: '20px 40px' }}>
             <style>{`
-              .ms-preview p { text-indent: inherit; margin: 0 0 0.9em; line-height: inherit; }
+              .ms-preview p { text-indent: var(--p-indent, 0); margin: 0 0 0.9em; line-height: inherit; }
               .ms-preview p:last-child { margin-bottom: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
-            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
+            <div className="ms-preview" style={{ '--p-indent': indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to preview yet.</p>' }} />
           </div>
         )}
 
         {view === 'read' && (
           <div style={{ ...previewBaseStyle, fontSize: `${fontSize * 1.2}em`, lineHeight: 2, padding: '40px 60px' }}>
             <style>{`
-              .ms-preview p { text-indent: inherit; margin: 0 0 0.9em; line-height: inherit; }
+              .ms-preview p { text-indent: var(--p-indent, 0); margin: 0 0 0.9em; line-height: inherit; }
               .ms-preview p:last-child { margin-bottom: 0; }
               .ms-preview mark { background: rgba(255, 204, 0, .35); color: inherit; padding: 0 .08em; border-radius: 2px; }
             `}</style>
@@ -360,7 +418,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
                 {title || '(untitled)'}
               </div>
             </div>
-            <div className="ms-preview" style={{ textIndent: indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
+            <div className="ms-preview" style={{ '--p-indent': indentParas ? '2em' : '0' }} dangerouslySetInnerHTML={{ __html: renderedHTML || '<p style="color:var(--mut)">Nothing to read yet.</p>' }} />
           </div>
         )}
 
@@ -516,6 +574,28 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
   function saveChapter(ch) {
     db.upsertEntry('manuscript', ch)
     setEditingChapterPersist(null)
+  }
+
+  // ── Split / Merge handlers (PATCH7K) ──
+  function splitChapter(ch, beforeText, afterText) {
+    const curN = parseInt(ch.chapter_num) || 0
+    const followers = chapters.filter(c => c.book === ch.book && (parseInt(c.chapter_num) || 0) > curN)
+    if (followers.length) db.bulkUpsert('manuscript', followers.map(c => ({ ...c, chapter_num: String((parseInt(c.chapter_num) || 0) + 1) })))
+    db.upsertEntry('manuscript', { id: uid(), book: ch.book, chapter_num: String(curN + 1), title: `${ch.title || 'Untitled'} — Part 2`, text: afterText, status: ch.status || 'Draft', notes: '', annotations: [], word_count: wordCount(afterText) })
+    const updated = { ...ch, text: beforeText, word_count: wordCount(beforeText) }
+    db.upsertEntry('manuscript', updated)
+    setEditingChapterPersist(updated)
+  }
+  function mergeWithNext(ch, mergedText, nextId) {
+    const next = chapters.find(c => c.id === nextId)
+    if (!next) return
+    const nextN = parseInt(next.chapter_num) || 0
+    const updated = { ...ch, text: mergedText, word_count: wordCount(mergedText) }
+    db.upsertEntry('manuscript', updated)
+    db.deleteEntry('manuscript', nextId)
+    const followers = chapters.filter(c => c.book === ch.book && c.id !== nextId && (parseInt(c.chapter_num) || 0) > nextN)
+    if (followers.length) db.bulkUpsert('manuscript', followers.map(c => ({ ...c, chapter_num: String((parseInt(c.chapter_num) || 0) - 1) })))
+    setEditingChapterPersist(updated)
   }
 
   function navigateToChapter(chId) {
@@ -793,7 +873,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
       )}
 
       {editingChapter && (
-        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} bookColor={bookTitleColor(editingChapter.book)} />
+        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} bookColor={bookTitleColor(editingChapter.book)} onSplit={splitChapter} onMerge={mergeWithNext} />
       )}
     </div>
   )

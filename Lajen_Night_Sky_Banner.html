@@ -1,0 +1,118 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>The Guardians of Lajen — Night Sky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:ital@1&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#050507;overflow:hidden}
+  canvas{position:fixed;inset:0;display:block}
+  .title{position:fixed;left:0;right:0;top:44%;transform:translateY(-50%);
+    text-align:center;pointer-events:none;user-select:none}
+  .title h1{margin:0;font-family:'Cinzel Decorative',Georgia,serif;font-weight:700;
+    font-size:clamp(34px,6.4vw,92px);letter-spacing:.045em;line-height:1.08;
+    background:linear-gradient(178deg,#ffffff 0%,#e8ecf2 28%,#b9c2cf 55%,#8f99a8 78%,#d9dee6 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 18px rgba(200,215,235,.38)) drop-shadow(0 2px 6px rgba(0,0,0,.9));}
+  .title h2{margin:.55em 0 0;font-family:'Cinzel Decorative',Georgia,serif;font-weight:700;
+    font-size:clamp(13px,1.7vw,24px);letter-spacing:.42em;text-indent:.42em;color:#aeb7c4;
+    text-shadow:0 0 12px rgba(190,205,225,.35),0 1px 4px #000}
+  .cap{position:fixed;left:0;right:0;bottom:3.2%;text-align:center;pointer-events:none;
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
+    font-size:clamp(12px,1.35vw,18px);color:#96a0ad;letter-spacing:.06em;
+    text-shadow:0 1px 4px #000}
+  .cap b{color:#d8b24a;font-weight:400}.cap i{color:#cfd6df;font-style:normal}
+</style></head><body>
+<canvas id="sky"></canvas>
+<div class="title"><h1>The Guardians<br>of Lajen</h1><h2>WORLDBUILDING COMPENDIUM</h2></div>
+<div class="cap"><b>☀</b> for him &nbsp;·&nbsp; <i>☾</i> for her &nbsp;·&nbsp; 3,370 stars, a hundred words each &nbsp;·&nbsp; twenty-six years</div>
+<script>
+const RAINBOW=['#ff69b4','#ff7f6e','#ff3b3b','#ff5a2b','#ff7f27','#ffb52e','#ffe135','#b6e34b',
+'#4cd964','#2fd6b0','#28d5e8','#4aa8ff','#2f6bff','#5a4fff','#8a5cff','#a64cf5','#e04cf0','#ff4fd8'];
+const N=3370;
+const cv=document.getElementById('sky'),cx=cv.getContext('2d');
+let W,H,stars=[],shooters=[],shootIdx=0,mouse={x:-9e9,y:-9e9},t0=performance.now();
+
+function build(){
+  W=cv.width=innerWidth;H=cv.height=innerHeight;stars=[];
+  for(let i=0;i<N;i++){
+    const z=.35+Math.random()*.65;
+    stars.push({x:Math.random()*W,y:Math.random()*H,z,
+      r:(.4+Math.random()*1.4)*z,ph:Math.random()*6.28,sp:.4+Math.random()*1.2});
+  }
+}
+addEventListener('resize',build);
+addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+addEventListener('mouseleave',()=>{mouse.x=-9e9});
+build();
+
+function spawnShooter(){
+  const fromLeft=Math.random()<.5, y0=H*(.06+Math.random()*.42);
+  shooters.push({x:fromLeft?-40:W+40,y:y0,
+    vx:(fromLeft?1:-1)*(7+Math.random()*5),vy:2.2+Math.random()*2.4,
+    color:RAINBOW[shootIdx++%RAINBOW.length],trail:[],life:1});
+  setTimeout(spawnShooter,2200+Math.random()*2600);
+}
+setTimeout(spawnShooter,1400);
+
+function moon(t){
+  const x=W*.14,y=H*.20,R=Math.min(W,H)*.075,breath=.85+.15*Math.sin(t*.0006);
+  let g=cx.createRadialGradient(x,y,R*.3,x,y,R*4.6);
+  g.addColorStop(0,`rgba(205,218,235,${.30*breath})`);g.addColorStop(1,'rgba(205,218,235,0)');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,R*4.6,0,6.283);cx.fill();
+  g=cx.createRadialGradient(x-R*.35,y-R*.35,R*.1,x,y,R);
+  g.addColorStop(0,'#f4f7fb');g.addColorStop(.65,'#cfd8e4');g.addColorStop(1,'#9aa6b6');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,R,0,6.283);cx.fill();
+  cx.fillStyle='rgba(5,5,7,0.92)';cx.beginPath();cx.arc(x+R*.42,y-R*.18,R*.92,0,6.283);cx.fill();
+}
+function sun(t){
+  const x=W*.865,y=H*.62,R=Math.min(W,H)*.055;
+  let g=cx.createRadialGradient(x,y,R*.2,x,y,R*7);
+  g.addColorStop(0,'rgba(255,196,90,.5)');g.addColorStop(.4,'rgba(216,140,40,.16)');g.addColorStop(1,'rgba(216,140,40,0)');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,R*7,0,6.283);cx.fill();
+  cx.save();cx.translate(x,y);cx.rotate(t*.00004);
+  cx.strokeStyle='rgba(240,180,90,.22)';cx.lineWidth=1.2;
+  for(let i=0;i<12;i++){cx.rotate(Math.PI/6);
+    cx.beginPath();cx.moveTo(R*1.5,0);cx.lineTo(R*(2.5+.5*Math.sin(t*.001+i)),0);cx.stroke();}
+  cx.restore();
+  g=cx.createRadialGradient(x-R*.3,y-R*.3,R*.1,x,y,R);
+  g.addColorStop(0,'#ffe9b8');g.addColorStop(.6,'#f2c264');g.addColorStop(1,'#c98c2e');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,R,0,6.283);cx.fill();
+}
+function frame(t){
+  cx.clearRect(0,0,W,H);
+  const px=(mouse.x-W/2)*.006,py=(mouse.y-H/2)*.006;
+  // stars (silver, twinkling, slight parallax)
+  for(const s of stars){
+    const tw=.45+.55*Math.sin(s.ph+t*.001*s.sp);
+    cx.globalAlpha=tw*(.5+.5*s.z);
+    cx.fillStyle=s.z>.8?'#f2f5fa':'#c9d2de';
+    cx.beginPath();cx.arc(s.x-px*s.z*8,s.y-py*s.z*8,s.r,0,6.283);cx.fill();
+  }
+  cx.globalAlpha=1;
+  // constellation tracing near the cursor
+  const near=stars.filter(s=>{const dx=s.x-mouse.x,dy=s.y-mouse.y;return dx*dx+dy*dy<16900});
+  cx.lineWidth=.6;
+  for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++){
+    const a=near[i],b=near[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;
+    if(d2<4200){cx.globalAlpha=(1-d2/4200)*.5;cx.strokeStyle='#dfe6ef';
+      cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();}
+  }
+  cx.globalAlpha=1;
+  // rainbow shooting stars — spectrum order, always
+  for(const sh of shooters){
+    sh.x+=sh.vx;sh.y+=sh.vy;sh.trail.push([sh.x,sh.y]);
+    if(sh.trail.length>26)sh.trail.shift();
+    if(sh.x<-80||sh.x>W+80||sh.y>H+80)sh.life=0;
+    for(let i=1;i<sh.trail.length;i++){
+      cx.globalAlpha=(i/sh.trail.length)*.9;
+      cx.strokeStyle=sh.color;cx.lineWidth=1+2.2*(i/sh.trail.length);
+      cx.beginPath();cx.moveTo(...sh.trail[i-1]);cx.lineTo(...sh.trail[i]);cx.stroke();
+    }
+    cx.globalAlpha=1;cx.fillStyle='#fff';
+    cx.beginPath();cx.arc(sh.x,sh.y,2.1,0,6.283);cx.fill();
+  }
+  shooters=shooters.filter(s=>s.life>0);
+  moon(t);sun(t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></body></html>

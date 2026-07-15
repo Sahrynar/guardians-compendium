@@ -187,6 +187,21 @@ export default function Locations({ db, navSearch }) {
   }, [locations])
 
   function toggle(id) { setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n }) }
+
+  // Jump bar: in tree view a target under a collapsed parent isn't in the DOM,
+  // so expand its whole ancestor chain first, then scroll after render (TD-065).
+  function jumpToLocation(target) {
+    if (view === 'tree') {
+      const byId = Object.fromEntries(locations.map(l => [l.id, l]))
+      const toOpen = []
+      let cur = byId[target.id]
+      while (cur && cur.parent_id) { toOpen.push(cur.parent_id); cur = byId[cur.parent_id] }
+      if (toOpen.length) setExpanded(prev => { const n = new Set(prev); toOpen.forEach(i => n.add(i)); return n })
+      setTimeout(() => scrollAndFlashEntry(target.id), 60)
+    } else {
+      scrollAndFlashEntry(target.id)
+    }
+  }
   function openAdd(parentId) { setEditing(parentId ? { parent_id: parentId } : {}); setModalOpen(true) }
   function handleSave(entry) { db.upsertEntry('locations', entry); setModalOpen(false); setEditing(null) }
   function handleDelete(id) {
@@ -278,7 +293,7 @@ export default function Locations({ db, navSearch }) {
         <button className="btn btn-primary btn-sm" style={{ background: tabColor, color: '#000' }} onClick={() => openAdd()}>+ Add</button>
       </div>
 
-      <AlphabetJumpBar entries={displayLocations} getName={e => e.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
+      <AlphabetJumpBar entries={displayLocations} getName={e => e.name} onJump={jumpToLocation} color={tabColor} />
 
       {!locations.length && <div className="empty"><div className="empty-icon">🗺</div><p>No locations yet.</p></div>}
 
