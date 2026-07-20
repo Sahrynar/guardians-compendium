@@ -14,7 +14,7 @@ export default function LibraryPicker({ db, onPick, onClose }) {
         if (!e || typeof e !== 'object') return
         Object.entries(e).forEach(([field, v]) => {
           if (!looksLikeImage(v)) return
-          const key = v.slice(0, 120) + '|' + e.id
+          const key = v.length + ':' + v.slice(0, 160) + v.slice(-60)
           if (seen.has(key)) return
           seen.add(key)
           out.push({ src: v, cat, label: e.title || e.display_name || e.name || e.id })

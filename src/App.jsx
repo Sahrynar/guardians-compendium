@@ -28,6 +28,7 @@ import IOBar from './components/common/IOBar'
 import { LibraryPickerHost } from './components/common/LibraryPicker'
 import Breadcrumb from './components/common/Breadcrumb'
 import GlobalSearch from './components/common/GlobalSearch'
+import NightSkyBanner from './components/common/NightSkyBanner'
 import CloudErrorToast from './components/common/CloudErrorToast'
 
 const TAB_ORDER = TAB_ORDER_FOR_COLORS
@@ -66,6 +67,13 @@ export default function App() {
   const [importSummary, setImportSummary] = useState(null)
   const tabBarRef = useRef(null)
   const headerImgRef = useRef(null)
+  const bannerStyle = (db.getSetting && db.getSetting('banner_style', 'classic')) || 'classic'
+  function cycleBannerStyle(e) {
+    e.stopPropagation()
+    const order = ['classic', 'sky', 'skytree']
+    const next = order[(order.indexOf(bannerStyle) + 1) % order.length]
+    db.saveSetting('banner_style', next)
+  }
   const quickCapRef = useRef(null)
 
   useEffect(() => {
@@ -318,10 +326,18 @@ export default function App() {
 
       {/* Header */}
       <div className="site-header" onClick={() => goTo('dashboard')} style={{ cursor: 'pointer', position: 'relative' }}>
-        {headerImg ? (
+        {bannerStyle !== 'classic' ? (
+          <div style={{ position: 'relative', height: 'clamp(170px, 22vw, 340px)', background: '#050507' }}>
+            <NightSkyBanner showTree={bannerStyle === 'skytree'} height="100%" />
+            <div className="header-corner-zone">
+              <button className="header-corner-btn" onClick={cycleBannerStyle} title={`Banner style: ${bannerStyle} — click to cycle`}>🖼</button>
+            </div>
+          </div>
+        ) : headerImg ? (
           <div style={{ position: 'relative' }}>
             <img src={headerImg} alt="header" style={{ width: '100%', height: 'auto', display: 'block' }} />
             <div className="header-corner-zone">
+              <button className="header-corner-btn" onClick={cycleBannerStyle} title="Banner style: classic — click to cycle">🖼</button>
               <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Change header image">✎</button>
               <button className="header-corner-btn" onClick={e => { e.stopPropagation(); removeHeaderImg() }} title="Remove image">✕</button>
             </div>
@@ -338,6 +354,7 @@ export default function App() {
               The Guardians of Lajen — Worldbuilding Compendium
             </span>
             <div className="header-corner-zone">
+              <button className="header-corner-btn" onClick={cycleBannerStyle} title="Banner style: classic — click to cycle">🖼</button>
               <button className="header-corner-btn" onClick={e => { e.stopPropagation(); headerImgRef.current?.click() }} title="Upload header image">✎</button>
             </div>
           </div>

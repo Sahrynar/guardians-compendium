@@ -371,15 +371,16 @@ export function useDB() {
             lsSave(next); return next
           })
           // Handle session_log - stored in its own Supabase table, not in CATEGORIES
-          let sessionLogAdded = 0
+          let sessionLogAdded = 0, sessionLogFailed = 0, sessionLogFirstErr = ''
           if (parsed.session_log && Array.isArray(parsed.session_log) && hasSupabase) {
             for (const entry of parsed.session_log) {
               if (!entry?.id) continue
               const { error } = await supabase.from('session_log').upsert(entry, { onConflict: 'id', ignoreDuplicates: true })
               if (!error) sessionLogAdded++
+              else { sessionLogFailed++; if (!sessionLogFirstErr) { sessionLogFirstErr = error.message || 'row rejected'; cloudError('Session log import failed: ' + sessionLogFirstErr) } }
             }
           }
-          resolve({ added, skippedExisting, conflicts, sessionLogAdded })
+          resolve({ added, skippedExisting, conflicts, sessionLogAdded, sessionLogFailed, sessionLogFirstErr })
         } catch (e) { reject(e) }
       }
       r.readAsText(file)

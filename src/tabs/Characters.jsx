@@ -1,10 +1,11 @@
 const SIZE_COLS_CHARS = { XS: 4, S: 3, M: 2, L: 1, XL: 1 }
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Modal from '../components/common/Modal'
 import EntryForm from '../components/common/EntryForm'
 import AlphabetJumpBar from '../components/common/AlphabetJumpBar'
 import { scrollAndFlashEntry } from '../components/common/entryNav'
+import CharacterGallery, { getCharImages } from '../components/common/CharacterGallery'
 import { CHAR_FIELDS, TAB_RAINBOW, highlight, SL, uid, hexToRgba, lerpColor } from '../constants'
 import FilterPopup from '../components/common/FilterPopup'
 
@@ -84,7 +85,19 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   const [editing, setEditing] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [portraitCharId, setPortraitCharId] = useState(null)
-  const [lightboxSrc, setLightboxSrc] = useState(null)
+  const [panels, setPanels] = useState([])
+  const dragRef = useRef(null)
+  function openPanel(img, charName) {
+    const url = typeof img === 'string' ? img : img.url
+    const label = typeof img === 'string' ? '' : (img.label || '')
+    setPanels(p => [...p, { pid: Date.now() + Math.random(), url, label, charName: charName || '', x: 70 + ((p.length * 38) % 260), y: 90 + ((p.length * 30) % 200), big: false }])
+  }
+  useEffect(() => {
+    function mm(e) { const d = dragRef.current; if (!d) return; setPanels(p => p.map(q => q.pid === d.pid ? { ...q, x: e.clientX - d.dx, y: e.clientY - d.dy } : q)) }
+    function mu() { dragRef.current = null }
+    window.addEventListener('pointermove', mm); window.addEventListener('pointerup', mu)
+    return () => { window.removeEventListener('pointermove', mm); window.removeEventListener('pointerup', mu) }
+  }, [])
   const [filterDeceased, setFilterDeceased] = useState('all') // 'all'|'alive'|'deceased'
   const [autoOnly, setAutoOnly] = useState(false)
   const autoCount = chars.filter(c => c.auto_imported === true).length
@@ -103,6 +116,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   }, [chars])
 
   // filterDeceased can be 'all', 'alive', 'deceased', or a book name like 'Book 1'
+  const [sortMode, setSortMode] = useState('az')
   const filtered = chars.filter(e => {
     if (search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false
     if (filterDeceased === 'alive') {
@@ -117,6 +131,15 @@ export default function Characters({ db, goTo, tab, navSearch }) {
     const bn = (b.display_name || b.name || '').toLowerCase()
     return an.localeCompare(bn)
   })
+  const sorted = useMemo(() => {
+    const arr = [...filtered]
+    const nm = c => (c.display_name || c.name || '').toLowerCase()
+    if (sortMode === 'za') arr.sort((a, b) => nm(b).localeCompare(nm(a)))
+    else if (sortMode === 'newest') arr.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+    else if (sortMode === 'oldest') arr.sort((a, b) => String(a.updated_at || '').localeCompare(String(b.updated_at || '')))
+    else arr.sort((a, b) => nm(a).localeCompare(nm(b)))
+    return arr
+  }, [filtered, sortMode])
 
   function handleSave(entry) {
     if (!editing?.id && entry.birthday_lajen) {
@@ -217,6 +240,12 @@ export default function Characters({ db, goTo, tab, navSearch }) {
             </button>
           ))}
         </div>
+        <select value={sortMode} onChange={e => setSortMode(e.target.value)} title="Sort order" style={{ fontSize: '0.74em', background: '#0b0b0e', color: 'var(--tx)', border: '1px solid var(--brd)', borderRadius: 8, padding: '2px 6px' }}>
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
         <FilterPopup
           color={tabColor}
           filters={[
@@ -246,7 +275,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
         <button className="btn btn-primary btn-sm" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add</button>
       </div>
 
-      <AlphabetJumpBar entries={filtered} getName={c => c.display_name || c.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
+      <AlphabetJumpBar entries={sorted} getName={c => c.display_name || c.name} onJump={target => scrollAndFlashEntry(target.id)} color={tabColor} />
 
       <div className="cg">
         {!filtered.length && (
@@ -254,10 +283,10 @@ export default function Characters({ db, goTo, tab, navSearch }) {
             <button className="btn btn-primary" style={{ background: tabColor }} onClick={() => { setEditing({}); setModalOpen(true) }}>+ Add Character</button>
           </div>
         )}
-        {filtered.map((e, i) => {
+        {sorted.map((e, i) => {
           const isOpen = expanded === e.id
-          const hasPortrait = !!(e.portrait_canvas)
-          const hasRef = !!(e.reference_image)
+          const imgs0 = getCharImages(e)
+          const thumb = imgs0[0]?.url || null
           const hasColors = ['hair_color','eye_color','skin_color','aura_color','clothing_color'].some(k => e[k] && e[k] !== '#888888')
             || (e.has_wings === 'Yes' && e.wing_color && e.wing_color !== '#888888')
           const dead = isDeceased(e)
@@ -276,58 +305,27 @@ export default function Characters({ db, goTo, tab, navSearch }) {
                   {dead === true && <span style={{ fontSize: '0.85em', color: '#ff3355', flexShrink: 0 }} title="Deceased">†</span>}
                   <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.display_name||e.name||'', search) }} />
                 </div>
-                {hasPortrait && (
-                  <img src={e.portrait_canvas} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--brd)', marginLeft: 8, flexShrink: 0, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.portrait_canvas) }} />
+                {thumb && (
+                  <img src={thumb} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--brd)', marginLeft: 8, flexShrink: 0, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); openPanel(imgs0[0], e.display_name || e.name) }} />
                 )}
               </div>
               <div className="entry-meta">{badges(e)}</div>
 
               {isOpen && (
                 <>
-                  {(hasPortrait || hasRef || hasColors) && (
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '8px 0', flexWrap: 'wrap' }}>
-                      <div style={{ textAlign: 'center' }}>
-                        {hasPortrait ? (
-                          <div>
-                            <img src={e.portrait_canvas} alt="Portrait"
-                              style={{ width: 100, height: 'auto', borderRadius: 'var(--r)', border: '1px solid var(--cc)', cursor: 'zoom-in' }}
-                              onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.portrait_canvas) }}
-                            />
-                            <div style={{ fontSize: '0.62em', color: '#e63946', marginTop: 2, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨 Edit</div>
-                          </div>
-                        ) : (
-                          <div style={{ width: 80, height: 80, border: '1px dashed var(--brd)', borderRadius: 'var(--r)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--mut)', fontSize: '0.69em', cursor: 'pointer', gap: 2 }}
-                            onClick={ev => { ev.stopPropagation(); setPortraitCharId(e.id) }}>🎨<span>Portrait</span></div>
-                        )}
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', margin: '8px 0', flexWrap: 'wrap' }} onClick={ev => ev.stopPropagation()}>
+                    <CharacterGallery
+                      images={imgs0}
+                      onChange={imgs => db.upsertEntry('characters', { ...e, images: imgs })}
+                      onOpen={img => openPanel(img, e.display_name || e.name)}
+                      onPortrait={() => setPortraitCharId(e.id)}
+                    />
+                    {hasColors && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center' }}>
+                        {colorSwatches(e)}
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        {hasRef ? (
-                          <div>
-                            <img src={e.reference_image} alt="Reference"
-                              style={{ maxWidth: 100, maxHeight: 130, borderRadius: 'var(--r)', border: '1px solid var(--brh)', objectFit: 'contain', cursor: 'zoom-in' }}
-                              onClick={ev => { ev.stopPropagation(); setLightboxSrc(e.reference_image) }}
-                            />
-                            <div style={{ display: 'flex', gap: 4, marginTop: 2, justifyContent: 'center' }}>
-                              <label style={{ fontSize: '0.62em', color: 'var(--dim)', cursor: 'pointer' }}>📎
-                                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={ev => { const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e2=>{db.upsertEntry('characters',{...e,reference_image:e2.target.result})};r.readAsDataURL(f) }} />
-                              </label>
-                              <span style={{ fontSize: '0.62em', color: '#ff3355', cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); db.upsertEntry('characters',{...e,reference_image:null}) }}>✕</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <label style={{ width: 80, height: 80, border: '1px dashed var(--brd)', borderRadius: 'var(--r)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--mut)', fontSize: '0.69em', cursor: 'pointer', gap: 2 }}>
-                            🖼<span>Reference</span>
-                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={ev => { ev.stopPropagation(); const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e2=>{db.upsertEntry('characters',{...e,reference_image:e2.target.result})};r.readAsDataURL(f) }} />
-                          </label>
-                        )}
-                      </div>
-                      {hasColors && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center' }}>
-                          {colorSwatches(e)}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className="entry-detail">
                     {CHAR_FIELDS.filter(f => {
@@ -398,12 +396,18 @@ export default function Characters({ db, goTo, tab, navSearch }) {
         <PortraitTool charId={portraitCharId} db={db} onClose={() => setPortraitCharId(null)} palette={PALETTE} presetLabels={PRESET_LABELS} />
       )}
 
-      {lightboxSrc && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.92)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setLightboxSrc(null)}>
-          <img src={lightboxSrc} alt="" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: 8 }} />
-          <button style={{ position: 'absolute', top: 16, right: 20, background: 'none', border: 'none', color: '#fff', fontSize: '1.85em', cursor: 'pointer' }} onClick={() => setLightboxSrc(null)}>✕</button>
+      {panels.map(p => (
+        <div key={p.pid} style={{ position: 'fixed', left: p.x, top: p.y, zIndex: 3000, background: '#0b0b0e', border: '1px solid var(--brd)', borderRadius: 10, boxShadow: '0 8px 30px rgba(0,0,0,.65)', width: p.big ? 460 : 280, maxWidth: '92vw' }}
+          onPointerDown={() => setPanels(q => { const z = q.find(w => w.pid === p.pid); return z ? [...q.filter(w => w.pid !== p.pid), z] : q })}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'grab', borderBottom: '1px solid var(--brd)', userSelect: 'none', touchAction: 'none' }}
+            onPointerDown={ev => { ev.preventDefault(); dragRef.current = { pid: p.pid, dx: ev.clientX - p.x, dy: ev.clientY - p.y } }}>
+            <span style={{ fontSize: '0.72em', color: 'var(--dim)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.charName}{p.label ? ` · ${p.label}` : ''}</span>
+            <button onClick={ev => { ev.stopPropagation(); setPanels(q => q.map(z => z.pid === p.pid ? { ...z, big: !z.big } : z)) }} style={{ fontSize: '0.7em', padding: '1px 6px', borderRadius: 5, background: 'none', border: '1px solid var(--brd)', color: 'var(--dim)', cursor: 'pointer' }} title="Toggle size">⤢</button>
+            <button onClick={ev => { ev.stopPropagation(); setPanels(q => q.filter(z => z.pid !== p.pid)) }} style={{ fontSize: '0.7em', padding: '1px 6px', borderRadius: 5, background: 'none', border: '1px solid #ff3355', color: '#ff3355', cursor: 'pointer' }} title="Close">✕</button>
+          </div>
+          <img src={p.url} alt="" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '0 0 10px 10px' }} />
         </div>
-      )}
+      ))}
 
       {confirmId && (
         <div className="confirm-overlay open">

@@ -117,7 +117,7 @@ function FormatBar({ textareaRef, onUpdate }) {
   )
 }
 
-function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink, bookColor, onSplit, onMerge }) {
+function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigateToChapter, onBackToShelf, onBackToTOC, onHome, crossLink, bookColor, onSplit, onMerge, onDelete }) {
   const [text, setText] = useState(chapter.text || '')
   const [title, setTitle] = useState(chapter.title || '')
   const [status, setStatus] = useState(chapter.status || 'Draft')
@@ -207,6 +207,11 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
     if (!window.confirm(`Split here?\n\n"${title || 'Untitled'}" keeps ${wordCount(before).toLocaleString()} words.\nNew chapter "${title || 'Untitled'} — Part 2" gets ${wordCount(after).toLocaleString()} words.\nFollowing chapters in this book renumber +1.`)) return
     updateText(before, true)
     onSplit({ ...chapter, title, status, notes, annotations }, before, after)
+  }
+  function doDelete() {
+    const wc = wordCount(text)
+    if (!window.confirm(`DELETE this chapter — "${title || 'Untitled'}" (${wc.toLocaleString()} words)?\n\nThis permanently removes the chapter; later chapters in this book renumber \u22121.\n\nBack up first if unsure (IOBar Export). This cannot be undone from inside the app.`)) return
+    onDelete({ ...chapter })
   }
   function doMergeNext() {
     const same = (allChapters || []).filter(c => c.book === chapter.book)
@@ -341,6 +346,7 @@ function ChapterEditor({ chapter, chars, allChapters, onSave, onClose, onNavigat
           <button onClick={redo} disabled={!histFuture.current.length} title="Redo (Ctrl+Y)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: histFuture.current.length ? 'var(--tx)' : 'var(--mut)', cursor: histFuture.current.length ? 'pointer' : 'default' }}>↷</button>
           <button onClick={doSplit} title="Split chapter at cursor (Edit/Split view)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>✂</button>
           <button onClick={doMergeNext} title="Merge the NEXT chapter into this one" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid var(--brd)', color: 'var(--tx)', cursor: 'pointer' }}>⤵</button>
+          <button onClick={doDelete} title="Delete this chapter (renumbers later chapters)" style={{ fontSize: '0.85em', padding: '3px 8px', borderRadius: 6, background: 'none', border: '1px solid #ff3355', color: '#ff3355', cursor: 'pointer' }}>🗑</button>
         </div>
         {view !== 'read' && <button onClick={() => setShowAnnotations(a => !a)} style={{ fontSize: '0.77em', padding: '4px 10px', borderRadius: 6, background: showAnnotations ? 'var(--cca)' : 'none', color: showAnnotations ? '#000' : 'var(--dim)', border: '1px solid var(--brd)', cursor: 'pointer' }}>📝 Notes ({annotations.length})</button>}
       </div>
@@ -585,6 +591,13 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
     const updated = { ...ch, text: beforeText, word_count: wordCount(beforeText) }
     db.upsertEntry('manuscript', updated)
     setEditingChapterPersist(updated)
+  }
+  function deleteChapter(ch) {
+    const curN = parseInt(ch.chapter_num) || 0
+    db.deleteEntry('manuscript', ch.id)
+    const followers = chapters.filter(c => c.book === ch.book && c.id !== ch.id && (parseInt(c.chapter_num) || 0) > curN)
+    if (followers.length) db.bulkUpsert('manuscript', followers.map(c => ({ ...c, chapter_num: String((parseInt(c.chapter_num) || 0) - 1) })))
+    setEditingChapterPersist(null)
   }
   function mergeWithNext(ch, mergedText, nextId) {
     const next = chapters.find(c => c.id === nextId)
@@ -873,7 +886,7 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
       )}
 
       {editingChapter && (
-        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} bookColor={bookTitleColor(editingChapter.book)} onSplit={splitChapter} onMerge={mergeWithNext} />
+        <ChapterEditor chapter={editingChapter} chars={chars} allChapters={chapters} onSave={saveChapter} onClose={() => setEditingChapterPersist(null)} onNavigateToChapter={navigateToChapter} onBackToShelf={backToShelf} onBackToTOC={backToTOC} onHome={() => goHome()} crossLink={crossLink} bookColor={bookTitleColor(editingChapter.book)} onSplit={splitChapter} onMerge={mergeWithNext} onDelete={deleteChapter} />
       )}
     </div>
   )
