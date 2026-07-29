@@ -1,6 +1,24 @@
 # RLS + Login Gate — Runbook
 Guardians Compendium · prepared 2026-07-11
 
+> ## ✅ HISTORICAL — this runbook has been fully executed
+>
+> Parts A–D were completed 2026-07-12. **You do not need to run any of it
+> again.** It is kept for the reasoning and the rollback SQL.
+>
+> Two corrections, so the file stops contradicting the live database:
+>
+> - **It says six tables. The real count was seven, and is now nine** —
+>   `backup_log` arrived with the auto-backup feature, and the two
+>   `*_backup` snapshot tables were locked on 2026-07-29.
+> - **The Part C2 storage policies below are the correct ones, but they are
+>   not what ended up in the project.** What was actually applied required
+>   every object path to start with `private/`, which no code path produces,
+>   so every upload was denied by RLS until it was fixed on 2026-07-29.
+>
+> **Current state of record:** `supabase_schema.sql` (full schema + all
+> policies) and `SUPABASE_SECURITY_2026-07-29.md` (what changed and why).
+
 ⚠️ **ORDER MATTERS.** Doing Part C before Part B breaks the app (reads
 return nothing until the authenticated code is live). Follow A → B → C → D.
 Rollback SQL is at the bottom if anything goes wrong.
