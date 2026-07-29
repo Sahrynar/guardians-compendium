@@ -469,13 +469,10 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
   const [coverLightbox, setCoverLightbox] = useState(null)
   const [editCovers, setEditCovers] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [editingChapter, setEditingChapter] = useState(() => {
-    try {
-      const id = localStorage.getItem('manuscript_editing_id')
-      if (!id) return null
-      return null
-    } catch { return null }
-  })
+  // Always starts null: chapters load asynchronously, so nothing can be
+  // restored yet. The reopen from `manuscript_editing_id` happens in the
+  // effect below, once `chapters` is populated.
+  const [editingChapter, setEditingChapter] = useState(null)
   const [addingChapter, setAddingChapter] = useState(false)
   const [newForm, setNewForm] = useState({ book: 'Book 1', chapter_num: '', title: '' })
   const [shelfSize, setShelfSize] = useState(() => {
@@ -694,9 +691,23 @@ export default function Manuscript({ db, navSearch, goTo, setCrumbs, crossLink }
                     else { setTocBookPersist(book); setFilterBook(book) }
                   }}>
                     {cover
-                      ? <img src={cover} alt={book} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: '2.2em', opacity: 0.25 }}>📖</span></div>
-                    }
+                      ? <img
+                          src={cover} alt={book}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          /* TD-006: a cover whose data URI is truncated or whose
+                             storage URL 404s used to leave a broken-image icon
+                             sitting in the shelf. Fall back to the same 📖
+                             placeholder an absent cover gets. */
+                          onError={ev => {
+                            ev.currentTarget.style.display = 'none'
+                            const ph = ev.currentTarget.nextElementSibling
+                            if (ph) ph.style.display = 'flex'
+                          }}
+                        />
+                      : null}
+                    <div style={{ width: '100%', height: '100%', display: cover ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '2.2em', opacity: 0.25 }}>📖</span>
+                    </div>
                   </div>
                   {editCovers && (
                     <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }}>

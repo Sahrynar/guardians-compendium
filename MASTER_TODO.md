@@ -31,6 +31,29 @@ Everything below is accurate; it is just not complete in that one range.
 
 ## A. ✅ CLOSED — recent (evidence noted, stop re-raising)
 
+**PATCH7M (sw v38, 2026-07-29)** — the quick-win bundle, see `INSTALL_PATCH7M.md`:
+- TD-001 ✅ Wiki READ mode — click a card to read the article; blocks render via a
+  shared `BlockBody` used by both editor and reader. Search/cross-link arrivals
+  now land in read mode, not the editor.
+- TD-003 ✅ Characters Zodiac is a 12-sign dropdown. `EntryForm` now preserves any
+  stored value outside a dropdown's option list (marked `·`), so converting a
+  free-text field to a select can never silently blank existing data.
+- TD-004 ✅ Characters 👁 read-only pop-open — whole character on one surface,
+  no expand needed, no editable control in reach.
+- TD-006 ✅ Manuscript cover image falls back to 📖 instead of a broken-image icon.
+- TD-007 ✅ Filter popup on World / Questions / Canon / Spellings, with facets
+  auto-derived from each tab's field definitions + data (2–20 distinct values).
+  Any future `GenericListTab` tab inherits it.
+- TD-008 ✅ Dashboard sweep — a stray `)}` was **rendering as literal text** on
+  the page, and the preview modal had two byte-identical buttons. Both fixed.
+- TD-053 ✅ Conflict-path import counter now sums `sessionLogAdded` like the
+  clean path always did — the real cause of the "0 added" symptom.
+
+**Found already-done during PATCH7M (stale "absent" notes, no code written):**
+- TD-002 ✅ Notes read-only popup — live at `JournalView.jsx:234`.
+- TD-005 ✅ Manuscript chapter editor already persists across reload via a restore
+  effect; only a misleading dead `useState` initializer needed removing.
+
 **PATCH7L (sw v37, 2026-07-15/19):**
 - TD-071 ✅ Characters image system rehaul — tagged slots, unlimited images per
   character, rainbow spectrum borders, per-slot S/M/L, draggable multi-panel
@@ -78,18 +101,8 @@ re-flag it**).
 ## B. 🔲 OPEN — CODE (🤖/🔧), grouped by size
 
 ### Quick wins — bundle candidates for the next patch
-- **TD-001** Wiki READ mode — click a card to read the article (currently edit-only).
-- **TD-002** Notes card click → read-only popup, distinct from edit.
-- **TD-003** Characters: Zodiac as a dropdown.
-- **TD-004** Characters: read-only pop-open view.
-- **TD-005** Manuscript: chapter editor persists across reload (S29 bug #1).
-- **TD-006** Manuscript: cover image `onError` fallback (picker half now closed by TD-052).
-- **TD-007** FilterPopup into World / Questions / Canon / Spellings (GenericListTab).
-- **TD-008** `Dashboard.jsx` dead-helper sweep (leftovers from the search removal).
 - **TD-009** Tools "Character Age at Event": auto-pull birthdays from Characters
   — ❓ verify first, may be manual-entry only.
-- **TD-053** `App.jsx` conflict-path import still reports "0 added". The IOBar
-  path was fixed; this one was not. Verify, then fix.
 - **TD-055** Forge: concept-CATEGORY dropdowns. CATTAG already carries the
   categories; the UI was never started.
 

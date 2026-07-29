@@ -106,14 +106,10 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
     setPreviewCategory(cat)
   }
 
+  // "Go to entry" and "Edit" were two identical copies of this, so the preview
+  // modal showed two buttons that did exactly the same thing (TD-008). One
+  // function, one button.
   function openInTabForEdit() {
-    if (!previewCategory || !previewEntry) return
-    crossLink(previewCategory, previewEntry.id)
-    setPreviewEntry(null)
-    setPreviewCategory(null)
-  }
-
-  function goToPreviewEntry() {
     if (!previewCategory || !previewEntry) return
     crossLink(previewCategory, previewEntry.id)
     setPreviewEntry(null)
@@ -144,8 +140,6 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* Scoped global search moved to the nav bar (PATCH7I) — see components/common/GlobalSearch.jsx */}
-
-      )}
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
         <div className="dash-card" style={{ minWidth: 80, textAlign: 'center' }}>
@@ -244,7 +238,6 @@ export default function Dashboard({ db, goTo, crossLink, sessionLogCount = 0 }) 
         category={previewCategory}
         color={previewCategory ? (TAB_RAINBOW[previewCategory] || '#fff') : '#fff'}
         onClose={() => { setPreviewEntry(null); setPreviewCategory(null) }}
-        onGoToEntry={goToPreviewEntry}
         onEdit={openInTabForEdit}
       />
     </div>

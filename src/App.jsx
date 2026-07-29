@@ -266,7 +266,10 @@ export default function App() {
       const result = await db.importJSON(file)
       if (result.conflicts && result.conflicts.length > 0) {
         setConflictQueue(result.conflicts)
-        setImportSummary({ added: result.added, skipped: result.skippedExisting || 0, resolved: 0, total: result.conflicts.length })
+        // TD-053: this path dropped sessionLogAdded, so a bundle that both hit
+        // a conflict AND imported session rows under-reported the count — the
+        // clean path below has always summed them.
+        setImportSummary({ added: result.added + (result.sessionLogAdded || 0), skipped: result.skippedExisting || 0, resolved: 0, total: result.conflicts.length })
       } else {
         setImportSummary({ added: result.added + (result.sessionLogAdded || 0), skipped: result.skippedExisting || 0, resolved: 0, total: 0, done: true })
       }

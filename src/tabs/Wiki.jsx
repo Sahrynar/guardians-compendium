@@ -98,21 +98,13 @@ function TableRenderer({ content }) {
   )
 }
 
-// ── Wiki Block (single content block) ──────────────────────────
-function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
+// ── Block body — the rendered content, shared by the editor and the reader ──
+// Kept separate from WikiBlock so READ mode (TD-001) shows exactly what edit
+// mode shows, with no second copy of the renderers to drift out of sync.
+function BlockBody({ block }) {
   const { type, content, caption } = block
   return (
-    <div style={{ marginBottom: 12, padding: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{type}</span>
-        <div style={{ display: 'flex', gap: 3 }}>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveUp}>↑</button>
-          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveDown}>↓</button>
-          <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
-          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: '0.77em' }} onClick={onDelete}>✕</button>
-        </div>
-      </div>
-
+    <>
       {type === 'text' && (
         <div style={{ fontSize: '0.92em', color: 'var(--tx)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
@@ -132,6 +124,69 @@ function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
           {content}
         </div>
       )}
+    </>
+  )
+}
+
+// ── Wiki Block (single content block, edit mode) ───────────────
+function WikiBlock({ block, onEdit, onDelete, onMoveUp, onMoveDown }) {
+  return (
+    <div style={{ marginBottom: 12, padding: 10, background: 'var(--card)', border: '1px solid var(--brd)', borderRadius: 'var(--r)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <span style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{block.type}</span>
+        <div style={{ display: 'flex', gap: 3 }}>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveUp}>↑</button>
+          <button className="btn btn-sm btn-outline" style={{ padding: '1px 5px', fontSize: '0.77em' }} onClick={onMoveDown}>↓</button>
+          <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor, padding: '1px 5px', fontSize: '0.77em' }} onClick={onEdit}>✎</button>
+          <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544', padding: '1px 5px', fontSize: '0.77em' }} onClick={onDelete}>✕</button>
+        </div>
+      </div>
+      <BlockBody block={block} />
+    </div>
+  )
+}
+
+// ── Article Reader (TD-001) ─────────────────────────────────────
+// Read mode: the article as a page, no edit chrome. Wiki was edit-only, so
+// there was no way to simply *read* long-form lore without risking a stray
+// keystroke in the editor.
+function ArticleReader({ article, onEdit, onClose }) {
+  const blocks = article.blocks || []
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
+        <button className="btn btn-sm btn-outline" onClick={onClose}>← Back</button>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={onEdit}>✎ Edit</button>
+      </div>
+
+      <div style={{ borderBottom: '1px solid var(--div)', paddingBottom: 10, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.5em', color: tabColor, margin: 0 }}>{article.title}</h2>
+          {article.category && (
+            <span className="badge" style={{ color: tabColor, borderColor: 'rgba(201,102,255,.3)' }}>{article.category}</span>
+          )}
+        </div>
+        {article.summary && (
+          <div style={{ fontSize: '0.95em', color: 'var(--dim)', marginTop: 6, fontStyle: 'italic' }}>{article.summary}</div>
+        )}
+        <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 6 }}>
+          {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+          {article.updated ? ` · Updated ${new Date(article.updated).toLocaleDateString()}` : ''}
+        </div>
+      </div>
+
+      {!blocks.length && (
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--mut)', fontSize: '0.85em', border: '1px dashed var(--brd)', borderRadius: 'var(--r)' }}>
+          This article has no content blocks yet.
+        </div>
+      )}
+
+      {blocks.map(b => (
+        <div key={b.id} style={{ marginBottom: 18 }}>
+          <BlockBody block={b} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -305,6 +360,7 @@ export default function Wiki({ db, navSearch }) {
   function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_wiki', sz) } catch {} }
   const [filterValues, setFilterValues] = useState({})
   const [editing, setEditing] = useState(null) // null = list, {} = new, {id,...} = edit
+  const [reading, setReading] = useState(null) // article being read (TD-001)
   const [confirmId, setConfirmId] = useState(null)
   const [autoOnly, setAutoOnly] = useState(false)
   const autoCount = articles.filter(a => a.auto_imported === true).length
@@ -317,7 +373,10 @@ export default function Wiki({ db, navSearch }) {
       if (!targetId) return
       const entry = articles.find(x => x.id === targetId)
       if (!entry) return
-      setEditing(entry)
+      // Arriving from search or a cross-link opens READ mode, not the editor —
+      // same principle as the Dashboard preview popup: never land a navigation
+      // straight into an editable surface.
+      setReading(entry)
       window.setTimeout(() => scrollAndFlashEntry(targetId), 50)
     }
     window.addEventListener('gcomp_expand', onExpand)
@@ -342,6 +401,18 @@ export default function Wiki({ db, navSearch }) {
 
   if (editing !== null) {
     return <ArticleEditor article={editing?.id ? editing : null} onSave={handleSave} onCancel={() => setEditing(null)} />
+  }
+
+  if (reading !== null) {
+    // Re-read from the live list so an edit-then-back shows the saved version.
+    const current = articles.find(a => a.id === reading.id) || reading
+    return (
+      <ArticleReader
+        article={current}
+        onEdit={() => { setReading(null); setEditing(current) }}
+        onClose={() => setReading(null)}
+      />
+    )
   }
 
   return (
@@ -395,17 +466,24 @@ export default function Wiki({ db, navSearch }) {
       <div style={{ display: 'grid', gridTemplateColumns: {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 > 1 ? `repeat(${ {'XS':4,'S':3,'M':2,'L':1,'XL':1}[colSize] || 2 }, minmax(0,1fr))` : '1fr', gap: 6 }}>
         {filtered.map(a => (
           <div key={a.id} id={`gcomp-entry-${a.id}`} className="entry-card" style={{ '--card-color': tabColor }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div className="entry-title">{a.title}</div>
-                {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
+            <div
+              onClick={() => setReading(a)}
+              title="Read article"
+              style={{ cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div className="entry-title">{a.title}</div>
+                  {a.summary && <div style={{ fontSize: '0.85em', color: 'var(--dim)', marginTop: 2 }}>{a.summary}</div>}
+                </div>
+                <span className="badge" style={{ color: tabColor, borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
               </div>
-              <span className="badge" style={{ color: tabColor, borderColor: 'rgba(201,102,255,.3)', flexShrink: 0, marginLeft: 8 }}>{a.category}</span>
-            </div>
-            <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
-              {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
+              <div style={{ fontSize: '0.69em', color: 'var(--mut)', marginTop: 4 }}>
+                {a.blocks?.length || 0} block{(a.blocks?.length || 0) !== 1 ? 's' : ''} · Updated {a.updated ? new Date(a.updated).toLocaleDateString() : '—'}
+              </div>
             </div>
             <div className="entry-actions" style={{ marginTop: 6 }}>
+              <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => setReading(a)}>📖 Read</button>
               <button className="btn btn-sm btn-outline" style={{ color: tabColor, borderColor: tabColor }} onClick={() => setEditing(a)}>✎ Edit</button>
               <button className="btn btn-sm btn-outline" style={{ color: '#ff3355', borderColor: '#ff335544' }} onClick={() => setConfirmId(a.id)}>✕</button>
             </div>

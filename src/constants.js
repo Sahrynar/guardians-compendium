@@ -197,6 +197,13 @@ export const BOOK_TITLES = {
   'Book 3': 'The Gathering — The Third Book of The Guardians of Lajen',
 }
 
+// The 12 signs in calendar order, matching the locked Guardian birthday cycle
+// (Lila Cancer → Nataru Gemini). Blank first so "no sign yet" stays expressible.
+export const ZODIAC_SIGNS = [
+  '', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
+]
+
 // ── Character field definitions ────────────────────────────────
 export const CHAR_FIELDS = [
   { k: 'name',            l: 'Full Name',           t: 'text',   r: true },
@@ -205,7 +212,7 @@ export const CHAR_FIELDS = [
   { k: 'guardian_number', l: 'Guardian #',          t: 'text' },
   { k: 'birthday',        l: 'Birthday (Mnaerah)',   t: 'text' },
   { k: 'birthday_lajen',  l: 'Birthday (Lajen)',     t: 'text' },
-  { k: 'sign',            l: 'Zodiac',              t: 'text' },
+  { k: 'sign',            l: 'Zodiac',              t: 'sel',    o: ZODIAC_SIGNS },
   { k: 'element',         l: 'Element',             t: 'sel',    o: ['','Water','Fire','Earth','Air'] },
   { k: 'age_b1',          l: 'Age Book 1',          t: 'text' },
   { k: 'age_b2',          l: 'Age Book 2',          t: 'text' },

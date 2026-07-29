@@ -1,11 +1,50 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Modal from './Modal'
 import EntryForm from './EntryForm'
 import AlphabetJumpBar from './AlphabetJumpBar'
+import FilterPopup from './FilterPopup'
 import { SL, highlight } from '../../constants'
 import { scrollAndFlashEntry } from './entryNav'
 
 const COLS_MAP = { XS: 5, S: 4, M: 3, L: 2, XL: 1 }
+
+// Fields that never make useful filter facets: the title itself, long-form
+// prose, and colour swatches.
+const NEVER_FACET = new Set(['name', 'display_name', 'word', 'notes'])
+const NEVER_FACET_TYPES = new Set(['ta', 'color'])
+
+// A facet is only worth showing if it actually divides the list. One value
+// filters nothing; hundreds of values (a free-text field used as a scratchpad)
+// is an unusable wall of chips.
+const MAX_FACET_VALUES = 20
+
+/**
+ * Build FilterPopup config from the tab's own field definitions plus the data.
+ * `sel` fields contribute their declared options; plain text fields contribute
+ * their distinct values, but only when the cardinality is low enough to read.
+ */
+function deriveFacets(fields, entries) {
+  if (!fields?.length || !entries.length) return []
+  return fields.reduce((out, f) => {
+    if (NEVER_FACET.has(f.k) || NEVER_FACET_TYPES.has(f.t)) return out
+
+    const present = new Set()
+    entries.forEach(e => {
+      const v = e[f.k]
+      if (typeof v === 'string' && v.trim()) present.add(v.trim())
+    })
+    if (present.size < 2) return out
+
+    // For `sel`, keep the author's declared order and drop the blank option.
+    const values = f.t === 'sel'
+      ? (f.o || []).filter(o => o && present.has(o))
+      : [...present].sort((a, b) => a.localeCompare(b))
+
+    if (values.length < 2 || values.length > MAX_FACET_VALUES) return out
+    out.push({ key: f.k, label: f.l, options: values.map(v => ({ value: v, label: v })) })
+    return out
+  }, [])
+}
 
 export default function GenericListTab({
   catKey, color, icon, label, fields, db,
@@ -30,8 +69,10 @@ export default function GenericListTab({
   const [confirmId, setConfirmId] = useState(null)
   const [sortMode, setSortMode] = useState('alpha')
   const [autoOnly, setAutoOnly] = useState(false)
+  const [filterValues, setFilterValues] = useState({})
   const colCount = COLS_MAP[cols] || 3
   const autoCount = entries.filter(e => e.auto_imported === true).length
+  const facets = useMemo(() => deriveFacets(fields, entries), [fields, entries])
 
   useEffect(() => { setSearch(navSearch || '') }, [navSearch])
 
@@ -60,7 +101,14 @@ export default function GenericListTab({
       const matchSearch = !search || JSON.stringify(e).toLowerCase().includes(search.toLowerCase())
       const matchStatus = fS === 'all' || e.status === fS
       const matchAuto = !autoOnly || e.auto_imported === true
-      return matchSearch && matchStatus && matchAuto
+      // Within one facet the selected chips are OR'd; across facets they are
+      // AND'd, so picking two priorities widens and adding a topic narrows.
+      const matchFacets = facets.every(fc => {
+        const sel = filterValues[fc.key]
+        if (!sel?.length) return true
+        return sel.includes((e[fc.key] || '').trim())
+      })
+      return matchSearch && matchStatus && matchAuto && matchFacets
     })
     .sort((a, b) => {
       const aName = a.display_name || a.name || a.word || ''
@@ -113,6 +161,14 @@ export default function GenericListTab({
             <button key={sz} onClick={() => setColsPersist(sz)} style={{ fontSize: '0.77em', padding: '2px 7px', borderRadius: 4, cursor: 'pointer', background: cols === sz ? `${accent}22` : 'transparent', color: cols === sz ? accent : 'var(--dim)', border: `1px solid ${cols === sz ? accent : 'var(--brd)'}` }}>{sz}</button>
           ))}
         </div>
+        {facets.length > 0 && (
+          <FilterPopup
+            color={accent}
+            filters={facets}
+            values={filterValues}
+            onChange={(key, vals) => setFilterValues(prev => ({ ...prev, [key]: vals }))}
+          />
+        )}
         {autoCount > 0 && (
           <button onClick={() => setAutoOnly(v => !v)} style={{ fontSize: '0.77em', padding: '3px 9px', borderRadius: 12, border: `1px solid ${autoOnly ? accent : 'var(--brd)'}`, background: autoOnly ? `${accent}22` : 'none', color: autoOnly ? accent : 'var(--dim)', cursor: 'pointer' }}>
             📥 Auto-imported ({autoCount})

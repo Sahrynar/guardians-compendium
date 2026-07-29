@@ -83,6 +83,7 @@ export default function Characters({ db, goTo, tab, navSearch }) {
   function changeColSize(sz) { setColSize(sz); try { localStorage.setItem('colsize_characters', sz) } catch {} }
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [viewing, setViewing] = useState(null) // read-only pop-open (TD-004)
   const [confirmId, setConfirmId] = useState(null)
   const [portraitCharId, setPortraitCharId] = useState(null)
   const [panels, setPanels] = useState([])
@@ -305,6 +306,11 @@ export default function Characters({ db, goTo, tab, navSearch }) {
                   {dead === true && <span style={{ fontSize: '0.85em', color: '#ff3355', flexShrink: 0 }} title="Deceased">†</span>}
                   <div className="entry-title" dangerouslySetInnerHTML={{ __html: highlight(e.display_name||e.name||'', search) }} />
                 </div>
+                <button
+                  title="View (read-only)"
+                  onClick={ev => { ev.stopPropagation(); setViewing(e) }}
+                  style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: '0.9em', padding: '0 4px', flexShrink: 0, marginLeft: 6 }}
+                >👁</button>
                 {thumb && (
                   <img src={thumb} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--brd)', marginLeft: 8, flexShrink: 0, cursor: 'pointer' }} onClick={ev => { ev.stopPropagation(); openPanel(imgs0[0], e.display_name || e.name) }} />
                 )}
@@ -391,6 +397,67 @@ export default function Characters({ db, goTo, tab, navSearch }) {
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null) }} title={`${editing?.id?'Edit':'Add'} Character`} color="var(--cc)">
         <EntryForm fields={CHAR_FIELDS} entry={editing||{}} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditing(null) }} color="var(--cc)" db={db} />
       </Modal>
+
+      {/* Read-only pop-open (TD-004) — the whole character on one focused
+          surface, reachable straight from the card without expanding it and
+          without any editable control in reach. */}
+      {viewing && (() => {
+        const v = chars.find(c => c.id === viewing.id) || viewing
+        const vImgs = getCharImages(v)
+        const vDead = isDeceased(v)
+        const vHasColors = ['hair_color','eye_color','skin_color','aura_color','clothing_color'].some(k => v[k] && v[k] !== '#888888')
+          || (v.has_wings === 'Yes' && v.wing_color && v.wing_color !== '#888888')
+        return (
+          <Modal open onClose={() => setViewing(null)} title={v.display_name || v.name || 'Character'} color="var(--cc)" maxWidth={640}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(vImgs.length > 0 || vHasColors) && (
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  {vImgs.slice(0, 4).map((img, ix) => (
+                    <img key={ix} src={img.url} alt={img.label || ''} title={img.label || ''}
+                      onClick={() => openPanel(img, v.display_name || v.name)}
+                      style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--brd)', cursor: 'pointer' }} />
+                  ))}
+                  {vHasColors && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center' }}>
+                      {colorSwatches(v)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {vDead === true && (
+                <div style={{ color: '#ff3355', fontSize: '0.85em' }}>
+                  † Deceased{diesIn(v) ? ` — ${diesIn(v)}` : ''}
+                </div>
+              )}
+
+              {CHAR_FIELDS.filter(f => {
+                const skip = ['hair_color','eye_color','skin_color','aura_color','clothing_color','wing_color']
+                if (f.k === 'wing_color' && v.has_wings !== 'Yes') return false
+                return !skip.includes(f.k) && v[f.k]
+              }).map(f => (
+                <div key={f.k}>
+                  <div style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>{f.l}</div>
+                  <div style={{ fontSize: '0.92em', color: 'var(--tx)', whiteSpace: 'pre-wrap' }}>{String(v[f.k])}</div>
+                </div>
+              ))}
+
+              {v.notes && (
+                <div>
+                  <div style={{ fontSize: '0.69em', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Notes</div>
+                  <div style={{ fontSize: '0.92em', color: 'var(--tx)', whiteSpace: 'pre-wrap' }}>{v.notes}</div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4, paddingTop: 12, borderTop: '1px solid var(--div)' }}>
+                <button className="btn btn-sm btn-outline" onClick={() => setViewing(null)}>Close</button>
+                <button className="btn btn-sm btn-outline" style={{ color: '#e63946', borderColor: '#e63946' }}
+                  onClick={() => { setViewing(null); setEditing(v); setModalOpen(true) }}>✎ Edit</button>
+              </div>
+            </div>
+          </Modal>
+        )
+      })()}
 
       {portraitCharId && (
         <PortraitTool charId={portraitCharId} db={db} onClose={() => setPortraitCharId(null)} palette={PALETTE} presetLabels={PRESET_LABELS} />

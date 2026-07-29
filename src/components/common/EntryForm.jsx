@@ -45,15 +45,22 @@ export default function EntryForm({
             />
           </div>
         )
-      case 'sel':
+      case 'sel': {
+        // A stored value that predates the option list (or came from an import)
+        // must still show, or turning a free-text field into a dropdown would
+        // silently blank it. Keep it as a one-off option marked with ·.
+        const opts = f.o || []
+        const legacy = val && !opts.includes(val) ? [val] : []
         return (
           <div className="field" key={f.k}>
             <label>{f.l}</label>
             <select value={val} onChange={e => set(f.k, e.target.value)}>
-              {(f.o || []).map(o => <option key={o} value={o}>{o || '—'}</option>)}
+              {legacy.map(o => <option key={o} value={o}>{o} ·</option>)}
+              {opts.map(o => <option key={o} value={o}>{o || '—'}</option>)}
             </select>
           </div>
         )
+      }
       case 'color':
         return (
           <div className="field" key={f.k}>
