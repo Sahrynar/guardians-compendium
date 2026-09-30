@@ -1,12 +1,12 @@
-# TD-049 — Supabase keep-alive for Guardians Compendium
+# TD-049 — Cloud keep-alives for Guardians Compendium and StoryForge
 # Uses the existing SUPABASE_URL and SUPABASE_ANON_KEY repository secrets.
 # This is a best-effort free-plan keep-alive, not a guarantee against pausing.
 name: Supabase keep-alive
 
 on:
   schedule:
-    # Four times daily, away from the busy start of each hour (UTC).
-    - cron: '17 1,7,13,19 * * *'
+    # Every eight hours, away from the busy start of each hour (UTC).
+    - cron: '17 1,9,17 * * *'
   workflow_dispatch: {}
   push:
     branches: [main]
@@ -51,3 +51,31 @@ jobs:
 
           python3 -c 'import json; body=json.load(open("/tmp/keep-alive-body.json")); assert body == [], "Expected an empty database response"'
           echo "Compendium database answered successfully."
+
+  storyforge:
+    name: StoryForge database keep-alive
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping authenticated StoryForge health endpoint
+        env:
+          STORYFORGE_URL: https://rrbuzjgrmjudbwofuyjq.supabase.co
+          # Public anon client key. This is not a service-role or secret key.
+          # Table grants and RLS remain unchanged; the endpoint returns health only.
+          STORYFORGE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyYnV6amdybWp1ZGJ3b2Z1eWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNTIxNzksImV4cCI6MjEwNDcyODE3OX0.IzErTr8LowGAn6Kb3snCauNpgtWj2g-ZDyuLC_5GA2Q
+        run: |
+          set -euo pipefail
+          status=$(curl --silent --show-error --retry 3 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 10 --max-time 30 \
+            --output /tmp/storyforge-health.json --write-out '%{http_code}' \
+            "${STORYFORGE_URL}/functions/v1/keep-alive" \
+            --header "apikey: ${STORYFORGE_ANON_KEY}" \
+            --header "Authorization: Bearer ${STORYFORGE_ANON_KEY}")
+
+          echo "StoryForge database ping: HTTP ${status}"
+          if [ "$status" != "200" ]; then
+            echo "::error::StoryForge keep-alive failed. Check its project state and health endpoint."
+            exit 1
+          fi
+          python3 -c 'import json; body=json.load(open("/tmp/storyforge-health.json")); assert body.get("ok") is True and body.get("database") == "awake", "Database health check failed"'
+          echo "StoryForge database answered successfully."
